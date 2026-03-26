@@ -1,0 +1,23 @@
+{
+  "name": "PoulaillerPro - Gestion Elevage",
+  "short_name": "PoulaillerPro",
+  "description": "Gestion intelligente de votre poulailler et élevage de cailles",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
