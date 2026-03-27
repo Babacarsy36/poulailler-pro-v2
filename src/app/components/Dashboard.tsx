@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { Bird, Egg, ShoppingCart, Heart, Calendar, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useAuth } from "../AuthContext";
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { poultryType, poultryBreed } = useAuth();
   const [stats, setStats] = useState({
-    totalChickens: 123, // Mocking values to match screenshots or as defaults
-    eggsToday: 16,
-    layingRate: 18.3,
-    feedRemaining: 59.1,
-    vaccinations: 3
+    totalChickens: 0,
+    eggsToday: 0,
+    layingRate: 0,
+    feedRemaining: 0,
+    vaccinations: 0,
+    breakdown: ""
   });
 
   const isCaille = poultryType === 'caille';
@@ -18,12 +21,39 @@ export function Dashboard() {
   const borderHighlight = isCaille ? "border-l-babs-emerald" : "border-l-babs-orange";
 
   useEffect(() => {
-    // In a real app, these would come from localStorage as before
-    // Keeping the calculation logic but focusing on UI for now
+    // Read from localStorage
     const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
-    if (chickens.length > 0) {
-      // update stats...
-    }
+    const eggs = JSON.parse(localStorage.getItem("eggs") || "[]");
+    const feed = JSON.parse(localStorage.getItem("feed") || "[]");
+    const health = JSON.parse(localStorage.getItem("health") || "[]");
+
+    // Filter by type if needed (currently global as per previous sessions)
+    const total = chickens.reduce((acc: number, c: any) => acc + parseInt(c.count || 0), 0);
+    
+    // Breakdown string
+    const breakdown = chickens
+      .map((c: any) => `${c.count} ${c.type}`)
+      .slice(0, 5)
+      .join(" • ");
+
+    // Eggs today
+    const today = new Date().toISOString().split('T')[0];
+    const eggsToday = eggs
+      .filter((e: any) => e.date === today)
+      .reduce((acc: number, e: any) => acc + parseInt(e.count || 0), 0);
+
+    // Laying rate (simplified)
+    const activeLayers = chickens.filter((c: any) => c.isAdult).reduce((acc: number, c: any) => acc + parseInt(c.count || 0), 0);
+    const layingRate = activeLayers > 0 ? ((eggsToday / activeLayers) * 100).toFixed(1) : "0";
+
+    setStats({
+      totalChickens: total,
+      eggsToday: eggsToday,
+      layingRate: parseFloat(layingRate),
+      feedRemaining: feed.length > 0 ? parseFloat(feed[feed.length-1].remaining || 0) : 0,
+      vaccinations: health.length, // Simulating last 7 days count
+      breakdown: breakdown || "Aucune donnée enregistrée"
+    });
   }, []);
 
   return (
@@ -55,85 +85,109 @@ export function Dashboard() {
       </div>
 
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Total Count */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group">
-          <div className="absolute top-6 right-6 p-3 bg-gray-500/10 rounded-2xl">
+        <button 
+          onClick={() => navigate("/inventory")}
+          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+        >
+          <div className="absolute top-6 right-6 p-3 bg-gray-500/10 rounded-2xl group-hover:bg-gray-500/20 transition-colors">
             <Bird className="w-8 h-8 text-gray-600" />
           </div>
           <div className="mt-12 space-y-2">
             <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Effectif Total</p>
             <p className="text-5xl font-black text-babs-brown">{stats.totalChickens}</p>
             <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
-              3 Pondeuses • 74 Cailles • 16 Jeunes • 7 Goliath • 21 Poussins
+              {stats.breakdown}
             </p>
           </div>
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${borderHighlight} border-l-4`}></div>
-        </div>
+        </button>
 
         {/* Laying Rate */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group">
-          <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg shadow-orange-200`}>
+        <button 
+          onClick={() => navigate("/eggs")}
+          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+        >
+          <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg shadow-orange-200 group-hover:shadow-orange-300 transition-all`}>
             <Egg className="w-8 h-8" />
           </div>
           <div className="mt-12 space-y-2">
-            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Taux de Ponte (Moy. 7J)</p>
+            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Taux de Ponte (Jour)</p>
             <p className="text-5xl font-black text-babs-brown">{stats.layingRate}%</p>
             <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
-              Toutes volailles confondues
+              {stats.eggsToday} œufs ramassés aujourd'hui
             </p>
           </div>
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${borderHighlight} border-l-4 opacity-40`}></div>
-        </div>
+        </button>
 
         {/* Consumption */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group">
-          <div className="absolute top-6 right-6 p-3 bg-blue-500 rounded-2xl shadow-lg shadow-blue-100">
+        <button 
+          onClick={() => navigate("/feed")}
+          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-100 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+        >
+          <div className="absolute top-6 right-6 p-3 bg-blue-500 rounded-2xl shadow-lg shadow-blue-100 group-hover:bg-blue-600 transition-colors">
             <ShoppingCart className="w-8 h-8 text-white" />
           </div>
           <div className="mt-12 space-y-2">
-            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Conso. Moyenne</p>
+            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Stock Aliment</p>
             <p className="text-5xl font-black text-babs-brown">{stats.feedRemaining}<span className="text-xl ml-1">kg</span></p>
+            <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
+              Dernier relevé d'inventaire
+            </p>
           </div>
-        </div>
+        </button>
 
         {/* Health */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group">
-          <div className="absolute top-6 right-6 p-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-100">
+        <button 
+          onClick={() => navigate("/health")}
+          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-100 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+        >
+          <div className="absolute top-6 right-6 p-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-100 group-hover:bg-emerald-600 transition-colors">
             <Heart className="w-8 h-8 text-white" />
           </div>
           <div className="mt-12 space-y-2">
-            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Traitements (7J)</p>
+            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Traitements</p>
             <p className="text-5xl font-black text-babs-brown">{stats.vaccinations}</p>
+            <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
+              Enregistrements au carnet
+            </p>
           </div>
-        </div>
+        </button>
       </div>
 
-      {/* Daily Guide Section (Similar to bottom of screenshot 1) */}
+      {/* Daily Guide Section */}
       <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Guide Journalier</h3>
           <ChevronRight className="w-6 h-6 text-orange-400" />
         </div>
         <div className="space-y-4">
-          <div className="flex items-center gap-4 p-4 rounded-3xl bg-orange-50/50 border border-orange-100/50">
+          <button 
+            onClick={() => navigate("/eggs")}
+            className="w-full flex items-center gap-4 p-4 rounded-3xl bg-orange-50/50 border border-orange-100/50 hover:bg-orange-50 transition-colors text-left"
+          >
             <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
               <Egg className="w-6 h-6 text-babs-orange" />
             </div>
             <div>
               <p className="text-sm font-black text-babs-brown">Ramassage matinal</p>
-              <p className="text-[10px] font-bold text-gray-400 italic">Effectué à 7h30</p>
+              <p className="text-[10px] font-bold text-gray-400 italic">Cliquer pour enregistrer la ponte</p>
             </div>
-          </div>
-          <div className="flex items-center gap-4 p-4 rounded-3xl bg-blue-50/50 border border-blue-100/50">
+          </button>
+          <button 
+            onClick={() => navigate("/feed")}
+            className="w-full flex items-center gap-4 p-4 rounded-3xl bg-blue-50/50 border border-blue-100/50 hover:bg-blue-50 transition-colors text-left"
+          >
             <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
               <ShoppingCart className="w-6 h-6 text-blue-500" />
             </div>
             <div>
               <p className="text-sm font-black text-babs-brown">Distribution Granulés</p>
-              <p className="text-[10px] font-bold text-gray-400 italic">Prochaine : 16h00</p>
+              <p className="text-[10px] font-bold text-gray-400 italic">Cliquer pour gérer le stock</p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>
