@@ -6,7 +6,7 @@ import { useAuth } from "../AuthContext";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, poultryBreed, clearSelection } = useAuth();
+  const { poultryType, poultryBreed, clearSelection, user, logout } = useAuth();
   
   const isCaille = poultryType === 'caille';
   const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
@@ -22,6 +22,11 @@ export function Layout() {
 
   const handleSwitch = () => {
     clearSelection();
+    navigate("/selection");
+  };
+
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -33,9 +38,9 @@ export function Layout() {
         <div className="flex items-center gap-4">
           <Moon className="w-6 h-6 text-babs-brown/60" />
           <button 
-            onClick={handleSwitch}
-            className="p-2 bg-gray-100 rounded-xl text-babs-brown/80 hover:bg-gray-200 transition-colors"
-            title="Changer d'espèce"
+            onClick={handleLogout}
+            className="p-2 bg-red-50 rounded-xl text-red-500 hover:bg-red-100 transition-colors"
+            title="Se déconnecter"
           >
             <LogOut className="w-6 h-6" />
           </button>
@@ -67,19 +72,31 @@ export function Layout() {
                   </Link>
                 );
               })}
+              <button 
+                onClick={handleSwitch}
+                className="ml-4 p-2 bg-gray-50 rounded-xl text-gray-400 hover:text-babs-brown transition-colors group flex items-center gap-2"
+                title="Changer d'espèce"
+              >
+                <Bird className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                <span className="text-[10px] font-black uppercase tracking-tighter">Espèce</span>
+              </button>
             </nav>
           </div>
 
           <div className="flex items-center gap-4">
+            <div className="hidden lg:block text-right">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Connecté en tant que</p>
+              <p className="text-xs font-bold text-babs-brown">{user?.email}</p>
+            </div>
             <p className={`text-sm font-medium ${accentColor} bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm`}>
               {poultryType === 'poulet' ? `Poulet ${poultryBreed || ''}` : 'Cailles'}
             </p>
             <button 
-              onClick={handleSwitch}
+              onClick={handleLogout}
               className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-red-500 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              Changer
+              Quitter
             </button>
           </div>
         </div>
