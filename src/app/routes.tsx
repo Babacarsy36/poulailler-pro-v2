@@ -4,6 +4,7 @@ import { Dashboard } from "./components/Dashboard";
 import { ChickenInventory } from "./components/ChickenInventory";
 import { EggProduction } from "./components/EggProduction";
 import { FeedManagement } from "./components/FeedManagement";
+import { HealthTracking } from "./components/HealthTracking";
 import { Login } from "./components/Login";
 import { useAuth } from "./AuthContext";
 
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "inventory", Component: ChickenInventory },
       { path: "eggs", Component: EggProduction },
       { path: "feed", Component: FeedManagement },
+      { path: "health", Component: HealthTracking },
     ],
   },
 ]);
