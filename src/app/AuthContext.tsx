@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { auth } from './firebaseConfig';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebaseConfig';
 import { SyncService } from './SyncService';
 
 export type PoultryType = 'caille' | 'poulet' | null;
-export type PoultryBreed = 'goliath' | 'herminé' | 'pondeuse' | null;
+export type PoultryBreed = 'goliath' | 'brahma' | 'cochin' | 'pondeuse' | null;
 
 interface AuthContextType {
     user: User | null;
@@ -33,6 +34,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (currentUser) {
                 // Pull data from cloud on login
                 await SyncService.pullCloudToLocal();
+                
+                // Pull user preferences
+                const prefsDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences'));
+                if (prefsDoc.exists()) {
+                    const data = prefsDoc.data();
+                    if (data.poultryType) {
+                        setPoultryType(data.poultryType);
+                        localStorage.setItem('poultry_type', data.poultryType);
+                    }
+                    if (data.poultryBreed) {
+                        setPoultryBreed(data.poultryBreed);
+                        localStorage.setItem('poultry_breed', data.poultryBreed);
+                    }
+                }
+
                 setSyncTrigger(prev => prev + 1);
             }
             setLoading(false);
@@ -58,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (savedBreed) setPoultryBreed(savedBreed);
     }, []);
 
-    const updatePoultrySelection = (type: PoultryType, breed: PoultryBreed) => {
+    const updatePoultrySelection = async (type: PoultryType, breed: PoultryBreed) => {
         setPoultryType(type);
         setPoultryBreed(breed);
         if (type) localStorage.setItem('poultry_type', type);
@@ -66,18 +82,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (breed) localStorage.setItem('poultry_breed', breed);
         else localStorage.removeItem('poultry_breed');
+
+        if (user) {
+            await setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
+                poultryType: type,
+                poultryBreed: breed,
+                lastUpdated: Date.now()
+            });
+        }
     };
 
     const clearSelection = () => {
         setPoultryType(null);
         setPoultryBreed(null);
-        localStorage.removeItem('poultry_type');
-        localStorage.removeItem('poultry_breed');
     };
 
     const logout = async () => {
         await signOut(auth);
+        // CRITICAL: Prevent data leak between accounts by wiping all local data
+        localStorage.clear();
         clearSelection();
+        setSyncTrigger(prev => prev + 1);
     };
 
     return (

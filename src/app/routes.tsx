@@ -5,6 +5,7 @@ import { ChickenInventory } from "./components/ChickenInventory";
 import { EggProduction } from "./components/EggProduction";
 import { FeedManagement } from "./components/FeedManagement";
 import { HealthTracking } from "./components/HealthTracking";
+import { FinanceManagement } from "./components/FinanceManagement";
 import { Login } from "./components/Login";
 import { Signup } from "./components/Signup";
 import { SelectionPage } from "./components/SelectionPage";
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
               { path: "eggs", Component: EggProduction },
               { path: "feed", Component: FeedManagement },
               { path: "health", Component: HealthTracking },
+              { path: "finances", Component: FinanceManagement },
             ],
           },
         ],

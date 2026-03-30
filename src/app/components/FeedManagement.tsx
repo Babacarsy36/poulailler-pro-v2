@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Minus, ShoppingCart, Calendar, History, Package } from "lucide-react";
+import { Plus, Minus, ShoppingCart, Calendar, History, Package, Info, ArrowRight, CheckCircle, ThermometerSun, ThermometerSnowflake, Thermometer } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 
@@ -11,6 +11,43 @@ interface FeedEntry {
   feedType: string;
   notes: string;
 }
+
+type FeedPhase = {
+  name: string;
+  duration: [number, number]; // [startDay, endDay]
+  description: string;
+  consumption: string;
+};
+
+const getPhasesForBreed = (breed: string): FeedPhase[] => {
+  if (breed === 'Pondeuse') {
+    return [
+      { name: "Démarrage", duration: [1, 28], description: "Aliment riche en protéines (20-22%) en miettes.", consumption: "15g à 30g par oiseau/jour" },
+      { name: "Poulette (Croissance)", duration: [29, 126], description: "Baisse progressive des protéines (16%).", consumption: "40g à 80g par oiseau/jour" },
+      { name: "Ponte", duration: [127, 999], description: "Aliment enrichi en Calcium (3-4%) pour la coquille.", consumption: "110g à 120g par oiseau/jour" }
+    ];
+  }
+  if (breed === 'Caille') {
+    return [
+      { name: "Démarrage", duration: [1, 14], description: "Aliment très riche en protéines (24-28%).", consumption: "5g à 10g par caille/jour" },
+      { name: "Croissance", duration: [15, 42], description: "Transition vers aliment adulte (20%).", consumption: "15g à 20g par caille/jour" },
+      { name: "Ponte / Engraissement", duration: [43, 999], description: "Aliment ponte riche en minéraux.", consumption: "25g à 30g par caille/jour" }
+    ];
+  }
+  if (breed === 'Goliath' || breed === 'Brahma' || breed === 'Cochin') {
+    return [
+      { name: "Démarrage", duration: [1, 28], description: "Aliment Démarrage Chair (20-22%).", consumption: "20g à 40g par oiseau/jour" },
+      { name: "Croissance", duration: [29, 60], description: "Aliment Croissance Chair (18%).", consumption: "50g à 100g par oiseau/jour" },
+      { name: "Finition", duration: [61, 999], description: "Aliment Finition (Énergie élevée).", consumption: "120g à 160g par oiseau/jour" }
+    ];
+  }
+  // Default: Chair / Rainbow
+  return [
+    { name: "Démarrage", duration: [1, 21], description: "Aliment Démarrage (très riche).", consumption: "30g à 60g par oiseau/jour" },
+    { name: "Croissance", duration: [22, 35], description: "Aliment Croissance.", consumption: "80g à 120g par oiseau/jour" },
+    { name: "Finition", duration: [36, 999], description: "Aliment Finition (Énergie max).", consumption: "150g à 180g par oiseau/jour" }
+  ];
+};
 
 export function FeedManagement() {
   const { poultryType, syncTrigger } = useAuth();
@@ -24,10 +61,26 @@ export function FeedManagement() {
     notes: "",
   });
 
+  const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
+  const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
+  const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
+
+  const adjustConsumption = (text: string, currentWeather: "normal" | "hot" | "cold") => {
+    if (currentWeather === "normal") return text;
+    const factor = currentWeather === "hot" ? 0.85 : 1.15; // -15% hot, +15% cold
+    return text.replace(/\d+/g, (match) => {
+       return Math.round(parseInt(match) * factor).toString();
+    });
+  };
+
   const isCaille = poultryType === 'caille';
-  const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
-  const iconBg = isCaille ? "bg-babs-emerald text-white" : "bg-babs-orange text-white";
-  const btnBg = isCaille ? "bg-babs-emerald hover:bg-emerald-600" : "bg-babs-orange hover:bg-orange-600";
+  const customColors = {
+     bgLight: isCaille ? 'bg-emerald-50' : 'bg-orange-50',
+     textDark: isCaille ? 'text-emerald-700' : 'text-orange-700',
+     border: isCaille ? 'border-emerald-100' : 'border-orange-100',
+     bgBtn: isCaille ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
+  }
 
   useEffect(() => {
     const saved = localStorage.getItem("feed");
@@ -48,7 +101,7 @@ export function FeedManagement() {
       ...formData,
       quantity: Number(formData.quantity),
     };
-    saveEntries([newEntry, ...entries]);
+    saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setFormData({
       date: new Date().toISOString().split("T")[0],
       type: "achat",
@@ -63,83 +116,214 @@ export function FeedManagement() {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
 
+  // Calculate current phase
+  const phases = getPhasesForBreed(selectedBreed);
+  const currentDate = new Date();
+  const arrDate = new Date(arrivalDate);
+  const diffTime = Math.abs(currentDate.getTime() - arrDate.getTime());
+  const currentAgeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Day 1 is arrival day
+
+  let currentPhaseIndex = phases.findIndex(p => currentAgeDays >= p.duration[0] && currentAgeDays <= p.duration[1]);
+  if(currentPhaseIndex === -1 && currentAgeDays > 0) currentPhaseIndex = phases.length - 1; // Default to last if very old
+
+  const activePhaseToExpand = expandedPhase !== null ? expandedPhase : currentPhaseIndex;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-4xl font-black text-babs-brown tracking-tight">Gestion Aliment</h2>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Stock & Rations</p>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Stock & Programme Nutritionnel</p>
         </div>
         <button 
           onClick={() => setIsAddOpen(true)}
-          className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold`}
+          className={`${customColors.bgBtn} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold`}
         >
           <Plus className="w-5 h-5" /> Nouvelle opération
         </button>
       </div>
 
-      {/* Stock Display */}
-      <div className="bg-white rounded-[2.5rem] p-10 shadow-premium border border-gray-50 flex items-center gap-8 relative overflow-hidden">
-        <div className={`p-6 rounded-[2rem] ${iconBg} shadow-xl shadow-orange-100`}>
-          <Package className="w-10 h-10" />
-        </div>
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">Stock Actuel</p>
-          <div className="flex items-baseline gap-2">
-            <span className={`text-5xl font-black ${totalFeed < 10 ? 'text-red-500' : 'text-babs-brown'}`}>
-              {totalFeed.toFixed(1)}
-            </span>
-            <span className="text-xl font-bold text-gray-300 uppercase tracking-widest">Kg</span>
-          </div>
-          {totalFeed < 10 && (
-            <p className="text-[9px] font-bold text-red-500 uppercase mt-2 tracking-wider animate-pulse">Stock critique !</p>
-          )}
-        </div>
-        <div className={`absolute right-0 top-0 h-full w-2 ${isCaille ? "bg-babs-emerald" : "bg-babs-orange"} opacity-20`}></div>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <div className="lg:col-span-1 space-y-8">
+           {/* Stock Display */}
+           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col relative overflow-hidden group">
+             <div className="absolute top-6 right-6 p-3 bg-gray-50 rounded-2xl group-hover:scale-110 transition-transform">
+               <Package className={`w-6 h-6 ${customColors.textDark}`} />
+             </div>
+             <p className="text-[10px] uppercase tracking-widest font-black text-gray-400">Stock Actuel</p>
+             <p className={`text-5xl mt-2 font-black ${totalFeed < 10 ? 'text-red-500' : 'text-babs-brown'}`}>
+                {totalFeed.toFixed(1)} <span className="text-2xl text-gray-300">kg</span>
+             </p>
+             {totalFeed < 10 && (
+               <p className="text-[10px] font-bold text-red-500 uppercase mt-4 tracking-wider animate-pulse flex items-center gap-1">
+                 ⚠️ Stock critique, réapprovisionner !
+               </p>
+             )}
+             <div className={`absolute bottom-0 left-0 w-full h-2 ${customColors.bgLight}`}></div>
+           </div>
 
-      {/* History */}
-      <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
-        <div className="flex items-center gap-2 mb-8 px-2">
-          <History className="w-5 h-5 text-gray-300" />
-          <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Mouvements de Stock</h3>
-        </div>
-        
-        <div className="space-y-4">
-          {entries.map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between p-6 rounded-3xl bg-gray-50/50 hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
-              <div className="flex items-center gap-6">
-                <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center ${
-                  entry.type === 'achat' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'
-                }`}>
-                  {entry.type === 'achat' ? <Plus className="w-6 h-6" /> : <Minus className="w-6 h-6" />}
+           {/* Nutritional Phase Generator */}
+           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
+             <div className="flex items-center gap-3 mb-6">
+                 <div className={`p-3 rounded-xl ${customColors.bgLight} ${customColors.textDark}`}>
+                    <Calendar className="w-5 h-5" />
+                 </div>
+                 <div>
+                   <h3 className="text-lg font-black text-babs-brown uppercase tracking-wider">Phase du Lot</h3>
+                   <p className="text-[10px] uppercase font-bold text-gray-400">Programme Alimentaire</p>
+                 </div>
+             </div>
+
+             <div className="space-y-4 mb-6">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
+                  <select 
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none`}
+                    value={selectedBreed}
+                    onChange={(e) => setSelectedBreed(e.target.value)}
+                  >
+                    <option value="Poulet de chair">Poulet de chair / Rainbow</option>
+                    <option value="Pondeuse">Pondeuse</option>
+                    <option value="Goliath">Poulet Goliath</option>
+                    <option value="Brahma">Poulet Brahma</option>
+                    <option value="Cochin">Poulet Cochin</option>
+                    <option value="Caille">Caille</option>
+                  </select>
                 </div>
                 <div>
-                  <p className="font-black text-babs-brown text-lg">
-                    {entry.type === 'achat' ? '+' : '-'}{entry.quantity} kg • {entry.feedType}
-                  </p>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    {new Date(entry.date).toLocaleDateString("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date d'arrivée</label>
+                  <input 
+                    type="date"
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none`}
+                    value={arrivalDate}
+                    onChange={e => setArrivalDate(e.target.value)}
+                  />
                 </div>
-              </div>
-              <div className="hidden sm:block">
-                <span className={`text-[10px] font-black px-3 py-1 rounded-full ${
-                  entry.type === 'achat' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
-                }`}>
-                  {entry.type.toUpperCase()}
-                </span>
-              </div>
-            </div>
-          ))}
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 flex items-center gap-1">
+                    <Thermometer className="w-3 h-3"/> Météo
+                  </label>
+                  <select 
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none appearance-none cursor-pointer`}
+                    value={weather}
+                    onChange={e => setWeather(e.target.value as "normal" | "hot" | "cold")}
+                  >
+                    <option value="normal">Tempérée (Normale)</option>
+                    <option value="hot">Forte Chaleur (Canicule) ☀️</option>
+                    <option value="cold">Fraîcheur (Froid/Pluie) ❄️</option>
+                  </select>
+                </div>
+             </div>
 
-          {entries.length === 0 && (
-            <div className="py-12 text-center">
-              <Package className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-              <p className="text-gray-400 font-bold italic">Historique vide.</p>
+             {/* Current Phase Highlight */}
+             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
+                <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Âge estimé du lot</p>
+                <p className="text-2xl font-black text-babs-brown mb-2">{currentAgeDays} jours</p>
+                <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-start gap-3 shadow-sm">
+                   <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+                   <div>
+                     <p className="font-black text-blue-700 uppercase text-xs tracking-wider">{phases[currentPhaseIndex]?.name}</p>
+                     <p className="text-[10px] text-gray-500 font-bold mt-1 leading-relaxed">{phases[currentPhaseIndex]?.description}</p>
+                   </div>
+                </div>
+             </div>
+
+             {/* Timeline Mini */}
+             <div className="space-y-4">
+                <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-2 ml-2">Cycle complet (Cliquez pour détails)</p>
+                {phases.map((p, i) => {
+                   const isExpanded = activePhaseToExpand === i;
+                   return (
+                     <div key={i} className={`flex flex-col p-4 rounded-3xl transition-all cursor-pointer border ${isExpanded ? 'bg-orange-50 border-orange-100 shadow-md scale-[1.02]' : 'bg-transparent border-transparent hover:bg-gray-50'}`} onClick={() => setExpandedPhase(isExpanded ? null : i)}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black transition-colors ${i === currentPhaseIndex ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : (i < currentPhaseIndex ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-400')}`}>
+                                {i < currentPhaseIndex ? <CheckCircle className="w-4 h-4"/> : i + 1}
+                             </div>
+                             <span className={`font-black text-sm ${i === currentPhaseIndex ? 'text-orange-700' : 'text-babs-brown'}`}>{p.name}</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-lg shadow-sm border border-gray-100">J{p.duration[0]}-J{p.duration[1]===999?'∞':p.duration[1]}</span>
+                        </div>
+                        
+                        {isExpanded && (
+                          <div className="mt-4 pt-4 border-t border-orange-100/50 space-y-3 animate-in fade-in slide-in-from-top-2">
+                             <div className="flex items-start gap-2">
+                               <Info className="w-4 h-4 text-orange-400 mt-0.5" />
+                               <p className="text-xs text-orange-800 font-bold leading-relaxed">{p.description}</p>
+                             </div>
+                             <div className="flex items-start gap-2 bg-white/60 p-3 rounded-xl border border-orange-50">
+                               {weather === "hot" ? <ThermometerSun className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" /> : 
+                                weather === "cold" ? <ThermometerSnowflake className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" /> :
+                                <Package className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />}
+                               <div>
+                                 <p className="text-xs text-orange-800 font-black">Consommation : <span className="font-bold">{adjustConsumption(p.consumption, weather)}</span></p>
+                                 {weather === "hot" && <p className="text-[10px] text-red-600 font-bold mt-1.5 leading-tight">☀️ Stress Thermique: Baisse d'appétit de ~15%. Nourrissez à la fraîche (très tôt ou tard). Vitamine C d'urgence dans l'eau.</p>}
+                                 {weather === "cold" && <p className="text-[10px] text-blue-600 font-bold mt-1.5 leading-tight">❄️ Climat Frais: Appétit en hausse de ~15% pour se réchauffer. Gardez la litière bien sèche et évitez les courants d'air.</p>}
+                               </div>
+                             </div>
+                          </div>
+                        )}
+                     </div>
+                   );
+                })}
+             </div>
+           </div>
+         </div>
+
+         {/* History */}
+         <div className="lg:col-span-2">
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 h-full flex flex-col">
+              <div className="flex items-center gap-2 mb-8 px-2">
+                <History className="w-5 h-5 text-gray-300" />
+                <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Historique de Mouvements</h3>
+              </div>
+              
+              <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-[700px]">
+                {entries.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between p-5 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 shadow-sm hover:shadow-md group">
+                    <div className="flex items-center gap-5">
+                      <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center transition-transform ${
+                        entry.type === 'achat' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600 group-hover:-rotate-6'
+                      }`}>
+                        {entry.type === 'achat' ? <Plus className="w-6 h-6" /> : <Minus className="w-6 h-6" />}
+                      </div>
+                      <div>
+                        <p className="font-black text-babs-brown text-sm">
+                          {entry.type === 'achat' ? 'Achat/Entrée' : 'Ration/Sortie'} • <span className="text-gray-500">{entry.feedType}</span>
+                        </p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                          {new Date(entry.date).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {entry.notes && <span className="ml-2 bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full normal-case tracking-normal">{entry.notes}</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`text-xl font-black ${entry.type === 'achat' ? 'text-emerald-500' : 'text-orange-500'}`}>
+                         {entry.type === 'achat' ? '+' : '-'}{entry.quantity} <span className="text-sm">kg</span>
+                      </span>
+                      <button 
+                        onClick={() => saveEntries(entries.filter(e => e.id !== entry.id))}
+                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+                        title="Supprimer l'opération"
+                      >
+                         <Minus className="w-4 h-4 transform rotate-45" /> {/* Use X essentially or trash, minus rotated serves as X */}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {entries.length === 0 && (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                       <Package className="w-10 h-10 text-gray-200" />
+                    </div>
+                    <p className="text-gray-400 font-bold italic mb-2">Aucun mouvement enregistré.</p>
+                    <p className="text-[10px] text-gray-300 font-black uppercase tracking-widest">Gérez vos entrées et sorties de stock ici.</p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+         </div>
       </div>
 
       {isAddOpen && (
@@ -152,7 +336,7 @@ export function FeedManagement() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
                   <input 
                     type="date"
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
                     value={formData.date}
                     onChange={e => setFormData({ ...formData, date: e.target.value })}
                     required
@@ -161,7 +345,7 @@ export function FeedManagement() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type</label>
                   <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
                     value={formData.type}
                     onChange={e => setFormData({ ...formData, type: e.target.value as any })}
                   >
@@ -176,7 +360,7 @@ export function FeedManagement() {
                   <input 
                     type="number"
                     step="0.1"
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
                     value={formData.quantity}
                     onChange={e => setFormData({ ...formData, quantity: e.target.value })}
                     required
@@ -186,20 +370,21 @@ export function FeedManagement() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Aliment</label>
                   <input 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
                     value={formData.feedType}
                     onChange={e => setFormData({ ...formData, feedType: e.target.value })}
-                    placeholder="Ex: Maïs, Grains..."
+                    placeholder="Ex: Miettes Croissance..."
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>
                 <input 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
+                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
                   value={formData.notes}
                   onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Facultatif"
                 />
               </div>
               <div className="flex gap-4 pt-4">
@@ -212,7 +397,7 @@ export function FeedManagement() {
                 </button>
                 <button 
                   type="submit"
-                  className={`flex-1 ${btnBg} text-white p-4 rounded-2xl font-black shadow-lg`}
+                  className={`flex-1 ${customColors.bgBtn} text-white p-4 rounded-2xl font-black shadow-lg`}
                 >
                   Confirmer
                 </button>

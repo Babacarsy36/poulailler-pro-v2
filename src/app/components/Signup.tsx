@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { Logo } from './Logo';
-import { UserPlus, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { UserPlus, Mail, Lock, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export function Signup() {
     const navigate = useNavigate();
@@ -12,6 +12,8 @@ export function Signup() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,13 +74,21 @@ export function Signup() {
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-babs-orange transition-colors" />
                                 <input 
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
-                                    className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-4 font-bold text-babs-brown outline-none transition-all"
+                                    className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-12 font-bold text-babs-brown outline-none transition-all"
                                     placeholder="8 caractères min."
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-babs-orange transition-colors focus:outline-none p-1"
+                                    title={showPassword ? "Masquer" : "Afficher"}
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
                         </div>
 
@@ -87,13 +97,21 @@ export function Signup() {
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-babs-orange transition-colors" />
                                 <input 
-                                    type="password"
+                                    type={showConfirmPassword ? "text" : "password"}
                                     required
-                                    className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-4 font-bold text-babs-brown outline-none transition-all"
+                                    className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-12 font-bold text-babs-brown outline-none transition-all"
                                     placeholder="Répétez le mot de passe"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-babs-orange transition-colors focus:outline-none p-1"
+                                    title={showConfirmPassword ? "Masquer" : "Afficher"}
+                                >
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
                         </div>
 

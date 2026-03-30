@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useNavigate, Link } from 'react-router';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { Logo } from './Logo';
-import { LogIn, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, ArrowRight, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 export function Login() {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [resetMessage, setResetMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,6 +30,22 @@ export function Login() {
         }
     };
 
+    const handleResetPassword = async () => {
+        if (!email) {
+            setError('Veuillez entrer votre adresse e-mail ci-dessus pour réinitialiser le mot de passe.');
+            setResetMessage('');
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setResetMessage('Un lien de réinitialisation a été envoyé à votre e-mail.');
+            setError('');
+        } catch (err: any) {
+            setError("Erreur lors de la réinitialisation. L'e-mail est-il correct ?");
+            setResetMessage('');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-babs-cream flex items-center justify-center p-6 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-orange-50 via-transparent to-transparent">
             <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in duration-700">
@@ -41,6 +59,12 @@ export function Login() {
 
                 <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-premium border border-white/20">
                     <form onSubmit={handleLogin} className="space-y-6">
+                        {resetMessage && (
+                            <div className="bg-green-50 text-green-600 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold animate-in slide-in-from-top-2">
+                                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                                {resetMessage}
+                            </div>
+                        )}
                         {error && (
                             <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold animate-in slide-in-from-top-2">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -68,13 +92,30 @@ export function Login() {
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-babs-orange transition-colors" />
                                 <input 
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
-                                    className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-4 font-bold text-babs-brown outline-none transition-all"
+                                    className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-12 font-bold text-babs-brown outline-none transition-all"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-babs-orange transition-colors focus:outline-none p-1"
+                                    title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            <div className="flex justify-end pt-2">
+                                <button 
+                                    type="button" 
+                                    onClick={handleResetPassword} 
+                                    className="text-[10px] text-babs-orange font-bold uppercase tracking-widest hover:underline"
+                                >
+                                    Mot de passe oublié ?
+                                </button>
                             </div>
                         </div>
 

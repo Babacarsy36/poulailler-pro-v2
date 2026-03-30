@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { Logo } from "./Logo";
-import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, LogOut } from "lucide-react";
+import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "../AuthContext";
 
 export function Layout() {
@@ -18,6 +18,7 @@ export function Layout() {
     { name: "PRODUCTION", href: "/eggs", icon: Egg },
     { name: "ALIMENTATION", href: "/feed", icon: ShoppingCart },
     { name: "SANTÉ", href: "/health", icon: Heart },
+    { name: "FINANCES", href: "/finances", icon: Wallet },
   ];
 
   const handleSwitch = () => {

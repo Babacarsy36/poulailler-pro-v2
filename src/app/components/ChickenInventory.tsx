@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Edit, Bird, Calendar, Hash, Palette } from "lucide-react";
+import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 
@@ -8,7 +8,9 @@ interface Chicken {
   name: string;
   breed: string;
   age: number;
-  color: string;
+  count: number;
+  femaleCount?: number;
+  maleCount?: number;
   status: "active" | "malade" | "retraite";
 }
 
@@ -21,19 +23,34 @@ export function ChickenInventory() {
     name: "",
     breed: poultryBreed || "",
     age: "",
-    color: "",
+    count: "1",
+    femaleCount: "0",
+    maleCount: "0",
     status: "active" as "active" | "malade" | "retraite",
   });
 
+  const [simFemales, setSimFemales] = useState("10");
+
   const isCaille = poultryType === 'caille';
   const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
+  const bgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
   const iconBg = isCaille ? "bg-babs-emerald text-white" : "bg-babs-orange text-white";
   const btnBg = isCaille ? "bg-babs-emerald hover:bg-emerald-600" : "bg-babs-orange hover:bg-orange-600";
+
+  // Mating ratio calculation
+  const matingRatio = isCaille ? 1/3 : 1/10; // Caille 1:3, Chicken 1:10
+  const recommendedMales = Math.ceil(Number(simFemales) * matingRatio);
 
   useEffect(() => {
     const saved = localStorage.getItem("chickens");
     if (saved) {
-      setChickens(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      // Ensure old entries have a count
+      const migrated = parsed.map((c: any) => ({
+        ...c,
+        count: c.count ? parseInt(c.count) : 1
+      }));
+      setChickens(migrated);
     }
   }, [syncTrigger]);
 
@@ -44,9 +61,22 @@ export function ChickenInventory() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const countVal = Number(formData.count);
+    const femVal = Number(formData.femaleCount);
+    const maleVal = Number(formData.maleCount);
+
+    const actualCount = (femVal > 0 || maleVal > 0) ? femVal + maleVal : countVal;
+
     if (editingChicken) {
       const updated = chickens.map((c) =>
-        c.id === editingChicken.id ? { ...c, ...formData, age: Number(formData.age) } : c
+        c.id === editingChicken.id ? { 
+          ...c, 
+          ...formData, 
+          age: Number(formData.age), 
+          count: actualCount,
+          femaleCount: femVal,
+          maleCount: maleVal
+        } : c
       );
       saveChickens(updated);
       setEditingChicken(null);
@@ -55,10 +85,13 @@ export function ChickenInventory() {
         id: Date.now().toString(),
         ...formData,
         age: Number(formData.age),
+        count: actualCount,
+        femaleCount: femVal,
+        maleCount: maleVal
       };
       saveChickens([...chickens, newChicken]);
     }
-    setFormData({ name: "", breed: poultryBreed || "", age: "", color: "", status: "active" });
+    setFormData({ name: "", breed: poultryBreed || "", age: "", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
     setIsAddOpen(false);
   };
 
@@ -69,23 +102,62 @@ export function ChickenInventory() {
           <h2 className="text-4xl font-black text-babs-brown tracking-tight">
             Inventaire {isCaille ? "Cailles" : "Poulets"}
           </h2>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Gestion du Cheptel</p>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Gestion par Lots & Sujets</p>
         </div>
         <button 
-          onClick={() => setIsAddOpen(true)}
+          onClick={() => {
+            setEditingChicken(null);
+            setFormData({ name: "", breed: poultryBreed || "", age: "", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
+            setIsAddOpen(true);
+          }}
           className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold`}
         >
           <Plus className="w-5 h-5" />
-          Ajouter {isCaille ? "une caille" : "une poule"}
+          Ajouter un Lot
         </button>
+      </div>
+
+      {/* Simulator Card */}
+      <div className={`rounded-[2.5rem] p-8 shadow-premium border ${bgLight} border-transparent flex flex-col md:flex-row items-center gap-8 relative overflow-hidden`}>
+          <div className="flex items-center gap-4">
+            <div className={`p-4 rounded-2xl ${iconBg} shadow-lg shadow-orange-100`}>
+              <Users className="w-8 h-8" />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest font-black text-babs-brown/70">Calculateur de Fertilité</p>
+              <h3 className="text-2xl font-black text-babs-brown">Ratio de Reproduction</h3>
+            </div>
+          </div>
+          
+          <div className="flex-1 w-full bg-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center gap-6 justify-between border border-white/40">
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nombre de femelles :</label>
+                 <input 
+                   type="number" 
+                   value={simFemales} 
+                   onChange={e => setSimFemales(e.target.value)}
+                   className={`w-24 bg-gray-50 border-none rounded-2xl p-3 font-black ${accentColor} text-center focus:ring-2 focus:ring-orange-200 outline-none`}
+                 />
+              </div>
+              <div className="flex items-center gap-3">
+                 <div className="text-right">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Idéalement, il vous faut</p>
+                    <p className={`text-3xl font-black ${accentColor}`}>{recommendedMales} Mâles</p>
+                 </div>
+                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <Bird className="w-6 h-6" />
+                 </div>
+              </div>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {chickens.map((chicken) => (
           <div key={chicken.id} className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden group hover:border-orange-100 transition-colors">
-            <div className="flex items-start justify-between mb-6">
-              <div className={`p-3 rounded-2xl ${iconBg} shadow-lg shadow-orange-100`}>
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-3 rounded-2xl ${iconBg} shadow-lg shadow-orange-100 flex items-center gap-2`}>
                 <Bird className="w-6 h-6" />
+                <span className="font-black text-lg">x{chicken.count}</span>
               </div>
               <span className={`text-[10px] font-black px-3 py-1 rounded-full ${
                 chicken.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
@@ -106,16 +178,30 @@ export function ChickenInventory() {
                   <span className="text-xs font-bold text-gray-500">{chicken.age} mois</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-gray-300" />
-                  <span className="text-xs font-bold text-gray-500">{chicken.color}</span>
+                  <Activity className="w-4 h-4 text-gray-300" />
+                  <span className="text-xs font-bold text-gray-500">Lot actif</span>
                 </div>
               </div>
+
+              {(chicken.maleCount! > 0 || chicken.femaleCount! > 0) && (
+                <div className="flex items-center gap-2 pt-2 text-xs font-bold text-gray-400 bg-gray-50 p-2 rounded-xl">
+                   <span>♀️ {chicken.femaleCount} Poules</span>
+                   <span className="text-gray-300">|</span>
+                   <span>♂️ {chicken.maleCount} Coqs</span>
+                </div>
+              )}
 
               <div className="flex gap-2 pt-4">
                 <button 
                   onClick={() => {
                     setEditingChicken(chicken);
-                    setFormData({ ...chicken, age: chicken.age.toString() });
+                    setFormData({ 
+                      ...chicken, 
+                      age: chicken.age.toString(), 
+                      count: chicken.count.toString(),
+                      femaleCount: (chicken.femaleCount || "0").toString(),
+                      maleCount: (chicken.maleCount || "0").toString(),
+                    });
                     setIsAddOpen(true);
                   }}
                   className="flex-1 bg-gray-50 hover:bg-gray-100 p-3 rounded-xl text-babs-brown font-bold text-xs transition-colors flex items-center justify-center gap-2"
@@ -138,15 +224,16 @@ export function ChickenInventory() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
             <h3 className="text-3xl font-black text-babs-brown mb-8">
-              {editingChicken ? "Modifier" : "Nouvel enregistrement"}
+              {editingChicken ? "Modifier le lot" : "Nouvel enregistrement en Lot"}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nom / Identifiant</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nom du Lot / Identifiant</label>
                 <input 
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: Arrivage Goliath Janvier..."
                   required
                 />
               </div>
@@ -155,47 +242,78 @@ export function ChickenInventory() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Âge (mois)</label>
                   <input 
                     type="number"
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
                     value={formData.age}
                     onChange={e => setFormData({ ...formData, age: e.target.value })}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Couleur</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quantité Totale (Têtes)</label>
                   <input 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
-                    value={formData.color}
-                    onChange={e => setFormData({ ...formData, color: e.target.value })}
+                    type="number"
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
+                    value={formData.count}
+                    onChange={e => setFormData({ ...formData, count: e.target.value })}
                     required
+                    min="1"
                   />
                 </div>
               </div>
+
+              <div className="bg-gray-50 p-5 rounded-[2rem] space-y-4">
+                 <div className="flex items-center gap-2 mb-2">
+                    <FileWarning className="w-4 h-4 text-orange-400" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-babs-brown/70">Reproduction (Optionnel)</p>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Femelles (Poules)</label>
+                     <input 
+                       type="number"
+                       className="w-full bg-white border-none rounded-xl p-3 font-bold text-babs-brown outline-none"
+                       value={formData.femaleCount}
+                       onChange={e => setFormData({ ...formData, femaleCount: e.target.value })}
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Mâles (Coqs)</label>
+                     <input 
+                       type="number"
+                       className="w-full bg-white border-none rounded-xl p-3 font-bold text-babs-brown outline-none"
+                       value={formData.maleCount}
+                       onChange={e => setFormData({ ...formData, maleCount: e.target.value })}
+                     />
+                   </div>
+                 </div>
+                 <p className="text-[9px] text-gray-400 font-bold leading-relaxed italic">Si vous remplissez ces champs, la quantité totale sera ignorée et remplacée par la somme des mâles et femelles.</p>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Statut de santé</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Statut de santé du lot</label>
                 <select 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
+                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none focus:ring-2 focus:ring-orange-200 outline-none"
                   value={formData.status}
                   onChange={e => setFormData({ ...formData, status: e.target.value as any })}
                 >
                   <option value="active">En pleine forme</option>
-                  <option value="malade">Soins requis</option>
-                  <option value="retraite">Retraité</option>
+                  <option value="malade">Soins requis / Isolement</option>
+                  <option value="retraite">Retraité / Abattu</option>
                 </select>
               </div>
               <div className="flex gap-4 pt-4">
                 <button 
                   type="button"
                   onClick={() => setIsAddOpen(false)}
-                  className="flex-1 p-4 rounded-2xl font-black text-gray-400 hover:bg-gray-50 transition-colors"
+                  className="flex-1 p-4 rounded-2xl font-black text-gray-400 hover:bg-gray-50 transition-colors text-sm"
                 >
                   Annuler
                 </button>
                 <button 
                   type="submit"
-                  className={`flex-1 ${btnBg} text-white p-4 rounded-2xl font-black shadow-lg shadow-orange-100`}
+                  className={`flex-1 ${btnBg} text-white p-4 rounded-2xl font-black shadow-lg shadow-orange-100 text-sm`}
                 >
-                  {editingChicken ? "Mettre à jour" : "Confirmer"}
+                  {editingChicken ? "Mettre à jour le lot" : "Confirmer l'ajout"}
                 </button>
               </div>
             </form>

@@ -9,6 +9,8 @@ export function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
     totalChickens: 0,
+    totalPoulet: 0,
+    totalCaille: 0,
     eggsToday: 0,
     layingRate: 0,
     feedRemaining: 0,
@@ -29,6 +31,12 @@ export function Dashboard() {
 
     // Total should sum the 'count' field if it exists (old format) or count 1 per entry (new format)
     const total = chickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
+    
+    const cailleChickens = chickens.filter((c: any) => c.breed?.toLowerCase().includes('caille') || c.type === 'caille');
+    const pouletChickens = chickens.filter((c: any) => !c.breed?.toLowerCase().includes('caille') && c.type !== 'caille');
+
+    const totalCaille = cailleChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
+    const totalPoulet = pouletChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
     
     const breeds = chickens.map((c: any) => c.breed || poultryBreed).filter(Boolean);
     const breakdown = [...new Set(breeds)]
@@ -54,6 +62,8 @@ export function Dashboard() {
 
     setStats({
       totalChickens: total,
+      totalPoulet: totalPoulet,
+      totalCaille: totalCaille,
       eggsToday: eggsOnDate,
       layingRate: parseFloat(layingRate),
       // Feed is always current total stock
@@ -107,12 +117,18 @@ export function Dashboard() {
           <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg opacity-80 group-hover:opacity-100`}>
             <Bird className="w-8 h-8" />
           </div>
-          <div className="mt-12 space-y-2">
+          <div className="mt-12 space-y-2 pb-2">
             <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Effectif Total</p>
             <p className="text-5xl font-black text-babs-brown">{stats.totalChickens}</p>
-            <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2 line-clamp-1">
-              {stats.breakdown}
-            </p>
+            
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <span className="bg-orange-50 text-orange-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg border border-orange-100/50 shadow-sm">
+                🐔 {stats.totalPoulet}
+              </span>
+              <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg border border-emerald-100/50 shadow-sm">
+                🐦 {stats.totalCaille}
+              </span>
+            </div>
           </div>
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${borderHighlight} border-l-4`}></div>
         </button>
@@ -125,10 +141,10 @@ export function Dashboard() {
             <Egg className="w-8 h-8" />
           </div>
           <div className="mt-12 space-y-2">
-            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Taux de Ponte</p>
+            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Taux Global Ajusté</p>
             <p className="text-5xl font-black text-babs-brown">{stats.layingRate}%</p>
-            <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
-              {stats.eggsToday} récoltés le {new Date(selectedDate).toLocaleDateString('fr-FR')}
+            <p className="bg-blue-50/50 text-blue-800 text-[10px] font-black px-2 py-1 mt-2 rounded-lg border border-blue-100/50 mx-auto w-fit shadow-sm">
+              🥚 {stats.eggsToday} récoltés auj.
             </p>
           </div>
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${borderHighlight} border-l-4 opacity-40`}></div>
