@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning } from "lucide-react";
+import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning, ShoppingCart } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 
 interface Chicken {
   id: string;
   name: string;
+  poultryType: "caille" | "poulet";
   breed: string;
   age: number;
   count: number;
@@ -38,8 +39,36 @@ export function ChickenInventory() {
   const btnBg = isCaille ? "bg-babs-emerald hover:bg-emerald-600" : "bg-babs-orange hover:bg-orange-600";
 
   // Mating ratio calculation
-  const matingRatio = isCaille ? 1/3 : 1/10; // Caille 1:3, Chicken 1:10
+  const matingRatio = 1/4; // Universal 1:4 for maximum fertility as requested
   const recommendedMales = Math.ceil(Number(simFemales) * matingRatio);
+
+  const getRecommendedFeed = (ageMonths: string, breed: string, type: string) => {
+    const ageDays = (parseFloat(ageMonths) || 0) * 30;
+    if (ageDays <= 0) return "Âge non défini";
+
+    if (type === 'caille') {
+       if (ageDays <= 14) return "Démarrage Cailles (Très riche)";
+       if (ageDays <= 42) return "Croissance Cailles";
+       return "Ponte / Engraissement Cailles";
+    }
+
+    if (breed.toLowerCase().includes('pondeuse')) {
+       if (ageDays <= 28) return "Démarrage Pondeuses";
+       if (ageDays <= 126) return "Poulette (Croissance)";
+       return "Aliment Ponte (Riche en Calcium)";
+    }
+
+    if (breed.toLowerCase().includes('goliath') || breed.toLowerCase().includes('brahma') || breed.toLowerCase().includes('cochin')) {
+       if (ageDays <= 28) return "Démarrage Chair (Lourdes)";
+       if (ageDays <= 60) return "Croissance Chair (Lourdes)";
+       return "Finition Chair (Énergie élevée)";
+    }
+
+    // Default Chair
+    if (ageDays <= 21) return "Démarrage Chair";
+    if (ageDays <= 35) return "Croissance Chair";
+    return "Finition Chair";
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("chickens");
@@ -48,11 +77,12 @@ export function ChickenInventory() {
       // Ensure old entries have a count
       const migrated = parsed.map((c: any) => ({
         ...c,
+        poultryType: c.poultryType || (c.breed?.toLowerCase().includes("caille") ? "caille" : (poultryType || "poulet")),
         count: c.count ? parseInt(c.count) : 1
       }));
       setChickens(migrated);
     }
-  }, [syncTrigger]);
+  }, [syncTrigger, poultryType]);
 
   const saveChickens = (newChickens: Chicken[]) => {
     setChickens(newChickens);
@@ -72,6 +102,7 @@ export function ChickenInventory() {
         c.id === editingChicken.id ? { 
           ...c, 
           ...formData, 
+          poultryType: poultryType || c.poultryType || "poulet",
           age: Number(formData.age), 
           count: actualCount,
           femaleCount: femVal,
@@ -84,6 +115,7 @@ export function ChickenInventory() {
       const newChicken: Chicken = {
         id: Date.now().toString(),
         ...formData,
+        poultryType: (poultryType || "poulet").toLowerCase() as "poulet" | "caille",
         age: Number(formData.age),
         count: actualCount,
         femaleCount: femVal,
@@ -129,14 +161,14 @@ export function ChickenInventory() {
             </div>
           </div>
           
-          <div className="flex-1 w-full bg-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center gap-6 justify-between border border-white/40">
+          <div className="flex-1 w-full bg-card rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center gap-6 justify-between border border-white/10 dark:border-white/5">
               <div className="flex items-center gap-4 w-full md:w-auto">
-                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nombre de femelles :</label>
+                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre de femelles :</label>
                  <input 
                    type="number" 
                    value={simFemales} 
                    onChange={e => setSimFemales(e.target.value)}
-                   className={`w-24 bg-gray-50 border-none rounded-2xl p-3 font-black ${accentColor} text-center focus:ring-2 focus:ring-orange-200 outline-none`}
+                   className={`w-24 bg-gray-100 dark:bg-gray-800 border-none rounded-2xl p-3 font-black ${accentColor} text-center focus:ring-2 focus:ring-orange-200 outline-none`}
                  />
               </div>
               <div className="flex items-center gap-3">
@@ -153,7 +185,7 @@ export function ChickenInventory() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {chickens.map((chicken) => (
-          <div key={chicken.id} className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden group hover:border-orange-100 transition-colors">
+          <div key={chicken.id} className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 dark:border-white/5 relative overflow-hidden group hover:border-orange-100 transition-colors">
             <div className="flex items-start justify-between mb-4">
               <div className={`p-3 rounded-2xl ${iconBg} shadow-lg shadow-orange-100 flex items-center gap-2`}>
                 <Bird className="w-6 h-6" />
@@ -221,8 +253,8 @@ export function ChickenInventory() {
       </div>
 
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-card rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh] border border-white/10">
             <h3 className="text-3xl font-black text-babs-brown mb-8">
               {editingChicken ? "Modifier le lot" : "Nouvel enregistrement en Lot"}
             </h3>
@@ -242,6 +274,7 @@ export function ChickenInventory() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Âge (mois)</label>
                   <input 
                     type="number"
+                    step="0.1"
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
                     value={formData.age}
                     onChange={e => setFormData({ ...formData, age: e.target.value })}
@@ -260,6 +293,16 @@ export function ChickenInventory() {
                   />
                 </div>
               </div>
+
+              {formData.age && (
+                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-3 animate-in slide-in-from-left-2">
+                  <ShoppingCart className="w-5 h-5 text-blue-500" />
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-400">Aliment Recommandé</p>
+                    <p className="text-sm font-black text-blue-700">{getRecommendedFeed(formData.age, formData.breed || poultryBreed || "", isCaille ? "caille" : "poulet")}</p>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gray-50 p-5 rounded-[2rem] space-y-4">
                  <div className="flex items-center gap-2 mb-2">

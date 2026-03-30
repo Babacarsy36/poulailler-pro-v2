@@ -13,6 +13,9 @@ export function Dashboard() {
     totalCaille: 0,
     eggsToday: 0,
     layingRate: 0,
+    activeLayers: 0,
+    layingRateLabel: "Taux de ponte",
+    layingRateHint: "",
     feedRemaining: 0,
     vaccinations: 0,
     breakdown: ""
@@ -30,13 +33,14 @@ export function Dashboard() {
     const health = JSON.parse(localStorage.getItem("health") || "[]");
 
     // Total should sum the 'count' field if it exists (old format) or count 1 per entry (new format)
-    const total = chickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
+    let total = chickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
     
-    const cailleChickens = chickens.filter((c: any) => c.breed?.toLowerCase().includes('caille') || c.type === 'caille');
-    const pouletChickens = chickens.filter((c: any) => !c.breed?.toLowerCase().includes('caille') && c.type !== 'caille');
+    const cailleChickens = chickens.filter((c: any) => c.poultryType?.toLowerCase() === 'caille');
+    const pouletChickens = chickens.filter((c: any) => c.poultryType?.toLowerCase() === 'poulet' || !c.poultryType);
 
     const totalCaille = cailleChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
     const totalPoulet = pouletChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
+    total = totalPoulet + totalCaille;
     
     const breeds = chickens.map((c: any) => c.breed || poultryBreed).filter(Boolean);
     const breakdown = [...new Set(breeds)]
@@ -48,13 +52,13 @@ export function Dashboard() {
       .filter((e: any) => e.date === selectedDate)
       .reduce((acc: number, e: any) => acc + parseInt(e.quantity || 0), 0);
 
-    const activeLayers = chickens.filter((c: any) => c.status === 'active').length;
-    // If using 'count' in old records, we might need a better activeLayers count, but if new format is 1-per-bird, this works.
-    // For backward compatibility:
-    const totalActiveLayers = chickens
-      .filter((c: any) => c.status === 'active')
-      .reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
-    
+    const activeLots = chickens.filter((c: any) => c.status === 'active');
+    const hasDetailedFemaleCounts = activeLots.some((c: any) => Number(c.femaleCount || 0) > 0);
+    const totalActiveLayers = activeLots.reduce((acc: number, c: any) => {
+      const femaleCount = Number(c.femaleCount || 0);
+      if (femaleCount > 0) return acc + femaleCount;
+      return acc + (parseInt(c.count) || 1);
+    }, 0);
     const layingRate = totalActiveLayers > 0 ? ((eggsOnDate / totalActiveLayers) * 100).toFixed(1) : "0";
 
     // Health on date
@@ -66,6 +70,11 @@ export function Dashboard() {
       totalCaille: totalCaille,
       eggsToday: eggsOnDate,
       layingRate: parseFloat(layingRate),
+      activeLayers: totalActiveLayers,
+      layingRateLabel: hasDetailedFemaleCounts ? "Taux de ponte" : "Taux de ponte estimé",
+      layingRateHint: hasDetailedFemaleCounts
+        ? `${totalActiveLayers} femelles actives prises en compte`
+        : `${totalActiveLayers} sujets actifs pris en compte`,
       // Feed is always current total stock
       feedRemaining: feed.reduce((acc: number, f: any) => acc + (f.type === 'achat' ? parseFloat(f.quantity || 0) : -parseFloat(f.quantity || 0)), 0),
       vaccinations: healthOnDate,
@@ -75,24 +84,12 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="space-y-1">
-        <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">
-          Babs Farmer Pro
-        </h2>
-        <p className="text-babs-brown/60 font-medium uppercase tracking-widest text-[10px]">
-          Pilotage d'Excellence
-        </p>
-      </div>
+
 
       {/* Date Widget (Clickable) */}
-      <div className="relative group max-w-sm">
-        <input 
-          type="date"
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-        />
-        <div className="bg-white rounded-[2rem] p-6 shadow-premium flex items-center gap-4 border border-gray-50 group-hover:border-orange-200 transition-colors">
+      <div className="relative group max-w-xs transition-transform active:scale-95">
+        <label htmlFor="dashboard-date" className="cursor-pointer block">
+        <div className="bg-card rounded-[2rem] p-6 shadow-premium flex items-center gap-4 border border-gray-50 dark:border-white/10 group-hover:border-orange-200 transition-colors">
           <div className={`p-3 ${iconBg} rounded-2xl shadow-lg`}>
             <Calendar className="w-8 h-8" />
           </div>
@@ -107,12 +104,26 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+        </label>
+        <input 
+          id="dashboard-date"
+          type="date"
+          className="absolute opacity-0 pointer-events-none"
+          style={{ width: 1, height: 1 }}
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
+        {/* Trigger click on the label works, but to be sure for all browsers: */}
+        <button 
+          className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+          onClick={() => (document.getElementById('dashboard-date') as HTMLInputElement)?.showPicker?.()}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <button 
           onClick={() => navigate("/inventory")}
-          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+          className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 dark:border-white/10 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
         >
           <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg opacity-80 group-hover:opacity-100`}>
             <Bird className="w-8 h-8" />
@@ -135,16 +146,19 @@ export function Dashboard() {
 
         <button 
           onClick={() => navigate("/eggs")}
-          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+          className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 dark:border-white/10 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
         >
           <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg`}>
             <Egg className="w-8 h-8" />
           </div>
           <div className="mt-12 space-y-2">
-            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Taux Global Ajusté</p>
+            <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">{stats.layingRateLabel}</p>
             <p className="text-5xl font-black text-babs-brown">{stats.layingRate}%</p>
             <p className="bg-blue-50/50 text-blue-800 text-[10px] font-black px-2 py-1 mt-2 rounded-lg border border-blue-100/50 mx-auto w-fit shadow-sm">
               🥚 {stats.eggsToday} récoltés auj.
+            </p>
+            <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
+              {stats.layingRateHint}
             </p>
           </div>
           <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${borderHighlight} border-l-4 opacity-40`}></div>
@@ -152,7 +166,7 @@ export function Dashboard() {
 
         <button 
           onClick={() => navigate("/feed")}
-          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-100 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+          className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-100 dark:border-white/10 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
         >
           <div className="absolute top-6 right-6 p-3 bg-blue-500 rounded-2xl shadow-lg text-white">
             <ShoppingCart className="w-8 h-8" />
@@ -168,7 +182,7 @@ export function Dashboard() {
 
         <button 
           onClick={() => navigate("/health")}
-          className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-100 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
+          className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-100 dark:border-white/10 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95"
         >
           <div className="absolute top-6 right-6 p-3 bg-emerald-500 rounded-2xl shadow-lg text-white">
             <Heart className="w-8 h-8" />
@@ -183,7 +197,7 @@ export function Dashboard() {
         </button>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 mb-10">
+      <div className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 dark:border-white/10 mb-10">
         <div className="flex items-center justify-between mb-8">
           <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Guide de Gestion</h3>
           <ChevronRight className={`w-6 h-6 ${isCaille ? 'text-emerald-400' : 'text-orange-400'}`} />
@@ -191,9 +205,9 @@ export function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button 
             onClick={() => navigate("/eggs")}
-            className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50/50 border border-transparent hover:border-orange-100 hover:bg-white transition-all text-left group"
+            className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50/50 dark:bg-white/5 border border-transparent hover:border-orange-100 hover:bg-card transition-all text-left group"
           >
-            <div className={`w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:${iconBg} transition-colors`}>
+            <div className={`w-14 h-14 rounded-2xl bg-card shadow-sm flex items-center justify-center group-hover:${iconBg} transition-colors`}>
               <Egg className={`w-7 h-7 ${accentColor} group-hover:text-white`} />
             </div>
             <div>
@@ -203,9 +217,9 @@ export function Dashboard() {
           </button>
           <button 
             onClick={() => navigate("/feed")}
-            className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50/50 border border-transparent hover:border-blue-100 hover:bg-white transition-all text-left group"
+            className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50/50 dark:bg-white/5 border border-transparent hover:border-blue-100 hover:bg-card transition-all text-left group"
           >
-            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+            <div className="w-14 h-14 rounded-2xl bg-card shadow-sm flex items-center justify-center group-hover:bg-blue-500 transition-colors">
               <ShoppingCart className="w-7 h-7 text-blue-500 group-hover:text-white" />
             </div>
             <div>
