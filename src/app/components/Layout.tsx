@@ -33,6 +33,7 @@ export function Layout() {
         { id: 'brahma', label: 'Brahma' },
         { id: 'cochin', label: 'Cochin' },
         { id: 'pondeuse', label: 'Pondeuse' },
+        { id: 'chair', label: 'Poulet de chair' },
       ]
     },
     { 

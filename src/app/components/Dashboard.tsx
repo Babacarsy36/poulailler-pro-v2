@@ -32,27 +32,50 @@ export function Dashboard() {
     const feed = JSON.parse(localStorage.getItem("feed") || "[]");
     const health = JSON.parse(localStorage.getItem("health") || "[]");
 
-    // Total should sum the 'count' field if it exists (old format) or count 1 per entry (new format)
-    let total = chickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
-    
-    const cailleChickens = chickens.filter((c: any) => c.poultryType?.toLowerCase() === 'caille');
-    const pouletChickens = chickens.filter((c: any) => c.poultryType?.toLowerCase() === 'poulet' || !c.poultryType);
+    // Apply strict filtering based on selection
+    const filteredChickens = chickens.filter((c: any) => {
+      const typeMatch = !poultryType || c.poultryType?.toLowerCase() === poultryType.toLowerCase() || (poultryType === 'poulet' && !c.poultryType);
+      const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+      return typeMatch && breedMatch;
+    });
 
-    const totalCaille = cailleChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
-    const totalPoulet = pouletChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
-    total = totalPoulet + totalCaille;
+    const filteredEggs = eggs.filter((e: any) => {
+      // Default existing records to current selection if missing fields to avoid data loss
+      const typeMatch = !e.poultryType || e.poultryType === poultryType;
+      const breedMatch = !e.poultryBreed || e.poultryBreed === poultryBreed;
+      return typeMatch && breedMatch;
+    });
+
+    const filteredFeed = feed.filter((f: any) => {
+      const typeMatch = !f.poultryType || f.poultryType === poultryType;
+      const breedMatch = !f.poultryBreed || f.poultryBreed === poultryBreed;
+      return typeMatch && breedMatch;
+    });
+
+    const filteredHealth = health.filter((h: any) => {
+      const typeMatch = !h.poultryType || h.poultryType === poultryType;
+      const breedMatch = !h.poultryBreed || h.poultryBreed === poultryBreed;
+      return typeMatch && breedMatch;
+    });
+
+    // Stats based on filtered data
+    let total = filteredChickens.reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
     
-    const breeds = chickens.map((c: any) => c.breed || poultryBreed).filter(Boolean);
+    // Breaking down the filtered set (if 'Poulets' is selected but no breed, show counts of breeds)
+    const cailleCount = filteredChickens.filter((c: any) => c.poultryType?.toLowerCase() === 'caille').reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
+    const pouletCount = filteredChickens.filter((c: any) => c.poultryType?.toLowerCase() === 'poulet' || !c.poultryType).reduce((acc: number, c: any) => acc + (parseInt(c.count) || 1), 0);
+
+    const breeds = filteredChickens.map((c: any) => c.breed || poultryBreed).filter(Boolean);
     const breakdown = [...new Set(breeds)]
       .slice(0, 3)
       .join(" • ");
 
-    // Filter by selectedDate for daily production
-    const eggsOnDate = eggs
+    // Daily production on filtered eggs
+    const eggsOnDate = filteredEggs
       .filter((e: any) => e.date === selectedDate)
       .reduce((acc: number, e: any) => acc + parseInt(e.quantity || 0), 0);
 
-    const activeLots = chickens.filter((c: any) => c.status === 'active');
+    const activeLots = filteredChickens.filter((c: any) => c.status === 'active');
     const hasDetailedFemaleCounts = activeLots.some((c: any) => Number(c.femaleCount || 0) > 0);
     const totalActiveLayers = activeLots.reduce((acc: number, c: any) => {
       const femaleCount = Number(c.femaleCount || 0);
@@ -61,13 +84,13 @@ export function Dashboard() {
     }, 0);
     const layingRate = totalActiveLayers > 0 ? ((eggsOnDate / totalActiveLayers) * 100).toFixed(1) : "0";
 
-    // Health on date
-    const healthOnDate = health.filter((h: any) => h.date === selectedDate).length;
+    // Health on date (filtered)
+    const healthOnDate = filteredHealth.filter((h: any) => h.date === selectedDate).length;
 
     setStats({
       totalChickens: total,
-      totalPoulet: totalPoulet,
-      totalCaille: totalCaille,
+      totalPoulet: pouletCount,
+      totalCaille: cailleCount,
       eggsToday: eggsOnDate,
       layingRate: parseFloat(layingRate),
       activeLayers: totalActiveLayers,
@@ -75,10 +98,9 @@ export function Dashboard() {
       layingRateHint: hasDetailedFemaleCounts
         ? `${totalActiveLayers} femelles actives prises en compte`
         : `${totalActiveLayers} sujets actifs pris en compte`,
-      // Feed is always current total stock
-      feedRemaining: feed.reduce((acc: number, f: any) => acc + (f.type === 'achat' ? parseFloat(f.quantity || 0) : -parseFloat(f.quantity || 0)), 0),
+      feedRemaining: filteredFeed.reduce((acc: number, f: any) => acc + (f.type === 'achat' ? parseFloat(f.quantity || 0) : -parseFloat(f.quantity || 0)), 0),
       vaccinations: healthOnDate,
-      breakdown: breakdown || "Aucune race enregistrée"
+      breakdown: breakdown || (poultryBreed ? poultryBreed.toUpperCase() : "Toutes races")
     });
   }, [selectedDate, poultryType, poultryBreed, syncTrigger]);
 

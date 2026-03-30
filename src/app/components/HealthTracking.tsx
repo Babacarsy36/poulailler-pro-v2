@@ -11,6 +11,8 @@ interface HealthRecord {
   title: string;
   target: string;
   status: "Complété" | "En attente";
+  poultryType?: string;
+  poultryBreed?: string;
 }
 
 type ProphylaxisStep = {
@@ -58,7 +60,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
 }
 
 export function HealthTracking() {
-  const { poultryType, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   
@@ -87,6 +89,27 @@ export function HealthTracking() {
     setRecords(saved.length > 0 ? saved : []);
   }, [syncTrigger]);
 
+  useEffect(() => {
+    if (poultryType === "caille") {
+      setSelectedBreed("Caille");
+      return;
+    }
+
+    if (poultryBreed) {
+      const breedLabelMap: Record<string, string> = {
+        goliath: "Goliath",
+        brahma: "Brahma",
+        cochin: "Cochin",
+        pondeuse: "Pondeuse",
+        chair: "Poulet de chair",
+      };
+      setSelectedBreed(breedLabelMap[poultryBreed] || "Poulet de chair");
+      return;
+    }
+
+    setSelectedBreed("Poulet de chair");
+  }, [poultryType, poultryBreed]);
+
   const saveRecords = (newRecords: HealthRecord[]) => {
     setRecords(newRecords);
     SyncService.saveCollection("health", newRecords);
@@ -97,6 +120,8 @@ export function HealthTracking() {
     const newRecord: HealthRecord = {
       id: Date.now().toString(),
       ...formData,
+      poultryType: poultryType || "poulet",
+      poultryBreed: poultryBreed || undefined
     };
     saveRecords([newRecord, ...records]);
     setFormData({
@@ -117,11 +142,19 @@ export function HealthTracking() {
       type: step.type,
       title: step.title,
       target: selectedBreed,
-      status: "Complété"
+      status: "Complété",
+      poultryType: poultryType || "poulet",
+      poultryBreed: poultryBreed || undefined
     };
     saveRecords([newRecord, ...records]);
     toast.success(`${step.title} marqué comme réalisé !`);
   };
+
+  const filteredRecords = records.filter(r => {
+    const typeMatch = !r.poultryType || r.poultryType === poultryType;
+    const breedMatch = !r.poultryBreed || r.poultryBreed === poultryBreed;
+    return typeMatch && breedMatch;
+  });
 
   const [expandedRemedy, setExpandedRemedy] = useState<number | null>(null);
 
@@ -201,8 +234,8 @@ export function HealthTracking() {
                     stepDateObj.setDate(stepDateObj.getDate() + (step.day - 1));
                     const stepDateStr = stepDateObj.toISOString().split("T")[0];
                     const isPast = new Date() > stepDateObj;
-                    // Check if already in records
-                    const isDone = records.some(r => r.date === stepDateStr && r.title === step.title && r.target === selectedBreed);
+                    // Check if already in records (filtered by current breed for accuracy)
+                    const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
 
                     return (
                       <div key={idx} className="relative flex items-start gap-6 group">
@@ -222,7 +255,7 @@ export function HealthTracking() {
                                   <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
                                     <CheckCircle className="w-6 h-6" />
                                   </button>
-                               )}
+                                )}
                                {isDone && <CheckCircle className="w-6 h-6 text-emerald-500" />}
                             </div>
                             <p className="text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
@@ -244,34 +277,34 @@ export function HealthTracking() {
              </div>
              
              <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-               {records.length === 0 ? (
-                  <p className="text-center text-gray-400 font-bold italic py-8">Aucun soin enregistré.</p>
-               ) : (
-                 records.map(record => (
-                   <div key={record.id} className="flex items-center justify-between p-4 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 group">
-                     <div className="flex items-center gap-4">
-                       <div className={`p-3 rounded-xl ${
-                         record.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 
-                         record.type === 'Traitement' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
-                       }`}>
-                         <Heart className="w-5 h-5" />
-                       </div>
-                       <div>
-                         <p className="font-black text-babs-brown text-sm">{record.title}</p>
-                         <p className="text-[10px] font-bold text-gray-400">{record.target} • {new Date(record.date).toLocaleDateString('fr-FR')}</p>
-                       </div>
-                     </div>
-                     <div className="flex items-center gap-3">
-                       <button 
-                         onClick={() => saveRecords(records.filter(r => r.id !== record.id))}
-                         className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
-                       >
-                         <Trash2 className="w-4 h-4" />
-                       </button>
-                     </div>
-                   </div>
-                 ))
-               )}
+                {filteredRecords.length === 0 ? (
+                   <p className="text-center text-gray-400 font-bold italic py-8">Aucun soin enregistré.</p>
+                ) : (
+                  filteredRecords.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => (
+                    <div key={record.id} className="flex items-center justify-between p-4 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 group">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl ${
+                          record.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 
+                          record.type === 'Traitement' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                        }`}>
+                          <Heart className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-black text-babs-brown text-sm">{record.title}</p>
+                          <p className="text-[10px] font-bold text-gray-400">{record.target} • {new Date(record.date).toLocaleDateString('fr-FR')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => saveRecords(records.filter(r => r.id !== record.id))}
+                          className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
              </div>
            </div>
 

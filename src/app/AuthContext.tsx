@@ -5,7 +5,7 @@ import { auth, db } from './firebaseConfig';
 import { SyncService } from './SyncService';
 
 export type PoultryType = 'caille' | 'poulet' | null;
-export type PoultryBreed = 'goliath' | 'brahma' | 'cochin' | 'pondeuse' | null;
+export type PoultryBreed = 'goliath' | 'brahma' | 'cochin' | 'pondeuse' | 'chair' | null;
 
 interface AuthContextType {
     user: User | null;
@@ -13,6 +13,8 @@ interface AuthContextType {
     poultryType: PoultryType;
     poultryBreed: PoultryBreed;
     syncTrigger: number; // Used to tell components to re-read from localStorage
+    isDarkMode: boolean;
+    toggleDarkMode: () => void;
     updatePoultrySelection: (type: PoultryType, breed: PoultryBreed) => void;
     clearSelection: () => void;
     logout: () => Promise<void>;
@@ -26,6 +28,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [poultryType, setPoultryType] = useState<PoultryType>(null);
     const [poultryBreed, setPoultryBreed] = useState<PoultryBreed>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
+    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+
+    // Persist and apply theme
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add("dark");
+            localStorage.setItem("theme", "dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("theme", "light");
+        }
+    }, [isDarkMode]);
+
+    const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
     // Listen for Firebase Auth changes
     useEffect(() => {
@@ -112,6 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             poultryType, 
             poultryBreed, 
             syncTrigger,
+            isDarkMode,
+            toggleDarkMode,
             updatePoultrySelection,
             clearSelection,
             logout

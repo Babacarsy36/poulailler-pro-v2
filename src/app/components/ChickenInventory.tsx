@@ -127,12 +127,18 @@ export function ChickenInventory() {
     setIsAddOpen(false);
   };
 
+  const filteredChickens = chickens.filter((c) => {
+    const typeMatch = c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+    const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+    return typeMatch && breedMatch;
+  });
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-4xl font-black text-babs-brown tracking-tight">
-            Inventaire {isCaille ? "Cailles" : "Poulets"}
+            Inventaire {isCaille ? "Cailles" : (poultryBreed ? (poultryBreed === 'chair' ? 'Poulet de Chair' : poultryBreed.toUpperCase()) : "Poulets")}
           </h2>
           <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Gestion par Lots & Sujets</p>
         </div>
@@ -184,7 +190,7 @@ export function ChickenInventory() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {chickens.map((chicken) => (
+        {filteredChickens.map((chicken) => (
           <div key={chicken.id} className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 dark:border-white/5 relative overflow-hidden group hover:border-orange-100 transition-colors">
             <div className="flex items-start justify-between mb-4">
               <div className={`p-3 rounded-2xl ${iconBg} shadow-lg shadow-orange-100 flex items-center gap-2`}>
@@ -201,7 +207,9 @@ export function ChickenInventory() {
             <div className="space-y-4">
               <div>
                 <h3 className="text-2xl font-black text-babs-brown tracking-tight">{chicken.name}</h3>
-                <p className={`text-xs font-bold ${accentColor} uppercase tracking-wider`}>{chicken.breed || poultryBreed}</p>
+                <p className={`text-xs font-bold ${accentColor} uppercase tracking-wider`}>
+                  {chicken.breed === 'chair' ? 'Poulet de chair' : (chicken.breed || poultryBreed || "Race indéfinie")}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">

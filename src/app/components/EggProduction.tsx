@@ -8,10 +8,12 @@ interface EggRecord {
   date: string;
   quantity: number;
   notes: string;
+  poultryType?: string;
+  poultryBreed?: string;
 }
 
 export function EggProduction() {
-  const { poultryType, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,6 +46,8 @@ export function EggProduction() {
       date: formData.date,
       quantity: Number(formData.quantity),
       notes: formData.notes,
+      poultryType: poultryType || "poulet",
+      poultryBreed: poultryBreed || undefined
     };
     saveRecords([newRecord, ...records]);
     setFormData({
@@ -54,7 +58,13 @@ export function EggProduction() {
     setIsAddOpen(false);
   };
 
-  const totalEggs = records.reduce((sum, r) => sum + r.quantity, 0);
+  const filteredRecords = records.filter(r => {
+    const typeMatch = !r.poultryType || r.poultryType === poultryType;
+    const breedMatch = !r.poultryBreed || r.poultryBreed === poultryBreed;
+    return typeMatch && breedMatch;
+  });
+
+  const totalEggs = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -94,7 +104,7 @@ export function EggProduction() {
         </div>
         
         <div className="space-y-4">
-          {records.map((record) => (
+          {filteredRecords.map((record) => (
             <div key={record.id} className="flex items-center justify-between p-6 rounded-3xl bg-gray-50/50 hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
               <div className="flex items-center gap-6">
                 <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center">
@@ -119,7 +129,7 @@ export function EggProduction() {
             </div>
           ))}
 
-          {records.length === 0 && (
+          {filteredRecords.length === 0 && (
             <div className="py-12 text-center">
               <Egg className="w-12 h-12 text-gray-200 mx-auto mb-4" />
               <p className="text-gray-400 font-bold italic">Aucune donnée de production.</p>

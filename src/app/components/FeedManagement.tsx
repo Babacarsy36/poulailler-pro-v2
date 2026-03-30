@@ -10,6 +10,8 @@ interface FeedEntry {
   quantity: number;
   feedType: string;
   notes: string;
+  poultryType?: string;
+  poultryBreed?: string;
 }
 
 type FeedPhase = {
@@ -50,7 +52,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { poultryType, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,6 +67,21 @@ export function FeedManagement() {
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
+
+  useEffect(() => {
+    if (poultryType === 'caille') {
+      setSelectedBreed('Caille');
+    } else if (poultryBreed) {
+      const breedMap: Record<string, string> = {
+        goliath: 'Goliath',
+        brahma: 'Brahma',
+        cochin: 'Cochin',
+        pondeuse: 'Pondeuse',
+        chair: 'Poulet de chair'
+      };
+      setSelectedBreed(breedMap[poultryBreed] || 'Poulet de chair');
+    }
+  }, [poultryType, poultryBreed]);
 
   const adjustConsumption = (text: string, currentWeather: "normal" | "hot" | "cold") => {
     if (currentWeather === "normal") return text;
@@ -100,6 +117,8 @@ export function FeedManagement() {
       id: Date.now().toString(),
       ...formData,
       quantity: Number(formData.quantity),
+      poultryType: poultryType || "poulet",
+      poultryBreed: poultryBreed || undefined
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setFormData({
@@ -112,7 +131,13 @@ export function FeedManagement() {
     setIsAddOpen(false);
   };
 
-  const totalFeed = entries.reduce((sum, entry) => {
+  const filteredEntries = entries.filter(e => {
+    const typeMatch = !e.poultryType || e.poultryType === poultryType;
+    const breedMatch = !e.poultryBreed || e.poultryBreed === poultryBreed;
+    return typeMatch && breedMatch;
+  });
+
+  const totalFeed = filteredEntries.reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
 
@@ -279,7 +304,7 @@ export function FeedManagement() {
               </div>
               
               <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-[700px]">
-                {entries.map((entry) => (
+                {filteredEntries.map((entry) => (
                   <div key={entry.id} className="flex items-center justify-between p-5 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 shadow-sm hover:shadow-md group">
                     <div className="flex items-center gap-5">
                       <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center transition-transform ${
@@ -312,7 +337,7 @@ export function FeedManagement() {
                   </div>
                 ))}
 
-                {entries.length === 0 && (
+                {filteredEntries.length === 0 && (
                   <div className="py-12 flex flex-col items-center justify-center text-center">
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                        <Package className="w-10 h-10 text-gray-200" />
