@@ -38,9 +38,26 @@ export function ChickenInventory() {
   const iconBg = isCaille ? "bg-babs-emerald text-white" : "bg-babs-orange text-white";
   const btnBg = isCaille ? "bg-babs-emerald hover:bg-emerald-600" : "bg-babs-orange hover:bg-orange-600";
 
+  const filteredChickens = chickens.filter((c) => {
+    const typeMatch = c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+    const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+    return typeMatch && breedMatch;
+  });
+
   // Mating ratio calculation
-  const matingRatio = 1/4; // Universal 1:4 for maximum fertility as requested
+  const matingRatio = 1/4; // 1 coq pour 4 poules (Goliath et Cailles)
   const recommendedMales = Math.ceil(Number(simFemales) * matingRatio);
+
+  const totalFemales = filteredChickens.reduce((sum, c) => sum + (c.femaleCount || 0), 0);
+  const totalMales = filteredChickens.reduce((sum, c) => sum + (c.maleCount || 0), 0);
+  const idealMales = Math.ceil(totalFemales * matingRatio);
+
+  let fertilityStatus: 'ideal' | 'deficit' | 'excess' | 'none' = 'none';
+  if (totalFemales > 0) {
+    if (totalMales === 0 || totalMales < idealMales) fertilityStatus = 'deficit';
+    else if (totalMales > idealMales + 1) fertilityStatus = 'excess';
+    else fertilityStatus = 'ideal';
+  }
 
   const getRecommendedFeed = (ageMonths: string, breed: string, type: string) => {
     const ageDays = (parseFloat(ageMonths) || 0) * 30;
@@ -127,7 +144,7 @@ export function ChickenInventory() {
     setIsAddOpen(false);
   };
 
-  const filteredChickens = chickens.filter((c) => {
+  const filtered = chickens.filter((c) => {
     const typeMatch = c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
     const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
     return typeMatch && breedMatch;
@@ -167,25 +184,59 @@ export function ChickenInventory() {
             </div>
           </div>
           
-          <div className="flex-1 w-full bg-card rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center gap-6 justify-between border border-white/10 dark:border-white/5">
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre de femelles :</label>
-                 <input 
-                   type="number" 
-                   value={simFemales} 
-                   onChange={e => setSimFemales(e.target.value)}
-                   className={`w-24 bg-gray-100 dark:bg-gray-800 border-none rounded-2xl p-3 font-black ${accentColor} text-center focus:ring-2 focus:ring-orange-200 outline-none`}
-                 />
+          <div className="flex-1 w-full space-y-4">
+            <div className="bg-card rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center gap-6 justify-between border border-white/10 dark:border-white/5">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                   <div className="space-y-1">
+                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Simulateur (Femelles)</label>
+                     <input 
+                       type="number" 
+                       value={simFemales} 
+                       onChange={e => setSimFemales(e.target.value)}
+                       className={`w-28 bg-gray-100 dark:bg-gray-800 border-none rounded-2xl p-3 font-black ${accentColor} text-center focus:ring-2 focus:ring-orange-200 outline-none transition-all`}
+                     />
+                   </div>
+                </div>
+                <div className="flex items-center gap-3">
+                   <div className="text-right">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Ratio Idéal (1:4)</p>
+                      <p className={`text-3xl font-black ${accentColor}`}>{recommendedMales} Mâles</p>
+                   </div>
+                   <div className={`w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center shadow-lg shadow-orange-100`}>
+                      <Bird className="w-6 h-6" />
+                   </div>
+                </div>
+            </div>
+
+            {/* Real-time Advisor */}
+            {totalFemales > 0 && (
+              <div className={`p-4 rounded-2xl border flex items-center justify-between animate-in slide-in-from-top-2 duration-500 ${
+                fertilityStatus === 'ideal' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                fertilityStatus === 'deficit' ? 'bg-orange-50 border-orange-100 text-orange-700' :
+                'bg-red-50 border-red-100 text-red-700'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    fertilityStatus === 'ideal' ? 'bg-emerald-500 text-white' :
+                    fertilityStatus === 'deficit' ? 'bg-orange-500 text-white' :
+                    'bg-red-500 text-white'
+                  }`}>
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-70">Statut Réel du Cheptel</p>
+                    <p className="text-xs font-bold leading-tight">
+                      {fertilityStatus === 'ideal' && `Parfait ! Vos ${totalMales} mâles couvrent idéalement vos ${totalFemales} femelles.`}
+                      {fertilityStatus === 'deficit' && `Besoin de ${idealMales - totalMales} mâle(s) supplémentaire(s) pour une fertilité optimale.`}
+                      {fertilityStatus === 'excess' && `Excès de mâles (${totalMales} pour ${totalFemales} femelles). Attention au stress.`}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right hidden sm:block">
+                  <p className="text-[10px] font-black uppercase tracking-widest">{fertilityStatus.toUpperCase()}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                 <div className="text-right">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Idéalement, il vous faut</p>
-                    <p className={`text-3xl font-black ${accentColor}`}>{recommendedMales} Mâles</p>
-                 </div>
-                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                    <Bird className="w-6 h-6" />
-                 </div>
-              </div>
+            )}
           </div>
       </div>
 

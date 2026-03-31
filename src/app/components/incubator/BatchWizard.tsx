@@ -1,19 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Egg, Thermometer, Bell } from 'lucide-react';
 import { IncubationBatch, SPECIES_CONFIG, SpeciesKey, getExpectedHatchDate } from './types';
 
+const generateDefaultName = (species: SpeciesKey, date: string, all: IncubationBatch[]) => {
+  const speciesLabel = SPECIES_CONFIG[species].label;
+  const formattedDate = date ? date.split('-').reverse().join('/') : '';
+  const count = all.filter(b => b.species === species).length + 1;
+  return `${speciesLabel} - ${formattedDate} - Lot ${count}`;
+};
+
 interface Props {
   batch: IncubationBatch | null;
+  allBatches: IncubationBatch[];
   onSave: (b: IncubationBatch) => void;
   onClose: () => void;
 }
 
-export function BatchWizard({ batch, onSave, onClose }: Props) {
+export function BatchWizard({ batch, allBatches, onSave, onClose }: Props) {
   const isEdit = !!batch;
+  const [isManualName, setIsManualName] = useState(isEdit);
   const [tab, setTab] = useState<'info' | 'incubator' | 'notes'>('info');
   const [form, setForm] = useState<IncubationBatch>(batch || {
     id: Date.now().toString(),
-    name: '',
+    name: generateDefaultName('poulet', new Date().toISOString().split('T')[0], allBatches),
     species: 'poulet',
     startDate: new Date().toISOString().split('T')[0],
     totalDays: 21,
@@ -31,6 +40,16 @@ export function BatchWizard({ batch, onSave, onClose }: Props) {
     notes: '',
     lastUpdated: Date.now(),
   });
+
+  // Auto-generate name when species or date changes, unless manually edited
+  useEffect(() => {
+    if (!isEdit && !isManualName) {
+      setForm(prev => ({
+        ...prev,
+        name: generateDefaultName(prev.species as SpeciesKey, prev.startDate, allBatches)
+      }));
+    }
+  }, [form.species, form.startDate, isManualName, isEdit, allBatches]);
 
   const cfg = SPECIES_CONFIG[form.species as SpeciesKey];
 
@@ -133,14 +152,28 @@ export function BatchWizard({ batch, onSave, onClose }: Props) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nom du lot (optionnel)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nom du lot</label>
                 <input
                   type="text"
                   value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  onChange={e => {
+                    setIsManualName(true);
+                    setForm({ ...form, name: e.target.value });
+                  }}
                   placeholder={`Ex: Lot ${cfg.label} Mars...`}
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none"
+                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-blue-100 transition-all"
                 />
+                {!isEdit && (
+                  <button 
+                    onClick={() => {
+                        setIsManualName(false);
+                        setForm(f => ({ ...f, name: generateDefaultName(f.species as SpeciesKey, f.startDate, allBatches) }));
+                    }}
+                    className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline"
+                  >
+                    Réinitialiser au nom automatique
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

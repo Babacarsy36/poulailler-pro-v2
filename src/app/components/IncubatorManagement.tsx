@@ -237,6 +237,7 @@ export function IncubatorManagement() {
       {wizardOpen && (
         <BatchWizard
           batch={editBatch}
+          allBatches={batches}
           onSave={handleSaveBatch}
           onClose={() => { setWizardOpen(false); setEditBatch(null); }}
         />
