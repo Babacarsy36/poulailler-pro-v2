@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Bird, Egg, ShoppingCart, Heart, Calendar, ChevronRight } from "lucide-react";
+import { Bird, Egg, ShoppingCart, Heart, Calendar, ChevronRight, Bell, AlertTriangle, Info } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../AuthContext";
+import { getDaysElapsed, getDayTip } from "./incubator/types";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -18,7 +19,8 @@ export function Dashboard() {
     layingRateHint: "",
     feedRemaining: 0,
     vaccinations: 0,
-    breakdown: ""
+    breakdown: "",
+    upcoming: [] as { id: string, title: string, type: 'hatchery' | 'health', date: string, tip: string, isUrgent: boolean }[]
   });
 
   const isCaille = poultryType === 'caille';
@@ -100,7 +102,34 @@ export function Dashboard() {
         : `${totalActiveLayers} sujets actifs pris en compte`,
       feedRemaining: filteredFeed.reduce((acc: number, f: any) => acc + (f.type === 'achat' ? parseFloat(f.quantity || 0) : -parseFloat(f.quantity || 0)), 0),
       vaccinations: healthOnDate,
-      breakdown: breakdown || (poultryBreed ? poultryBreed.toUpperCase() : "Toutes races")
+      breakdown: breakdown || (poultryBreed ? poultryBreed.toUpperCase() : "Toutes races"),
+      upcoming: (() => {
+        const hatchery = JSON.parse(localStorage.getItem("incubation") || "[]");
+        const ongoing = hatchery.filter((b: any) => b.status === 'ongoing');
+        
+        const tasks = ongoing.map((b: any) => {
+          const elapsed = getDaysElapsed(b.startDate);
+          const day = Math.min(elapsed + 1, b.totalDays);
+          const tip = getDayTip(b.species, day, b.totalDays);
+          const isAlert = tip.match(/[⚠️🔦🐣🚀]/);
+          
+          if (!isAlert) return null;
+          
+          const targetDate = new Date(b.startDate);
+          targetDate.setDate(targetDate.getDate() + (day - 1));
+
+          return {
+             id: b.id,
+             title: b.name || b.species.toUpperCase(),
+             type: 'hatchery' as const,
+             date: targetDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+             tip: tip.replace(/[⚠️🔦🐣🚀🪺🔄🤫🌡️]/g, ''),
+             isUrgent: tip.includes('⚠️') || tip.includes('🐣')
+          };
+        }).filter(Boolean);
+
+        return tasks.slice(0, 3);
+      })() as any[]
     });
   }, [selectedDate, poultryType, poultryBreed, syncTrigger]);
 
@@ -218,6 +247,45 @@ export function Dashboard() {
           </div>
         </button>
       </div>
+
+      {/* Upcoming Section */}
+      {stats.upcoming.length > 0 && (
+        <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="flex items-center gap-2 px-2">
+            <Bell className={`w-5 h-5 ${accentColor} animate-bounce`} />
+            <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Prochainement</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             {stats.upcoming.map((task, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => navigate(task.type === 'hatchery' ? "/incubator" : "/health")}
+                  className={`p-6 rounded-[2rem] bg-card border-2 shadow-premium cursor-pointer hover:scale-[1.02] transition-all relative overflow-hidden ${
+                    task.isUrgent ? 'border-red-100 shadow-red-50' : 'border-blue-50 shadow-blue-50'
+                  }`}
+                >
+                   <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-2xl ${task.isUrgent ? 'bg-red-500' : 'bg-blue-500'} text-white shadow-lg`}>
+                        {task.isUrgent ? <AlertTriangle className="w-5 h-5" /> : <Info className="w-5 h-5" />}
+                      </div>
+                      <div className="min-w-0 pr-4">
+                         <p className={`text-[10px] font-black uppercase tracking-widest ${task.isUrgent ? 'text-red-600' : 'text-blue-600'}`}>
+                           {task.date} — {task.title}
+                         </p>
+                         <p className="text-sm font-black text-babs-brown leading-tight mt-1 line-clamp-2">
+                           {task.tip}
+                         </p>
+                      </div>
+                   </div>
+                   <div className={`absolute bottom-0 right-0 p-3 opacity-10 ${task.isUrgent ? 'text-red-600' : 'text-blue-600'}`}>
+                      <ChevronRight className="w-8 h-8" />
+                   </div>
+                </div>
+             ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 dark:border-white/10 mb-10">
         <div className="flex items-center justify-between mb-8">
