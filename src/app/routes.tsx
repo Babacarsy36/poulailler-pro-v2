@@ -3,9 +3,6 @@ import { Layout } from "./components/Layout";
 import { Dashboard } from "./components/Dashboard";
 import { ChickenInventory } from "./components/ChickenInventory";
 import { EggProduction } from "./components/EggProduction";
-import { FeedManagement } from "./components/FeedManagement";
-import { HealthTracking } from "./components/HealthTracking";
-import { FinanceManagement } from "./components/FinanceManagement";
 import { Login } from "./components/Login";
 import { Signup } from "./components/Signup";
 import { SelectionPage } from "./components/SelectionPage";
@@ -34,6 +31,26 @@ function SelectionGuard() {
   return <Outlet />;
 }
 
+async function loadIncubatorRoute() {
+  const module = await import("./components/IncubatorManagement");
+  return { Component: module.IncubatorManagement };
+}
+
+async function loadFeedRoute() {
+  const module = await import("./components/FeedManagement");
+  return { Component: module.FeedManagement };
+}
+
+async function loadHealthRoute() {
+  const module = await import("./components/HealthTracking");
+  return { Component: module.HealthTracking };
+}
+
+async function loadFinancesRoute() {
+  const module = await import("./components/FinanceManagement");
+  return { Component: module.FinanceManagement };
+}
+
 export const router = createBrowserRouter([
   {
     path: "/login",
@@ -60,9 +77,10 @@ export const router = createBrowserRouter([
               { index: true, Component: Dashboard },
               { path: "inventory", Component: ChickenInventory },
               { path: "eggs", Component: EggProduction },
-              { path: "feed", Component: FeedManagement },
-              { path: "health", Component: HealthTracking },
-              { path: "finances", Component: FinanceManagement },
+              { path: "feed", lazy: loadFeedRoute },
+              { path: "health", lazy: loadHealthRoute },
+              { path: "finances", lazy: loadFinancesRoute },
+              { path: "incubator", lazy: loadIncubatorRoute },
             ],
           },
         ],

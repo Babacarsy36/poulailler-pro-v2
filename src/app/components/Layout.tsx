@@ -18,6 +18,7 @@ export function Layout() {
     { name: "TABLEAU", short: "Board", href: "/", icon: LayoutDashboard },
     { name: "VOLAILLES", short: "Volailles", href: "/inventory", icon: Bird },
     { name: "PRODUCTION", short: "Production", href: "/eggs", icon: Egg },
+    { name: "COUVOIR", short: "Couvoir", href: "/incubator", icon: Egg },
     { name: "ALIMENTATION", short: "Aliment", href: "/feed", icon: ShoppingCart },
     { name: "SANTÉ", short: "Santé", href: "/health", icon: Heart },
     { name: "FINANCES", short: "Finances", href: "/finances", icon: Wallet },

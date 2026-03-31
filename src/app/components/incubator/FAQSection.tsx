@@ -1,9 +1,19 @@
 import { useState } from 'react';
-import { ChevronDown, Globe, FileText, HelpCircle } from 'lucide-react';
+import { ChevronDown, Globe, FileText, HelpCircle, Download } from 'lucide-react';
 import { FAQ_ITEMS } from './types';
+import { toast } from 'sonner';
 
 export function FAQSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  const handleLinkClick = (e: React.MouseEvent, type: 'web' | 'pdf') => {
+    e.preventDefault();
+    if (type === 'web') {
+      toast.info("Le portail d'incubation externe sera bientôt disponible !");
+    } else {
+      toast.info("Le guide PDF officiel est en cours de rédaction ! 🚧");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -15,17 +25,16 @@ export function FAQSection() {
       {/* External links */}
       <div className="space-y-3">
         <a
-          href="https://poultryhatching.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between bg-card rounded-2xl p-5 shadow-premium border border-gray-50 dark:border-white/5 hover:border-blue-200 transition-colors group"
+          href="#"
+          onClick={(e) => handleLinkClick(e, 'web')}
+          className="flex items-center justify-between bg-card rounded-2xl p-5 shadow-premium border border-gray-50 dark:border-white/5 hover:border-blue-200 transition-colors group cursor-pointer"
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
               <Globe className="w-6 h-6" />
             </div>
             <div>
-              <p className="font-black text-babs-brown">Poultry Hatch</p>
+              <p className="font-black text-babs-brown">Portail d'Incubation</p>
               <p className="text-[10px] text-gray-400 font-bold">Informations quotidiennes sur l'élevage et l'éclosion</p>
             </div>
           </div>
@@ -34,18 +43,25 @@ export function FAQSection() {
           </div>
         </a>
 
-        <div className="flex items-center justify-between bg-card rounded-2xl p-5 shadow-premium border border-gray-50 dark:border-white/5">
+        <a
+          href="#"
+          onClick={(e) => handleLinkClick(e, 'pdf')}
+          className="flex items-center justify-between bg-card rounded-2xl p-5 shadow-premium border border-gray-50 dark:border-white/5 hover:border-red-200 transition-colors group cursor-pointer"
+        >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-red-50 rounded-xl text-red-500">
+            <div className="p-3 bg-red-50 rounded-xl text-red-500 group-hover:bg-red-100 transition-colors">
               <FileText className="w-6 h-6" />
             </div>
             <div>
               <p className="font-black text-babs-brown">Guide PDF Incubation</p>
-              <p className="text-[10px] text-gray-400 font-bold">Questions & Réponses pour les aviculteurs</p>
-              <span className="text-[9px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full">PDF</span>
+              <p className="text-[10px] text-gray-400 font-bold mb-1">Questions & Réponses pour les aviculteurs</p>
+              <span className="text-[9px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full mt-1">PDF</span>
             </div>
           </div>
-        </div>
+          <div className="p-2 bg-red-50 rounded-xl text-red-500 group-hover:bg-red-100 transition-colors">
+            <Download className="w-4 h-4" />
+          </div>
+        </a>
       </div>
 
       {/* FAQ Accordion */}

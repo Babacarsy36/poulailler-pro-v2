@@ -22,6 +22,37 @@ export default defineConfig({
 
   build: {
     rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+
+          if (id.includes('/recharts/') || id.includes('/victory-vendor/')) {
+            return 'charts';
+          }
+
+          if (id.includes('/firebase/') || id.includes('/@firebase/')) {
+            return 'firebase';
+          }
+
+          if (
+            id.includes('/@radix-ui/') ||
+            id.includes('/lucide-react/') ||
+            id.includes('/@mui/') ||
+            id.includes('/react-day-picker/') ||
+            id.includes('/sonner/')
+          ) {
+            return 'ui-vendor';
+          }
+
+          if (
+            id.includes('/react-router/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react/')
+          ) {
+            return 'react-vendor';
+          }
+        },
+      },
     },
   },
 })

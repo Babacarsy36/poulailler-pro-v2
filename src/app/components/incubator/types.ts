@@ -1,7 +1,7 @@
 export interface IncubationBatch {
   id: string;
   name: string;
-  species: 'poulet' | 'caille' | 'canard' | 'oie';
+  species: 'poulet' | 'caille' | 'canard' | 'oie' | 'dinde';
   startDate: string;
   totalDays: number;
   incubatorName: string;
@@ -24,6 +24,7 @@ export const SPECIES_CONFIG = {
   caille:  { label: 'Caille', emoji: '🐦', totalDays: 17, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '65-70%' },
   canard:  { label: 'Canard', emoji: '🦆', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '58-62%', humidityHatch: '70-75%' },
   oie:     { label: 'Oie', emoji: '🪿', totalDays: 30, tempC: 37.4, tempF: 99.3, humidity: '55-60%', humidityHatch: '70-75%' },
+  dinde:   { label: 'Dinde', emoji: '🦃', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '70-75%' },
 } as const;
 
 export type SpeciesKey = keyof typeof SPECIES_CONFIG;
@@ -54,6 +55,11 @@ export function getDayTip(species: SpeciesKey, day: number, totalDays: number): 
     tips[14] = "🔦 Deuxième mirage.";
     tips[25] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 70-75%.";
     tips[28] = "🐣 Jour d'éclosion des canetons !";
+  } else if (species === 'dinde') {
+    tips[1] = "Mise en place. Température 37.5°C, humidité 50-55%.";
+    tips[8] = "🔦 Premier mirage recommandé.";
+    tips[25] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 70-75%.";
+    tips[28] = "🦃 Jour d'éclosion des dindonneaux !";
   } else {
     tips[1] = "Mise en place. Température 37.4°C, humidité 55-60%.";
     tips[10] = "🔦 Premier mirage recommandé.";
@@ -88,7 +94,7 @@ export function getHatchRate(fertile: number, total: number): number {
 export const FAQ_ITEMS = [
   {
     q: "Quelle température et humidité pour l'incubation ?",
-    a: "Poulet : 37.7°C, 50-55% d'humidité (65-75% les 3 derniers jours). Caille : 37.5°C, mêmes taux. Canard : 37.5°C, 58-62% (70-75% en fin). Oie : 37.4°C, 55-60% (70-75% en fin)."
+    a: "Poulet : 37.7°C, 50-55% d'humidité (65-75% les 3 derniers jours). Caille : 37.5°C, mêmes taux. Canard : 37.5°C, 58-62% (70-75% en fin). Oie : 37.4°C, 55-60% (70-75% en fin). Dinde : 37.5°C, 50-55% (70-75% en fin)."
   },
   {
     q: "Comment installer les œufs dans l'incubateur ?",
@@ -96,7 +102,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Combien de jours d'incubation par espèce ?",
-    a: "Poulet : 21 jours. Caille : 17 jours. Canard : 28 jours. Oie : 28-30 jours."
+    a: "Poulet : 21 jours. Caille : 17 jours. Canard / Dinde : 28 jours. Oie : 28-30 jours."
   },
   {
     q: "Qu'est-ce que le mirage (Candling) ?",

@@ -1,7 +1,7 @@
 import { db, auth } from "./firebaseConfig";
 import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
 
-const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances"];
+const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation"];
 
 export const SyncService = {
   // Pushes local data to the cloud

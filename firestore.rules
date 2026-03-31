@@ -11,7 +11,7 @@ service cloud.firestore {
     }
 
     function isAllowedCollectionDoc(docId) {
-      return docId in ['chickens', 'eggs', 'feed', 'health', 'finances'];
+      return docId in ['chickens', 'eggs', 'feed', 'health', 'finances', 'incubation'];
     }
 
     function isValidCollectionPayload() {
@@ -30,7 +30,7 @@ service cloud.firestore {
         (
           !('poultryBreed' in request.resource.data) ||
           request.resource.data.poultryBreed == null ||
-          request.resource.data.poultryBreed in ['goliath', 'brahma', 'cochin', 'pondeuse']
+          request.resource.data.poultryBreed in ['goliath', 'brahma', 'cochin', 'pondeuse', 'chair']
         ) &&
         request.resource.data.lastUpdated is int;
     }

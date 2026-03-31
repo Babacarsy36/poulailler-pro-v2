@@ -108,12 +108,19 @@ export function EggProduction() {
             <div key={record.id} className="flex items-center justify-between p-6 rounded-3xl bg-gray-50/50 hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
               <div className="flex items-center gap-6">
                 <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center">
-                  <Egg className={`w-6 h-6 ${accentColor}`} />
+                  {record.poultryType === 'caille' ? (
+                    <span className="text-2xl" title="Œufs de caille">🪺</span>
+                  ) : (
+                    <Egg className="w-6 h-6 text-babs-orange" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-black text-babs-brown text-lg">{record.quantity} œufs</p>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <p className="font-black text-babs-brown text-lg">
+                    {record.quantity} {record.poultryType === 'caille' ? 'œufs de caille' : 'œufs'}
+                  </p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
                     {new Date(record.date).toLocaleDateString("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {record.poultryBreed && <span className="px-1.5 py-0.5 bg-gray-100 rounded-md text-[8px] text-gray-500">{record.poultryBreed}</span>}
                   </p>
                 </div>
               </div>

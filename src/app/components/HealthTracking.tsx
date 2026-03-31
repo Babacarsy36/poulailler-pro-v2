@@ -150,6 +150,12 @@ export function HealthTracking() {
     toast.success(`${step.title} marqué comme réalisé !`);
   };
 
+  const unmarkStepAsDone = (step: ProphylaxisStep, dateStr: string) => {
+    const updatedRecords = records.filter(r => !(r.date === dateStr && r.title === step.title && r.target === selectedBreed));
+    saveRecords(updatedRecords);
+    toast.info(`${step.title} décoché !`);
+  };
+
   const filteredRecords = records.filter(r => {
     const typeMatch = !r.poultryType || r.poultryType === poultryType;
     const breedMatch = !r.poultryBreed || r.poultryBreed === poultryBreed;
@@ -251,12 +257,15 @@ export function HealthTracking() {
                                      <span className={`px-2 py-0.5 rounded-full ${step.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>{step.type}</span>
                                   </p>
                                </div>
-                               {!isDone && (
+                               {!isDone ? (
                                   <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
                                     <CheckCircle className="w-6 h-6" />
                                   </button>
+                                ) : (
+                                  <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
+                                    <CheckCircle className="w-6 h-6" />
+                                  </button>
                                 )}
-                               {isDone && <CheckCircle className="w-6 h-6 text-emerald-500" />}
                             </div>
                             <p className="text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
                          </div>
