@@ -20,6 +20,7 @@ export function Dashboard() {
     feedRemaining: 0,
     vaccinations: 0,
     breakdown: "",
+    feedAutonomy: 0,
     upcoming: [] as { id: string, title: string, type: 'hatchery' | 'health', date: string, tip: string, isUrgent: boolean }[]
   });
 
@@ -27,6 +28,13 @@ export function Dashboard() {
   const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
   const iconBg = isCaille ? "bg-babs-emerald text-white" : "bg-babs-orange text-white";
   const borderHighlight = isCaille ? "border-l-babs-emerald" : "border-l-babs-orange";
+
+  const getDailyRateForBreed = (breed: string) => {
+    if (breed.toLowerCase().includes('caille')) return 0.03; // 30g
+    if (breed.toLowerCase().includes('goliath')) return 0.125; // 125g
+    if (breed.toLowerCase().includes('pondeuse')) return 0.115; // 115g
+    return 0.12; // 120g default
+  };
 
   useEffect(() => {
     const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
@@ -101,6 +109,14 @@ export function Dashboard() {
         ? `${totalActiveLayers} femelles actives prises en compte`
         : `${totalActiveLayers} sujets actifs pris en compte`,
       feedRemaining: filteredFeed.reduce((acc: number, f: any) => acc + (f.type === 'achat' ? parseFloat(f.quantity || 0) : -parseFloat(f.quantity || 0)), 0),
+      feedAutonomy: (() => {
+        const totalKg = filteredFeed.reduce((acc: number, f: any) => acc + (f.type === 'achat' ? parseFloat(f.quantity || 0) : -parseFloat(f.quantity || 0)), 0);
+        const dailyCons = filteredChickens.filter((c: any) => c.status === 'active').reduce((acc: number, c: any) => {
+          const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet');
+          return acc + (getDailyRateForBreed(breed) * (parseInt(c.count) || 1));
+        }, 0);
+        return dailyCons > 0 ? Math.floor(totalKg / dailyCons) : Infinity;
+      })(),
       vaccinations: healthOnDate,
       breakdown: breakdown || (poultryBreed ? poultryBreed.toUpperCase() : "Toutes races"),
       upcoming: (() => {
@@ -225,8 +241,12 @@ export function Dashboard() {
           <div className="mt-12 space-y-2">
             <p className="text-[11px] uppercase tracking-widest font-black text-gray-400">Stock Aliment</p>
             <p className="text-5xl font-black text-babs-brown">{stats.feedRemaining.toFixed(1)}<span className="text-xl ml-1">kg</span></p>
-            <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2 text-red-500">
-              {stats.feedRemaining < 10 ? "⚠️ Réapprovisionner bientôt" : "Stock suffisant"}
+            <p className={`text-[10px] font-black uppercase tracking-wider mt-2 ${
+              (stats as any).feedAutonomy <= 3 ? 'text-red-500 animate-pulse' : 'text-gray-400'
+            }`}>
+              { (stats as any).feedAutonomy === Infinity ? "Lot à définir" : 
+                (stats as any).feedAutonomy <= 0 ? "⚠️ RUPTURE STOCK" :
+                `🔋 Autonomie : ${(stats as any).feedAutonomy} jours` }
             </p>
           </div>
         </button>

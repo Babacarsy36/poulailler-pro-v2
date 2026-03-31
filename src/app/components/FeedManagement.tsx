@@ -54,6 +54,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 export function FeedManagement() {
   const { poultryType, poultryBreed, syncTrigger } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
+  const [allChickens, setAllChickens] = useState<any[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -104,6 +105,10 @@ export function FeedManagement() {
     if (saved) {
       setEntries(JSON.parse(saved));
     }
+    const savedChickens = localStorage.getItem("chickens");
+    if (savedChickens) {
+      setAllChickens(JSON.parse(savedChickens));
+    }
   }, [syncTrigger]);
 
   const saveEntries = (newEntries: FeedEntry[]) => {
@@ -140,6 +145,44 @@ export function FeedManagement() {
   const totalFeed = filteredEntries.reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
+
+  // Consumption Calculation Engine
+  const calculateDailyConsumption = () => {
+    let dailyTotalKg = 0;
+    
+    // Filter chickens by current breed/type selection for specific autonomy, or all?
+    // Let's do ALL to reflect the REAL stock depletion
+    allChickens.filter(c => c.status === 'active').forEach(c => {
+      const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
+      const phases = getPhasesForBreed(breed);
+      
+      const arrDate = new Date(c.arrivalDate || c.date || Date.now());
+      const ageDays = Math.ceil(Math.abs(Date.now() - arrDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      let phase = phases.find(p => ageDays >= p.duration[0] && ageDays <= p.duration[1]);
+      if(!phase) phase = phases[phases.length - 1];
+
+      // Extract numeric values from "Xg à Yg"
+      const matches = phase.consumption.match(/\d+/g);
+      if (matches) {
+        const avgGrams = matches.length === 2 
+          ? (parseInt(matches[0]) + parseInt(matches[1])) / 2 
+          : parseInt(matches[0]);
+        
+        // Multiplier for weather
+        const weatherFactor = weather === 'hot' ? 0.85 : weather === 'cold' ? 1.15 : 1.0;
+        
+        const count = parseInt(c.count) || 1;
+        dailyTotalKg += (avgGrams * count * weatherFactor) / 1000;
+      }
+    });
+
+    return dailyTotalKg;
+  };
+
+  const dailyConsumption = calculateDailyConsumption();
+  const autonomyDays = dailyConsumption > 0 ? Math.floor(totalFeed / dailyConsumption) : Infinity;
+  const autonomyColor = autonomyDays > 7 ? 'text-emerald-500' : autonomyDays > 3 ? 'text-orange-500' : 'text-red-500';
 
   // Calculate current phase
   const phases = getPhasesForBreed(selectedBreed);
@@ -179,9 +222,23 @@ export function FeedManagement() {
              <p className={`text-5xl mt-2 font-black ${totalFeed < 10 ? 'text-red-500' : 'text-babs-brown'}`}>
                 {totalFeed.toFixed(1)} <span className="text-2xl text-gray-300">kg</span>
              </p>
-             {totalFeed < 10 && (
-               <p className="text-[10px] font-bold text-red-500 uppercase mt-4 tracking-wider animate-pulse flex items-center gap-1">
-                 ⚠️ Stock critique, réapprovisionner !
+             
+             <div className="mt-4 flex flex-col gap-1">
+               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-gray-400">
+                 <span>Conso. estimée</span>
+                 <span className="text-gray-600">{dailyConsumption.toFixed(2)} kg / jour</span>
+               </div>
+               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-gray-400">
+                 <span>Autonomie</span>
+                 <span className={`${autonomyColor} flex items-center gap-1`}>
+                   {autonomyDays === Infinity ? "Lot à définir" : `${autonomyDays} jours`}
+                 </span>
+               </div>
+             </div>
+
+             {autonomyDays <= 3 && dailyConsumption > 0 && (
+               <p className="text-[10px] font-black text-red-500 uppercase mt-4 tracking-widest animate-pulse flex items-center gap-1 bg-red-50 p-2 rounded-xl border border-red-100 italic">
+                 ⚠️ Rupture imminente (Date estimée : {new Date(Date.now() + autonomyDays * 86400000).toLocaleDateString()})
                </p>
              )}
              <div className={`absolute bottom-0 left-0 w-full h-2 ${customColors.bgLight}`}></div>
