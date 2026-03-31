@@ -10,9 +10,9 @@ export function SelectionPage() {
     const [type, setType] = useState<PoultryType>(null);
     const [breed, setBreed] = useState<PoultryBreed>(null);
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (type) {
-            updatePoultrySelection(type, breed);
+            await updatePoultrySelection(type, breed);
             navigate('/');
         }
     };
@@ -148,7 +148,7 @@ export function SelectionPage() {
                 )}
 
                 <button 
-                    disabled={!type}
+                    disabled={!type || (type === 'poulet' && !breed)}
                     onClick={handleConfirm}
                     className={`w-full py-6 text-xl font-black rounded-3xl transition-all duration-500 shadow-xl flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale ${
                         type === 'caille' 

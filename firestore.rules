@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAllowedCollectionDoc(docId) {
+      return docId in ['chickens', 'eggs', 'feed', 'health', 'finances'];
+    }
+
+    function isValidCollectionPayload() {
+      return request.resource.data.keys().hasOnly(['data', 'lastUpdated']) &&
+        request.resource.data.data is list &&
+        request.resource.data.lastUpdated is int;
+    }
+
+    function isValidPreferencesPayload() {
+      return request.resource.data.keys().hasOnly(['poultryType', 'poultryBreed', 'lastUpdated']) &&
+        (
+          !('poultryType' in request.resource.data) ||
+          request.resource.data.poultryType == null ||
+          request.resource.data.poultryType in ['caille', 'poulet']
+        ) &&
+        (
+          !('poultryBreed' in request.resource.data) ||
+          request.resource.data.poultryBreed == null ||
+          request.resource.data.poultryBreed in ['goliath', 'brahma', 'cochin', 'pondeuse']
+        ) &&
+        request.resource.data.lastUpdated is int;
+    }
+
+    match /users/{userId} {
+      allow read, write: if false;
+
+      match /collections/{docId} {
+        allow read: if isOwner(userId) && isAllowedCollectionDoc(docId);
+        allow create, update: if isOwner(userId) &&
+          isAllowedCollectionDoc(docId) &&
+          isValidCollectionPayload();
+        allow delete: if isOwner(userId) && isAllowedCollectionDoc(docId);
+      }
+
+      match /settings/preferences {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidPreferencesPayload();
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
