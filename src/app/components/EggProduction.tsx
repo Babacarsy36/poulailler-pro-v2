@@ -107,11 +107,13 @@ export function EggProduction() {
           {filteredRecords.map((record) => (
             <div key={record.id} className="flex items-center justify-between p-6 rounded-3xl bg-gray-50/50 hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
               <div className="flex items-center gap-6">
-                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                <div className={`w-14 h-14 rounded-2xl shadow-sm flex items-center justify-center ${
+                  record.poultryType === 'caille' ? 'bg-emerald-50 text-babs-emerald' : 'bg-orange-50 text-babs-orange'
+                }`}>
                   {record.poultryType === 'caille' ? (
-                    <span className="text-2xl" title="Œufs de caille">🪺</span>
+                    <span className="text-2xl" title="Œufs de caille">🐚</span>
                   ) : (
-                    <Egg className="w-6 h-6 text-babs-orange" />
+                    <Egg className="w-7 h-7" />
                   )}
                 </div>
                 <div>
