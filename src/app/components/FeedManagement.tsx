@@ -14,6 +14,20 @@ interface FeedEntry {
   poultryBreed?: string;
 }
 
+interface Ingredient {
+  id: string;
+  name: string;
+  protein: number;
+  percentage: number;
+}
+
+interface FeedRecipe {
+  id: string;
+  name: string;
+  ingredients: Ingredient[];
+  totalProtein: number;
+}
+
 type FeedPhase = {
   name: string;
   duration: [number, number]; // [startDay, endDay]
@@ -64,6 +78,14 @@ export function FeedManagement() {
     notes: "",
   });
 
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
+    { id: '1', name: 'Maïs', protein: 9, percentage: 60 },
+    { id: '2', name: 'Tourteau de Soja', protein: 44, percentage: 30 },
+    { id: '3', name: 'Concentré/CMV', protein: 40, percentage: 10 }
+  ]);
+  const [savedRecipes, setSavedRecipes] = useState<FeedRecipe[]>([]);
+  const [recipeName, setRecipeName] = useState("");
+
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
@@ -109,11 +131,33 @@ export function FeedManagement() {
     if (savedChickens) {
       setAllChickens(JSON.parse(savedChickens));
     }
+    const savedRecipes = localStorage.getItem("feed_recipes");
+    if (savedRecipes) setSavedRecipes(JSON.parse(savedRecipes));
   }, [syncTrigger]);
 
   const saveEntries = (newEntries: FeedEntry[]) => {
     setEntries(newEntries);
     SyncService.saveCollection("feed", newEntries);
+  };
+
+  const handleSaveRecipe = () => {
+    if (!recipeName) return;
+    const totalProt = ingredients.reduce((acc, ing) => acc + (ing.protein * ing.percentage) / 100, 0);
+    const newRecipe: FeedRecipe = {
+      id: Date.now().toString(),
+      name: recipeName,
+      ingredients: [...ingredients],
+      totalProtein: totalProt
+    };
+    const updated = [newRecipe, ...savedRecipes];
+    setSavedRecipes(updated);
+    localStorage.setItem("feed_recipes", JSON.stringify(updated));
+    setRecipeName("");
+    toast.success("Recette enregistrée !");
+  };
+
+  const updateIngredient = (id: string, field: keyof Ingredient, value: string | number) => {
+    setIngredients(ingredients.map(ing => ing.id === id ? { ...ing, [field]: value } : ing));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -349,6 +393,162 @@ export function FeedManagement() {
                    );
                 })}
              </div>
+           </div>
+
+           {/* Feed Optimizer (Mixer) */}
+           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 mt-8">
+              <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
+                     <Thermometer className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-babs-brown uppercase tracking-wider">Optimiseur de Ration</h3>
+                    <p className="text-[10px] uppercase font-bold text-gray-400">Équilibrez vos propres mélanges</p>
+                  </div>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                 {ingredients.map((ing, idx) => (
+                    <div key={ing.id} className="grid grid-cols-12 gap-2 items-center">
+                       <div className="col-span-5">
+                          <input 
+                            className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-bold text-babs-brown outline-none"
+                            value={ing.name}
+                            onChange={(e) => updateIngredient(ing.id, 'name', e.target.value)}
+                          />
+                       </div>
+                       <div className="col-span-3 flex items-center gap-1">
+                          <input 
+                            type="number"
+                            className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-black text-babs-brown outline-none text-center"
+                            value={ing.percentage}
+                            onChange={(e) => updateIngredient(ing.id, 'percentage', Number(e.target.value))}
+                          />
+                          <span className="text-[10px] font-black text-gray-400">%</span>
+                       </div>
+                       <div className="col-span-3 flex items-center gap-1">
+                          <input 
+                            type="number"
+                            className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-black text-babs-brown outline-none text-center"
+                            value={ing.protein}
+                            onChange={(e) => updateIngredient(ing.id, 'protein', Number(e.target.value))}
+                          />
+                          <span className="text-[10px] font-black text-gray-400">P</span>
+                       </div>
+                       <div className="col-span-1 flex justify-end">
+                          <button 
+                            onClick={() => setIngredients(ingredients.filter(i => i.id !== ing.id))}
+                            className="text-red-300 hover:text-red-500 transition-colors"
+                          >
+                             <Minus className="w-4 h-4" />
+                          </button>
+                       </div>
+                    </div>
+                 ))}
+                 
+                 <button 
+                   onClick={() => setIngredients([...ingredients, { id: Date.now().toString(), name: "Nouvel ingrédient", protein: 10, percentage: 0 }])}
+                   className="w-full py-2 border-2 border-dashed border-gray-100 rounded-xl text-[10px] font-black uppercase text-gray-400 hover:border-purple-200 hover:text-purple-400 transition-all"
+                 >
+                   + Ajouter un ingrédient
+                 </button>
+              </div>
+
+              {/* Mix Analysis */}
+              {(() => {
+                const totalPercent = ingredients.reduce((acc, ing) => acc + ing.percentage, 0);
+                const totalProt = ingredients.reduce((acc, ing) => acc + (ing.protein * ing.percentage) / 100, 0);
+                const targetMatch = currentPhaseIndex !== -1 ? (
+                   phases[currentPhaseIndex].name === 'Démarrage' ? 21 :
+                   phases[currentPhaseIndex].name === 'Ponte' ? 17.5 : 18
+                ) : 18;
+                const isAcceptable = Math.abs(totalProt - targetMatch) <= 1.5;
+
+                return (
+                   <div className="p-6 rounded-[2rem] bg-purple-50/50 border border-purple-100">
+                      <div className="flex items-center justify-between mb-4">
+                         <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">Taux de Protéines Final</p>
+                            <p className={`text-4xl font-black ${isAcceptable ? 'text-emerald-600' : 'text-purple-700'}`}>
+                               {totalProt.toFixed(1)}%
+                            </p>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">Total Mélange</p>
+                            <p className={`text-xl font-black ${totalPercent === 100 ? 'text-emerald-500' : 'text-red-500'}`}>
+                               {totalPercent}%
+                            </p>
+                         </div>
+                      </div>
+
+                      {totalPercent === 100 ? (
+                         <div className={`p-4 rounded-2xl flex items-start gap-3 border ${isAcceptable ? 'bg-emerald-100/50 border-emerald-100 text-emerald-800' : 'bg-red-50 border-red-100 text-red-800'}`}>
+                            <Info className="w-5 h-5 mt-0.5" />
+                            <div>
+                               <p className="text-xs font-black uppercase tracking-tight">
+                                  {isAcceptable ? "Équilibre Optimal ✅" : "Déséquilibre Nutritionnel ❌"}
+                                </p>
+                               <p className="text-[10px] font-bold mt-1 opacity-70">
+                                  Cible : {targetMatch}% pour la phase {phases[currentPhaseIndex]?.name}. {isAcceptable ? "Parfait pour la croissance !" : "Ajustez vos pourcentages."}
+                               </p>
+                            </div>
+                         </div>
+                      ) : (
+                         <p className="text-[10px] font-bold text-red-500 italic text-center">La somme des pourcentages doit être égale à 100%.</p>
+                      )}
+
+                      {totalPercent === 100 && (
+                        <div className="mt-6 flex gap-2">
+                           <input 
+                             placeholder="Nom de la recette..."
+                             className="flex-1 bg-white border border-purple-100 rounded-xl px-4 py-2 text-xs font-bold text-babs-brown outline-none"
+                             value={recipeName}
+                             onChange={(e) => setRecipeName(e.target.value)}
+                           />
+                           <button 
+                             onClick={handleSaveRecipe}
+                             className="bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase shadow-lg shadow-purple-100 hover:scale-105 transition-all"
+                           >
+                              Enregistrer
+                           </button>
+                        </div>
+                      )}
+                   </div>
+                );
+              })()}
+
+              {/* Saved Recipes */}
+              {savedRecipes.length > 0 && (
+                <div className="mt-8 space-y-3">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Recettes Enregistrées</p>
+                   {savedRecipes.map(recipe => (
+                      <div key={recipe.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between group">
+                         <div>
+                            <p className="text-xs font-black text-babs-brown">{recipe.name}</p>
+                            <p className="text-[10px] font-bold text-purple-500 uppercase">{recipe.totalProtein.toFixed(1)}% Protéines</p>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <button 
+                               onClick={() => setIngredients(recipe.ingredients)}
+                               className="bg-white p-2 rounded-lg shadow-sm text-purple-600 hover:bg-purple-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                            >
+                               <ArrowRight className="w-4 h-4" />
+                            </button>
+                            <button 
+                               onClick={() => {
+                                 const updated = savedRecipes.filter(r => r.id !== recipe.id);
+                                 setSavedRecipes(updated);
+                                 localStorage.setItem("feed_recipes", JSON.stringify(updated));
+                               }}
+                               className="bg-white p-2 rounded-lg shadow-sm text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all font-black text-xs"
+                            >
+                               Suppr
+                            </button>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+              )}
            </div>
          </div>
 
