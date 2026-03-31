@@ -10,9 +10,13 @@ export const SyncService = {
     if (!user) return;
 
     for (const key of STORAGE_KEYS) {
-      const localData = JSON.parse(localStorage.getItem(key) || "[]");
-      const userDocRef = doc(db, "users", user.uid, "collections", key);
-      await setDoc(userDocRef, { data: localData, lastUpdated: Date.now() });
+      try {
+        const localData = JSON.parse(localStorage.getItem(key) || "[]");
+        const userDocRef = doc(db, "users", user.uid, "collections", key);
+        await setDoc(userDocRef, { data: localData, lastUpdated: Date.now() });
+      } catch (err) {
+        console.error(`Failed to push ${key} to cloud:`, err);
+      }
     }
   },
 
@@ -22,10 +26,14 @@ export const SyncService = {
     if (!user) return;
 
     for (const key of STORAGE_KEYS) {
-      const userDocRef = doc(db, "users", user.uid, "collections", key);
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        localStorage.setItem(key, JSON.stringify(docSnap.data().data));
+      try {
+        const userDocRef = doc(db, "users", user.uid, "collections", key);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          localStorage.setItem(key, JSON.stringify(docSnap.data().data));
+        }
+      } catch (err) {
+        console.error(`Failed to pull ${key} from cloud:`, err);
       }
     }
   },

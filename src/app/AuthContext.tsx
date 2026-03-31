@@ -46,28 +46,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for Firebase Auth changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                // Pull data from cloud on login
-                await SyncService.pullCloudToLocal();
-                
-                // Pull user preferences
-                const prefsDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences'));
-                if (prefsDoc.exists()) {
-                    const data = prefsDoc.data();
-                    if (data.poultryType) {
-                        setPoultryType(data.poultryType);
-                        localStorage.setItem('poultry_type', data.poultryType);
+            try {
+                setUser(currentUser);
+                if (currentUser) {
+                    // Pull data from cloud on login - wrapped in internal try/catch in SyncService
+                    await SyncService.pullCloudToLocal();
+                    
+                    // Pull user preferences
+                    const prefsDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences'));
+                    if (prefsDoc.exists()) {
+                        const data = prefsDoc.data();
+                        if (data.poultryType) {
+                            setPoultryType(data.poultryType);
+                            localStorage.setItem('poultry_type', data.poultryType);
+                        }
+                        if (data.poultryBreed) {
+                            setPoultryBreed(data.poultryBreed);
+                            localStorage.setItem('poultry_breed', data.poultryBreed);
+                        }
                     }
-                    if (data.poultryBreed) {
-                        setPoultryBreed(data.poultryBreed);
-                        localStorage.setItem('poultry_breed', data.poultryBreed);
-                    }
+                    setSyncTrigger(prev => prev + 1);
                 }
-
-                setSyncTrigger(prev => prev + 1);
+            } catch (err) {
+                console.error("Error during auth state change:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         });
         return () => unsubscribe();
     }, []);
