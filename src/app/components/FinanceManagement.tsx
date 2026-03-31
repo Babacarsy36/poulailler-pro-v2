@@ -12,6 +12,8 @@ export type Transaction = {
   category: string;
   description: string;
   date: string;
+  batchId?: string;
+  batchName?: string;
 };
 
 export function FinanceManagement() {
@@ -24,6 +26,8 @@ export function FinanceManagement() {
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('none');
+  const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
 
   const isCaille = poultryType === 'caille';
   const customColors = {
@@ -37,6 +41,14 @@ export function FinanceManagement() {
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem("finances") || "[]");
     setTransactions(data);
+    
+    // Fetch chickens to link lots
+    const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
+    const activeLots = chickens.filter((c: any) => c.status === 'active' || c.count > 0).map((c: any) => ({
+       id: c.id,
+       name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)}`
+    }));
+    setBatches(activeLots);
   }, [syncTrigger]);
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
@@ -61,6 +73,8 @@ export function FinanceManagement() {
       category: finalCategory,
       description,
       date,
+      batchId: selectedBatchId === 'none' ? undefined : selectedBatchId,
+      batchName: selectedBatchId === 'none' ? undefined : batches.find(b => b.id === selectedBatchId)?.name
     };
 
     const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -204,6 +218,20 @@ export function FinanceManagement() {
                       onChange={e => setDate(e.target.value)}
                       className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Lier à un lot (Optionnel)</label>
+                    <select
+                      value={selectedBatchId}
+                      onChange={e => setSelectedBatchId(e.target.value)}
+                      className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all appearance-none"
+                    >
+                       <option value="none">Hors lot (Frais généraux)</option>
+                       {batches.map(b => (
+                         <option key={b.id} value={b.id}>{b.name}</option>
+                       ))}
+                    </select>
                   </div>
                   
                   <button 
