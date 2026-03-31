@@ -30,43 +30,40 @@ export const SPECIES_CONFIG = {
 export type SpeciesKey = keyof typeof SPECIES_CONFIG;
 
 export function getDayTip(species: SpeciesKey, day: number, totalDays: number): string {
-  const tips: Record<string, string> = {};
+  const tips: Record<number, string> = {};
   if (species === 'poulet') {
-    tips[1] = "Mise en place des œufs. Température 37.7°C, humidité 50-55%.";
-    tips[2] = "Le blastoderme se développe. Ne pas ouvrir l'incubateur.";
-    tips[3] = "Début de la formation du cœur et des vaisseaux sanguins.";
-    tips[4] = "Le cœur commence à battre. Retournement 3x/jour minimum.";
-    tips[5] = "Formation des yeux et des membres.";
-    tips[7] = "🔦 Premier mirage recommandé. Retirer les œufs clairs.";
-    tips[10] = "Les plumes commencent à se former.";
-    tips[14] = "🔦 Deuxième mirage. La chambre à air doit être visible.";
-    tips[18] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 65-75%.";
-    tips[19] = "Le poussin se positionne pour l'éclosion.";
-    tips[20] = "Bréchage possible. Le sac vitellin est absorbé.";
-    tips[21] = "🐣 Jour d'éclosion ! Ne pas ouvrir pendant le bréchage.";
+    tips[1] = "🚀 MISE EN PLACE : Température 37.7°C, humidité 50-55%. Ne pas ouvrir pendant la stabilisation.";
+    tips[4] = "🔄 RETOURNEMENT : Assurez-vous de tourner les œufs 3 à 5 fois par jour (nombre impair).";
+    tips[7] = "🔦 MIRAGE : Premier mirage recommandé. Retirez impérativement les œufs clairs (non fécondés).";
+    tips[10] = "🌡️ CONTRÔLE : Vérifiez la stabilité de la température. Le développement s'accélère.";
+    tips[14] = "🔦 MIRAGE 2 : Deuxième mirage. Vérifiez la taille de la chambre à air.";
+    tips[18] = "⚠️ ARRÊT BRUTAL du retournement ! Augmentez l'humidité à 65-75% pour l'éclosion.";
+    tips[19] = "🤫 SILENCE : Ne plus ouvrir l'incubateur. Le poussin se prépare au bréchage.";
+    tips[21] = "🐣 ÉCLOSION ! Laissez les poussins sécher (24h) avant de les sortir vers l'éleveuse.";
   } else if (species === 'caille') {
-    tips[1] = "Mise en place. Température 37.5°C, humidité 50-55%.";
-    tips[7] = "🔦 Premier mirage. Retirer les œufs non fécondés.";
-    tips[14] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 65-70%.";
-    tips[17] = "🐣 Jour d'éclosion des cailles !";
-  } else if (species === 'canard') {
-    tips[1] = "Mise en place. Température 37.5°C, humidité 58-62%.";
-    tips[7] = "🔦 Premier mirage recommandé.";
-    tips[14] = "🔦 Deuxième mirage.";
-    tips[25] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 70-75%.";
-    tips[28] = "🐣 Jour d'éclosion des canetons !";
-  } else if (species === 'dinde') {
-    tips[1] = "Mise en place. Température 37.5°C, humidité 50-55%.";
-    tips[8] = "🔦 Premier mirage recommandé.";
-    tips[25] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 70-75%.";
-    tips[28] = "🦃 Jour d'éclosion des dindonneaux !";
-  } else {
-    tips[1] = "Mise en place. Température 37.4°C, humidité 55-60%.";
-    tips[10] = "🔦 Premier mirage recommandé.";
-    tips[27] = "⚠️ ARRÊT du retournement ! Augmenter l'humidité à 70-75%.";
-    tips[30] = "🐣 Jour d'éclosion des oisons !";
+    tips[1] = "🚀 MISE EN PLACE : Température 37.5°C, humidité 50-55%.";
+    tips[7] = "🔦 MIRAGE : Mirage recommandé. Les œufs de caille sont sombres, soyez attentif.";
+    tips[14] = "⚠️ ARRÊT du retournement ! Transition vers l'éclosion, humidité à 65-70%.";
+    tips[17] = "🐣 ÉCLOSION des cailles ! Bravo !";
+  } else if (species === 'dinde' || species === 'canard') {
+    tips[1] = "🚀 MISE EN PLACE : Température 37.5°C, humidité 55-60%.";
+    tips[7] = "🔦 MIRAGE 1 : Premier contrôle de fertilité.";
+    tips[25] = "⚠️ ARRÊT du retournement ! Augmentez l'humidité à 70-75% pour l'éclosion.";
+    tips[28] = "🐣 ÉCLOSION prévue ! Surveillez le bréchage.";
+  } else if (species === 'oie') {
+    tips[1] = "🚀 MISE EN PLACE : Température 37.4°C, humidité 55-60%.";
+    tips[10] = "🔦 MIRAGE : Vérifiez le développement.";
+    tips[27] = "⚠️ ARRÊT du retournement ! Humidité 70-75% requise.";
+    tips[30] = "🐣 ÉCLOSION des oisons !";
   }
-  return tips[day] || `Jour ${day}/${totalDays} — Continuer le retournement et surveiller la température.`;
+  
+  if (tips[day]) return tips[day];
+  
+  // Default advice
+  if (day < totalDays - 3) return "🔄 Continuez le retournement régulier (3-5x/jour) et surveillez l'eau.";
+  if (day >= totalDays - 3) return "⚠️ Période d'éclosion : Ne plus retourner les œufs et maintenir une humidité élevée.";
+  
+  return `Jour ${day}/${totalDays} — Suivi normal de l'incubation.`;
 }
 
 export function getDaysElapsed(startDate: string): number {

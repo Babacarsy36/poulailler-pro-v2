@@ -1,4 +1,5 @@
 import { IncubationBatch, SPECIES_CONFIG, SpeciesKey, getDaysElapsed, getDayTip } from './types';
+import { AlertTriangle, Info } from 'lucide-react';
 
 interface Props {
   batch: IncubationBatch;
@@ -44,15 +45,34 @@ export function DailyProgress({ batch, onUpdate }: Props) {
         </div>
       </div>
 
-      {/* Day tip */}
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">🚨</span>
-          <div>
-            <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">
-              Jour {currentDay} — Statut Incubateur
+      {/* Day tip / Alert */}
+      <div className={`p-6 rounded-[2rem] border-2 animate-in zoom-in-95 duration-500 ${
+        tip.includes('⚠️') ? 'bg-red-50 border-red-200 text-red-900' : 
+        tip.includes('🔦') ? 'bg-blue-50 border-blue-200 text-blue-900' :
+        'bg-amber-50 border-amber-100 text-amber-900'
+      }`}>
+        <div className="flex items-start gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
+            tip.includes('⚠️') ? 'bg-red-500 text-white animate-pulse' : 
+            tip.includes('🔦') ? 'bg-blue-500 text-white' :
+            'bg-amber-500 text-white'
+          }`}>
+            {tip.includes('⚠️') ? <AlertTriangle className="w-6 h-6" /> : 
+             tip.includes('🔦') ? <Info className="w-6 h-6" /> : 
+             <Info className="w-6 h-6" />}
+          </div>
+          <div className="flex-1">
+            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-70`}>
+              Conseil du Jour {currentDay}
             </p>
-            <p className="text-sm font-bold text-amber-900 leading-relaxed">{tip}</p>
+            <p className="text-sm font-black leading-relaxed whitespace-pre-line">
+              {tip}
+            </p>
+            {(tip.includes('⚠️') || tip.includes('ARRÊT')) && (
+               <div className="mt-3 flex items-center gap-2 text-[10px] font-black bg-white/50 px-3 py-1.5 rounded-full inline-block border border-red-100 italic">
+                 ✨ Action requise aujourd'hui !
+               </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import { Trash2, Edit, Egg } from 'lucide-react';
-import { IncubationBatch, SPECIES_CONFIG, getDaysElapsed, SpeciesKey } from './types';
+import { Trash2, Edit, Egg, AlertTriangle } from 'lucide-react';
+import { IncubationBatch, SPECIES_CONFIG, getDaysElapsed, SpeciesKey, getDayTip } from './types';
 import { CircularProgress } from './CircularProgress';
 
 interface Props {
@@ -13,18 +13,36 @@ export function BatchCard({ batch, onEdit, onDelete, onSelect }: Props) {
   const cfg = SPECIES_CONFIG[batch.species as SpeciesKey];
   const elapsed = getDaysElapsed(batch.startDate);
   const startLabel = new Date(batch.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const dayTip = getDayTip(batch.species as SpeciesKey, Math.min(elapsed + 1, batch.totalDays), batch.totalDays);
+  const isAlertStatus = dayTip.match(/[⚠️🔦🐣🚀]/);
 
   return (
     <div
       onClick={() => onSelect(batch)}
-      className="bg-card rounded-[2rem] p-6 shadow-premium border border-gray-50 dark:border-white/5 hover:border-blue-200 transition-all cursor-pointer group"
+      className={`bg-card rounded-[2rem] p-6 shadow-premium border-2 transition-all cursor-pointer group relative overflow-hidden ${
+        batch.status === 'ongoing' && isAlertStatus && dayTip.includes('⚠️')
+          ? 'border-red-100 shadow-red-50'
+          : 'border-transparent hover:border-blue-200'
+      }`}
     >
+      {batch.status === 'ongoing' && isAlertStatus && (
+        <div className="absolute top-0 right-0 p-2">
+           <div className={`w-3 h-3 rounded-full animate-ping ${
+             dayTip.includes('⚠️') ? 'bg-red-500' : 'bg-blue-500'
+           }`} />
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         {/* Left: egg counts */}
         <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
           <span className="flex items-center gap-1">🐣 {batch.fertileCount}</span>
           <span className="flex items-center gap-1">❌ {batch.deadCount}</span>
-          <span className="text-gray-300">›</span>
+          {isAlertStatus && (
+            <span className={`flex items-center gap-1 ${dayTip.includes('⚠️') ? 'text-red-500' : 'text-blue-500'} animate-pulse`}>
+              <AlertTriangle className="w-3 h-3" />
+            </span>
+          )}
         </div>
       </div>
 

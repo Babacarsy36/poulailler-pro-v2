@@ -10,6 +10,8 @@ import { DailyProgress } from './incubator/DailyProgress';
 import { HatchSummary } from './incubator/HatchSummary';
 import { FinancialSummary } from './incubator/FinancialSummary';
 import { FAQSection } from './incubator/FAQSection';
+import { getDaysElapsed, getDayTip } from './incubator/types';
+import { AlertTriangle, Info, Bell } from 'lucide-react';
 
 type TabId = 'batches' | 'summary' | 'finances' | 'faq';
 
@@ -22,6 +24,24 @@ export function IncubatorManagement() {
   const [editBatch, setEditBatch] = useState<IncubationBatch | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<IncubationBatch | null>(null);
   const [detailBatch, setDetailBatch] = useState<IncubationBatch | null>(null);
+
+  const filtered = batches.filter(b => speciesFilter === 'all' || b.species === speciesFilter);
+  const ongoing = filtered.filter(b => b.status === 'ongoing');
+  const hatched = filtered.filter(b => b.status === 'hatched');
+
+  const todayAlerts = ongoing.map(b => {
+    const day = Math.min(getDaysElapsed(b.startDate) + 1, b.totalDays);
+    const tip = getDayTip(b.species as SpeciesKey, day, b.totalDays);
+    const isCritical = tip.includes('⚠️') || tip.includes('🔦') || tip.includes('🚀') || tip.includes('🐣');
+    if (!isCritical) return null;
+    return { 
+      id: b.id, 
+      name: b.name || SPECIES_CONFIG[b.species as SpeciesKey].label, 
+      tip, 
+      day,
+      isDanger: tip.includes('⚠️') || tip.includes('🐣')
+    };
+  }).filter((x): x is NonNullable<typeof x> => x !== null);
 
   useEffect(() => {
     const saved = localStorage.getItem('incubation');
@@ -53,10 +73,6 @@ export function IncubatorManagement() {
     setDetailBatch(b);
     if (selectedBatch?.id === b.id) setSelectedBatch(b);
   };
-
-  const filtered = batches.filter(b => speciesFilter === 'all' || b.species === speciesFilter);
-  const ongoing = filtered.filter(b => b.status === 'ongoing');
-  const hatched = filtered.filter(b => b.status === 'hatched');
 
   const tabs: { id: TabId; label: string; icon: any; short: string }[] = [
     { id: 'batches', label: 'Mes Lots', icon: Egg, short: 'Lots' },
@@ -127,6 +143,44 @@ export function IncubatorManagement() {
           </button>
         ))}
       </div>
+
+      {/* Alerts Banner */}
+      {activeTab === 'batches' && todayAlerts.length > 0 && (
+        <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
+           <div className="flex items-center gap-2 px-2">
+             <Bell className="w-4 h-4 text-blue-500 fill-blue-500/20" />
+             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/70">Alertes de Couvaison</h3>
+           </div>
+           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide px-1">
+             {todayAlerts.map(alert => (
+               <div 
+                 key={alert.id}
+                 onClick={() => {
+                   const b = batches.find(x => x.id === alert.id);
+                   if (b) { setSelectedBatch(b); setDetailBatch(b); }
+                 }}
+                 className={`flex-shrink-0 w-[280px] p-4 rounded-3xl border shadow-sm cursor-pointer hover:scale-[1.02] transition-all ${
+                   alert.isDanger ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'
+                 }`}
+               >
+                 <div className="flex items-start gap-3">
+                   <div className={`p-2 rounded-xl ${alert.isDanger ? 'bg-red-500' : 'bg-blue-500'} text-white shadow-lg`}>
+                     {alert.isDanger ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
+                   </div>
+                   <div className="min-w-0">
+                     <p className={`text-[9px] font-black uppercase tracking-widest ${alert.isDanger ? 'text-red-600' : 'text-blue-600'}`}>
+                       {alert.name} — Jour {alert.day}
+                     </p>
+                     <p className="text-xs font-bold text-gray-800 leading-tight mt-1 line-clamp-2">
+                       {alert.tip}
+                     </p>
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
+        </div>
+      )}
 
       {/* Tab navigation */}
       <div className="flex bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 gap-1">
