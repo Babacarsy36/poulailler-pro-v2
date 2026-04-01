@@ -7,6 +7,7 @@ import { Login } from "./components/Login";
 import { Signup } from "./components/Signup";
 import { SelectionPage } from "./components/SelectionPage";
 import { useAuth } from "./AuthContext";
+import { Logo } from "./components/Logo";
 
 // Guard to ensure user is logged in
 function AuthGuard() {
@@ -14,8 +15,10 @@ function AuthGuard() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-babs-cream flex items-center justify-center">
+      <div className="min-h-screen bg-babs-cream flex flex-col items-center justify-center gap-6 animate-pulse">
+        <Logo className="w-20 h-20 opacity-50" />
         <div className="w-12 h-12 border-4 border-babs-orange border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Chargement d'Excellence</p>
       </div>
     );
   }

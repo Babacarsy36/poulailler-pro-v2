@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { Logo } from "./Logo";
-import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, Sun, LogOut, Wallet, ChevronDown, Check } from "lucide-react";
+import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, Sun, LogOut, Wallet, ChevronDown, Check, RefreshCw, CloudOff } from "lucide-react";
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useState } from "react";
@@ -8,7 +8,7 @@ import { useState } from "react";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, poultryBreed, updatePoultrySelection, user, logout, isDarkMode, toggleDarkMode } = useAuth();
+  const { poultryType, poultryBreed, updatePoultrySelection, user, logout, isDarkMode, toggleDarkMode, isSyncing } = useAuth();
   
   const isCaille = poultryType === 'caille';
   const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
@@ -142,6 +142,12 @@ export function Layout() {
         <div className="flex items-center gap-3">
           <Logo className="w-10 h-10" />
           <SpeciesSwitcher mobile />
+          {isSyncing && (
+            <div className="flex items-center gap-1.5 ml-2 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-800/30">
+               <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />
+               <span className="text-[8px] font-black text-blue-600 uppercase tracking-tighter">Sync...</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -199,7 +205,10 @@ export function Layout() {
               {isDarkMode ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4" />}
             </button>
             <div className="hidden lg:block text-right">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Connecté en tant que</p>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none flex items-center justify-end gap-1.5">
+                {isSyncing && <RefreshCw className="w-2.5 h-2.5 text-blue-500 animate-spin" />}
+                Connecté en tant que
+              </p>
               <p className="text-xs font-bold text-babs-brown">{user?.email}</p>
             </div>
             <button 

@@ -17,6 +17,7 @@ interface AuthContextType {
     toggleDarkMode: () => void;
     updatePoultrySelection: (type: PoultryType, breed: PoultryBreed) => void;
     clearSelection: () => void;
+    isSyncing: boolean;
     logout: () => Promise<void>;
 }
 
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [poultryType, setPoultryType] = useState<PoultryType>(null);
     const [poultryBreed, setPoultryBreed] = useState<PoultryBreed>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
     // Persist and apply theme
@@ -46,14 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for Firebase Auth changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            try {
-                setUser(currentUser);
-                if (currentUser) {
-                    // Pull data from cloud on login - wrapped in internal try/catch in SyncService
-                    await SyncService.pullCloudToLocal();
-                    
-                    // Pull user preferences
-                    const prefsDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences'));
+            setUser(currentUser);
+            if (currentUser) {
+                // Background cloud pull - don't block the UI
+                setIsSyncing(true);
+                SyncService.pullCloudToLocal().finally(() => {
+                    setIsSyncing(false);
+                    setSyncTrigger(prev => prev + 1);
+                });
+
+                // Pull user preferences (critical but fast)
+                getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences')).then(prefsDoc => {
                     if (prefsDoc.exists()) {
                         const data = prefsDoc.data();
                         if (data.poultryType) {
@@ -65,13 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             localStorage.setItem('poultry_breed', data.poultryBreed);
                         }
                     }
-                    setSyncTrigger(prev => prev + 1);
-                }
-            } catch (err) {
-                console.error("Error during auth state change:", err);
-            } finally {
-                setLoading(false);
+                }).catch(err => console.error("Pref fetch failed:", err));
             }
+            setLoading(false);
         });
         return () => unsubscribe();
     }, []);
@@ -137,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             toggleDarkMode,
             updatePoultrySelection,
             clearSelection,
+            isSyncing,
             logout
         }}>
             {children}
