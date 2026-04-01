@@ -9,6 +9,7 @@ interface Chicken {
   poultryType: "caille" | "poulet";
   breed: string;
   age: number;
+  ageUnit: "weeks" | "months";
   count: number;
   femaleCount?: number;
   maleCount?: number;
@@ -24,6 +25,7 @@ export function ChickenInventory() {
     name: "",
     breed: poultryBreed || "",
     age: "",
+    ageUnit: "months" as "weeks" | "months",
     count: "1",
     femaleCount: "0",
     maleCount: "0",
@@ -59,8 +61,9 @@ export function ChickenInventory() {
     else fertilityStatus = 'ideal';
   }
 
-  const getRecommendedFeed = (ageMonths: string, breed: string, type: string) => {
-    const ageDays = (parseFloat(ageMonths) || 0) * 30;
+  const getRecommendedFeed = (ageValue: string, ageUnit: string, breed: string, type: string) => {
+    const val = parseFloat(ageValue) || 0;
+    const ageDays = ageUnit === 'weeks' ? val * 7 : val * 30;
     if (ageDays <= 0) return "Âge non défini";
 
     if (type === 'caille') {
@@ -95,7 +98,8 @@ export function ChickenInventory() {
       const migrated = parsed.map((c: any) => ({
         ...c,
         poultryType: c.poultryType || (c.breed?.toLowerCase().includes("caille") ? "caille" : (poultryType || "poulet")),
-        count: c.count ? parseInt(c.count) : 1
+        count: c.count ? parseInt(c.count) : 1,
+        ageUnit: c.ageUnit || "months"
       }));
       setChickens(migrated);
     }
@@ -121,6 +125,7 @@ export function ChickenInventory() {
           ...formData, 
           poultryType: poultryType || c.poultryType || "poulet",
           age: Number(formData.age), 
+          ageUnit: formData.ageUnit,
           count: actualCount,
           femaleCount: femVal,
           maleCount: maleVal
@@ -134,13 +139,14 @@ export function ChickenInventory() {
         ...formData,
         poultryType: (poultryType || "poulet").toLowerCase() as "poulet" | "caille",
         age: Number(formData.age),
+        ageUnit: formData.ageUnit,
         count: actualCount,
         femaleCount: femVal,
         maleCount: maleVal
       };
       saveChickens([...chickens, newChicken]);
     }
-    setFormData({ name: "", breed: poultryBreed || "", age: "", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
+    setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
     setIsAddOpen(false);
   };
 
@@ -282,7 +288,9 @@ export function ChickenInventory() {
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-300" />
-                  <span className="text-xs font-bold text-gray-500">{chicken.age} mois</span>
+                  <span className="text-xs font-bold text-gray-500">
+                    {chicken.age} {chicken.ageUnit === 'weeks' ? 'semaines' : 'mois'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-gray-300" />
@@ -346,15 +354,26 @@ export function ChickenInventory() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Âge (mois)</label>
-                  <input 
-                    type="number"
-                    step="0.1"
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
-                    value={formData.age}
-                    onChange={e => setFormData({ ...formData, age: e.target.value })}
-                    required
-                  />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Âge</label>
+                  <div className="flex bg-gray-50 rounded-2xl p-1 items-stretch">
+                    <input 
+                      type="number"
+                      step="0.1"
+                      className="w-20 bg-transparent border-none p-3 font-bold text-babs-brown focus:ring-0 outline-none"
+                      value={formData.age}
+                      onChange={e => setFormData({ ...formData, age: e.target.value })}
+                      required
+                    />
+                    <div className="w-[1px] bg-gray-200 my-2"></div>
+                    <select
+                      className="flex-1 bg-transparent border-none px-3 font-bold text-xs text-babs-brown outline-none cursor-pointer"
+                      value={formData.ageUnit}
+                      onChange={e => setFormData({ ...formData, ageUnit: e.target.value as any })}
+                    >
+                      <option value="weeks">Semaines</option>
+                      <option value="months">Mois</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quantité Totale (Têtes)</label>
@@ -374,7 +393,7 @@ export function ChickenInventory() {
                   <ShoppingCart className="w-5 h-5 text-blue-500" />
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-blue-400">Aliment Recommandé</p>
-                    <p className="text-sm font-black text-blue-700">{getRecommendedFeed(formData.age, formData.breed || poultryBreed || "", isCaille ? "caille" : "poulet")}</p>
+                    <p className="text-sm font-black text-blue-700">{getRecommendedFeed(formData.age, formData.ageUnit, formData.breed || poultryBreed || "", isCaille ? "caille" : "poulet")}</p>
                   </div>
                 </div>
               )}

@@ -117,10 +117,26 @@ export function FinanceManagement() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="space-y-1">
-        <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">Finances</h2>
-        <p className="text-babs-brown/60 font-medium uppercase tracking-widest text-[10px]">
-          Rentabilité & Suivi détaillé
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">Finances</h2>
+          <p className="text-babs-brown/60 font-medium uppercase tracking-widest text-[10px]">
+            Rentabilité & Suivi détaillé
+          </p>
+        </div>
+        <button 
+          onClick={() => window.print()}
+          className="bg-white border-2 border-gray-100 text-gray-500 px-6 py-4 rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print"
+        >
+          <Printer className="w-5 h-5" /> Imprimer Rapport
+        </button>
+      </div>
+
+      {/* Print-only Header */}
+      <div className="print-only mb-8 border-b-2 border-gray-100 pb-6 w-full">
+        <h1 className="text-3xl font-black text-black">POULAILLER PRO - RAPPORT FINANCIER</h1>
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
+          Généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
 
