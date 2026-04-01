@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning, ShoppingCart, Printer } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 
@@ -159,17 +159,33 @@ export function ChickenInventory() {
           </h2>
           <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Gestion par Lots & Sujets</p>
         </div>
-        <button 
-          onClick={() => {
-            setEditingChicken(null);
-            setFormData({ name: "", breed: poultryBreed || "", age: "", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
-            setIsAddOpen(true);
-          }}
-          className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold`}
-        >
-          <Plus className="w-5 h-5" />
-          Ajouter un Lot
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => {
+              setEditingChicken(null);
+              setFormData({ name: "", breed: poultryBreed || "", age: "", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
+              setIsAddOpen(true);
+            }}
+            className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print`}
+          >
+            <Plus className="w-5 h-5" />
+            Ajouter un Lot
+          </button>
+          <button 
+            onClick={() => window.print()}
+            className="bg-white border-2 border-gray-100 text-gray-500 px-6 py-4 rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print"
+          >
+            <Printer className="w-5 h-5" /> Imprimer Rapport
+          </button>
+        </div>
+      </div>
+
+      {/* Print-only Header */}
+      <div className="print-only mb-8 border-b-2 border-gray-100 pb-6 w-full">
+        <h1 className="text-3xl font-black text-black">POULAILLER PRO - INVENTAIRE DU CHEPTEL</h1>
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
+          Généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
       </div>
 
       {/* Simulator Card */}
@@ -282,7 +298,7 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-4 no-print">
                 <button 
                   onClick={() => {
                     setEditingChicken(chicken);

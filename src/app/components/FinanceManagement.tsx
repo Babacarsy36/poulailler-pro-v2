@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2 } from "lucide-react";
+import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2, Printer } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { toast } from "sonner";
@@ -121,6 +121,14 @@ export function FinanceManagement() {
         <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">Finances</h2>
         <p className="text-babs-brown/60 font-medium uppercase tracking-widest text-[10px]">
           Rentabilité & Suivi détaillé
+        </p>
+      </div>
+
+      {/* Print-only Header */}
+      <div className="print-only mb-8 border-b-2 border-gray-100 pb-6">
+        <h1 className="text-3xl font-black text-black">POULAILLER PRO - RAPPORT FINANCIER</h1>
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
+          Généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
 
@@ -321,7 +329,7 @@ export function FinanceManagement() {
                               </p>
                               <button 
                                 onClick={() => handleDelete(t.id)}
-                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100 no-print"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>

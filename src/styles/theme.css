@@ -49,7 +49,78 @@
   --babs-brown: #451A03;
   --babs-cream: #FDFCF8;
   
-  --shadow-premium: 0 20px 50px -12px rgba(45, 26, 10, 0.08), 0 10px 15px -3px rgba(45, 26, 10, 0.05);
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* Print Overrides */
+@media print {
+  @page {
+    margin: 2cm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 10pt;
+  }
+
+  /* Hide navigation, buttons, and floating UI */
+  .no-print, 
+  nav, 
+  button, 
+  .fixed,
+  aside,
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Force cards to show as simple containers */
+  .bg-card, .bg-white {
+    background: transparent !important;
+    border: 1px solid #eee !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    margin-bottom: 1cm;
+    border-radius: 1rem !important;
+  }
+
+  .shadow-premium, .shadow-lg, .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  /* Print Header Utility */
+  .print-only {
+    display: block !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border-bottom: 1px solid #eee;
+    padding: 8pt;
+    text-align: left;
+  }
+
+  h1, h2, h3 {
+    color: black !important;
+    margin-top: 1.5rem !important;
+  }
+
+  .text-babs-brown, .text-babs-orange, .text-babs-emerald {
+    color: black !important;
+  }
+
+  /* Allow charts to print if possible, but keep background white */
+  .recharts-wrapper {
+    background: white !important;
+  }
+}
+
+.print-only {
+  display: none;
 }
 
 .dark {
