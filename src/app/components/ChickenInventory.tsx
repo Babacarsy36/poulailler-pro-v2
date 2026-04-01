@@ -169,7 +169,7 @@ export function ChickenInventory() {
           <button 
             onClick={() => {
               setEditingChicken(null);
-              setFormData({ name: "", breed: poultryBreed || "", age: "", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
+              setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
               setIsAddOpen(true);
             }}
             className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print`}
@@ -370,8 +370,8 @@ export function ChickenInventory() {
                       value={formData.ageUnit}
                       onChange={e => setFormData({ ...formData, ageUnit: e.target.value as any })}
                     >
-                      <option value="weeks">Semaines</option>
                       <option value="months">Mois</option>
+                      <option value="weeks">Semaines</option>
                     </select>
                   </div>
                 </div>
