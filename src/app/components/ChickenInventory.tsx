@@ -14,6 +14,7 @@ interface Chicken {
   femaleCount?: number;
   maleCount?: number;
   status: "active" | "malade" | "retraite";
+  startDate?: string;
 }
 
 export function ChickenInventory() {
@@ -30,6 +31,7 @@ export function ChickenInventory() {
     femaleCount: "0",
     maleCount: "0",
     status: "active" as "active" | "malade" | "retraite",
+    startDate: new Date().toISOString().split('T')[0],
   });
 
   const [simFemales, setSimFemales] = useState("10");
@@ -142,11 +144,12 @@ export function ChickenInventory() {
         ageUnit: formData.ageUnit,
         count: actualCount,
         femaleCount: femVal,
-        maleCount: maleVal
+        maleCount: maleVal,
+        startDate: formData.startDate
       };
       saveChickens([...chickens, newChicken]);
     }
-    setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
+    setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
     setIsAddOpen(false);
   };
 
@@ -169,7 +172,7 @@ export function ChickenInventory() {
           <button 
             onClick={() => {
               setEditingChicken(null);
-              setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active" });
+              setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
               setIsAddOpen(true);
             }}
             className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print`}
@@ -288,9 +291,9 @@ export function ChickenInventory() {
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-300" />
-                  <span className="text-xs font-bold text-gray-500">
-                    {chicken.age} {chicken.ageUnit === 'weeks' ? 'semaines' : 'mois'}
-                  </span>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                    {chicken.age} {chicken.ageUnit === 'weeks' ? 'semaines' : 'mois'} • Entrée : {chicken.startDate ? new Date(chicken.startDate).toLocaleDateString('fr-FR') : 'Non définie'}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-gray-300" />
@@ -316,6 +319,7 @@ export function ChickenInventory() {
                       count: chicken.count.toString(),
                       femaleCount: (chicken.femaleCount || "0").toString(),
                       maleCount: (chicken.maleCount || "0").toString(),
+                      startDate: chicken.startDate || new Date().toISOString().split('T')[0]
                     });
                     setIsAddOpen(true);
                   }}
@@ -437,6 +441,16 @@ export function ChickenInventory() {
                   <option value="malade">Soins requis / Isolement</option>
                   <option value="retraite">Retraité / Abattu</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date d'arrivée du lot</label>
+                <input 
+                  type="date"
+                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
+                  value={formData.startDate}
+                  onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                  required
+                />
               </div>
               <div className="flex gap-4 pt-4">
                 <button 

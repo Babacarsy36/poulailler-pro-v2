@@ -33,6 +33,16 @@ export function EggProduction() {
       setRecords(JSON.parse(saved));
     }
   }, [syncTrigger]);
+  
+  // Calculate females from inventory
+  const [totalFemales, setTotalFemales] = useState(0);
+  useEffect(() => {
+     const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
+     const females = chickens
+       .filter((c: any) => (!poultryType || c.poultryType === poultryType) && (!poultryBreed || c.breed === poultryBreed))
+       .reduce((sum: number, c: any) => sum + (parseInt(c.femaleCount) || 0), 0);
+     setTotalFemales(females);
+  }, [syncTrigger, poultryType, poultryBreed]);
 
   const saveRecords = (newRecords: EggRecord[]) => {
     setRecords(newRecords);
@@ -95,6 +105,45 @@ export function EggProduction() {
         </div>
         <div className={`absolute right-0 top-0 h-full w-2 ${isCaille ? "bg-babs-emerald" : "bg-babs-orange"} opacity-20`}></div>
       </div>
+
+      {/* Productivity Alert */}
+      {totalFemales > 0 && filteredRecords.length > 0 && (
+        <div className="animate-in slide-in-from-left duration-500">
+           {(() => {
+             const lastRecord = filteredRecords[0];
+             const rate = (lastRecord.quantity / totalFemales) * 100;
+             let tier: 'good' | 'average' | 'low' = 'good';
+             if (rate < 50) tier = 'low';
+             else if (rate < 70) tier = 'average';
+
+             return (
+               <div className={`p-6 rounded-[2rem] border-2 flex items-center gap-4 ${
+                 tier === 'good' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' :
+                 tier === 'average' ? 'bg-amber-50 border-amber-100 text-amber-800' :
+                 'bg-red-50 border-red-100 text-red-800'
+               }`}>
+                  <div className={`p-3 rounded-xl ${
+                    tier === 'good' ? 'bg-emerald-500' :
+                    tier === 'average' ? 'bg-amber-500' :
+                    'bg-red-500'
+                  } text-white shadow-lg`}>
+                    <TrendingUp className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Score de Productivité (Dernière récolte)</p>
+                    <p className="text-sm font-black leading-tight">
+                       {tier === 'good' ? '🚀 Excellente performance !' : 
+                        tier === 'average' ? '⚖️ Production correcte.' : 
+                        '⚠️ Attention : Production faible.'}
+                       <span className="ml-2 opacity-50 underline decoration-dotted">Taux : {rate.toFixed(1)}%</span>
+                    </p>
+                    <p className="text-[9px] font-bold opacity-60 mt-1">Basé sur {totalFemales} femelles actives.</p>
+                  </div>
+               </div>
+             )
+           })()}
+        </div>
+      )}
 
       {/* History List */}
       <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">

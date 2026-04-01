@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Bird, Egg, ShoppingCart, Heart, Calendar, ChevronRight, Bell, AlertTriangle, Info } from "lucide-react";
+import { Bird, Egg, ShoppingCart, Heart, Calendar, ChevronRight, Bell, AlertTriangle, Info, Database } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../AuthContext";
+import { SyncService } from "../SyncService";
 import { getDaysElapsed, getDayTip } from "./incubator/types";
 
 export function Dashboard() {
@@ -338,6 +339,22 @@ export function Dashboard() {
             </div>
           </button>
         </div>
+      </div>
+
+      {/* Test Data Integration */}
+      <div className="flex justify-center pb-8">
+        <button 
+          onClick={async () => {
+            if (window.confirm("⚠️ Générer des données de test ?\n\nCela va injecter un historique complet de volailles, œufs, finances et soins pour tester l'application. Vos données actuelles resteront en local mais pourront être mélangées.")) {
+              await SyncService.injectTestData();
+              window.location.reload();
+            }
+          }}
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gray-100/50 hover:bg-gray-200 text-gray-400 hover:text-babs-brown transition-all text-[10px] font-black uppercase tracking-widest"
+        >
+          <Database className="w-4 h-4" />
+          Générer des données de test
+        </button>
       </div>
     </div>
   );
