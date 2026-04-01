@@ -103,12 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (breed) localStorage.setItem('poultry_breed', breed);
         else localStorage.removeItem('poultry_breed');
 
+        // Fire-and-forget: don't block navigation
         if (user) {
-            await setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
+            setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
                 poultryType: type,
                 poultryBreed: breed,
                 lastUpdated: Date.now()
-            });
+            }).catch(() => {});
         }
     };
 
