@@ -34,6 +34,14 @@ function SelectionGuard() {
   return <Outlet />;
 }
 
+// Guard to ensure user is Pro
+function ProGuard() {
+  const { isPro, loading } = useAuth();
+  if (loading) return null;
+  if (!isPro) return <Navigate to="/?upgrade=true" replace />;
+  return <Outlet />;
+}
+
 async function loadIncubatorRoute() {
   const module = await import("./components/IncubatorManagement");
   return { Component: module.IncubatorManagement };
@@ -82,8 +90,13 @@ export const router = createBrowserRouter([
               { path: "eggs", Component: EggProduction },
               { path: "feed", lazy: loadFeedRoute },
               { path: "health", lazy: loadHealthRoute },
-              { path: "finances", lazy: loadFinancesRoute },
-              { path: "incubator", lazy: loadIncubatorRoute },
+              {
+                element: <ProGuard />,
+                children: [
+                  { path: "finances", lazy: loadFinancesRoute },
+                  { path: "incubator", lazy: loadIncubatorRoute },
+                ]
+              },
             ],
           },
         ],

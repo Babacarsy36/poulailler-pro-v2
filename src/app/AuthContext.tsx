@@ -18,6 +18,8 @@ interface AuthContextType {
     updatePoultrySelection: (type: PoultryType, breed: PoultryBreed) => void;
     clearSelection: () => void;
     isSyncing: boolean;
+    isPro: boolean;
+    togglePro: () => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [poultryBreed, setPoultryBreed] = useState<PoultryBreed>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isPro, setIsPro] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
     // Persist and apply theme
@@ -71,6 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         }
                     }
                 }).catch(err => console.error("Pref fetch failed:", err));
+
+                // Pull subscription status
+                getDoc(doc(db, 'users', currentUser.uid, 'settings', 'subscription')).then(subDoc => {
+                    if (subDoc.exists()) {
+                        setIsPro(subDoc.data().active === true);
+                    }
+                }).catch(() => {});
             }
             setLoading(false);
         });
@@ -119,6 +129,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPoultryBreed(null);
     };
 
+    const togglePro = async () => {
+        if (!user) return;
+        const newStatus = !isPro;
+        setIsPro(newStatus);
+        await setDoc(doc(db, 'users', user.uid, 'settings', 'subscription'), {
+            active: newStatus,
+            updatedAt: Date.now()
+        }, { merge: true });
+    };
+
     const logout = async () => {
         await signOut(auth);
         // CRITICAL: Prevent data leak between accounts by wiping all local data
@@ -139,6 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatePoultrySelection,
             clearSelection,
             isSyncing,
+            isPro,
+            togglePro,
             logout
         }}>
             {children}

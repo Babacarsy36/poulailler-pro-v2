@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { Logo } from "./Logo";
-import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, Sun, LogOut, Wallet, ChevronDown, Check, RefreshCw, CloudOff } from "lucide-react";
+import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, Sun, LogOut, Wallet, ChevronDown, Check, RefreshCw, Crown, Zap, Activity, Calculator, FlaskConical } from "lucide-react";
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useState } from "react";
@@ -8,7 +8,7 @@ import { useState } from "react";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, poultryBreed, updatePoultrySelection, user, logout, isDarkMode, toggleDarkMode, isSyncing } = useAuth();
+  const { poultryType, poultryBreed, updatePoultrySelection, user, logout, isDarkMode, toggleDarkMode, isSyncing, isPro, togglePro } = useAuth();
   
   const isCaille = poultryType === 'caille';
   const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
@@ -150,6 +150,11 @@ export function Layout() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {!isPro && (
+            <button onClick={togglePro} className="p-2 bg-amber-100 text-amber-600 rounded-xl">
+              <Crown className="w-5 h-5" />
+            </button>
+          )}
           <button 
             onClick={toggleDarkMode}
             className="p-2 transition-transform active:scale-95"
@@ -197,6 +202,17 @@ export function Layout() {
           </div>
 
           <div className="flex items-center gap-4">
+            {isPro && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-100">
+                <Crown className="w-3.5 h-3.5 fill-white" />
+                <span className="text-[10px] font-black uppercase tracking-widest">PRO</span>
+              </div>
+            )}
+            {!isPro && (
+              <button onClick={togglePro} className="text-[10px] font-black uppercase tracking-widest text-amber-500 border border-amber-500 px-3 py-1.5 rounded-full hover:bg-amber-50">
+                Upgrade
+              </button>
+            )}
             <button 
               onClick={toggleDarkMode}
               className="p-2 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-400 hover:text-babs-brown transition-colors group"
