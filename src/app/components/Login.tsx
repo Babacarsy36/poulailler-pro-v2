@@ -20,11 +20,29 @@ export function Login() {
         setLoading(true);
         setError('');
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            await signInWithEmailAndPassword(auth, email.trim(), password);
             navigate('/selection');
         } catch (err: any) {
-            setError('Identifiants incorrects ou problème de connexion.');
-            console.error(err);
+            console.error("Login Error Code:", err.code);
+            switch (err.code) {
+                case 'auth/user-not-found':
+                    setError("Aucun compte n'existe avec cet e-mail.");
+                    break;
+                case 'auth/wrong-password':
+                    setError("Le mot de passe que vous avez entré est incorrect.");
+                    break;
+                case 'auth/too-many-requests':
+                    setError("Trop de tentatives de connexion échouées. Compte temporairement bloqué par mesure de sécurité. Réessayez dans quelques minutes.");
+                    break;
+                case 'auth/invalid-credential':
+                    setError("Les informations de connexion sont incorrectes. Vérifiez votre e-mail ou votre mot de passe.");
+                    break;
+                case 'auth/network-request-failed':
+                    setError("Erreur réseau. Vérifiez votre connexion internet.");
+                    break;
+                default:
+                    setError("Erreur lors de la connexion. Vérifiez vos identifiants ou réinitialisez votre mot de passe.");
+            }
         } finally {
             setLoading(false);
         }
