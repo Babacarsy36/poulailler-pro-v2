@@ -16,7 +16,7 @@ import { AlertTriangle, Info, Bell } from 'lucide-react';
 type TabId = 'batches' | 'summary' | 'finances' | 'faq';
 
 export function IncubatorManagement() {
-  const { syncTrigger } = useAuth();
+  const { syncTrigger, saveData } = useAuth();
   const [batches, setBatches] = useState<IncubationBatch[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>('batches');
   const [speciesFilter, setSpeciesFilter] = useState<SpeciesKey | 'all'>('all');
@@ -48,28 +48,28 @@ export function IncubatorManagement() {
     if (saved) setBatches(JSON.parse(saved));
   }, [syncTrigger]);
 
-  const save = (updated: IncubationBatch[]) => {
+  const saveBatches = (updated: IncubationBatch[]) => {
     setBatches(updated);
-    SyncService.saveCollection('incubation', updated);
+    saveData('incubation', updated);
   };
 
   const handleSaveBatch = (b: IncubationBatch) => {
     const exists = batches.find(x => x.id === b.id);
     if (exists) {
-      save(batches.map(x => x.id === b.id ? b : x));
+      saveBatches(batches.map(x => x.id === b.id ? b : x));
     } else {
-      save([...batches, b]);
+      saveBatches([...batches, b]);
     }
     setWizardOpen(false);
     setEditBatch(null);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Supprimer ce lot ?')) save(batches.filter(b => b.id !== id));
+    if (confirm('Supprimer ce lot ?')) saveBatches(batches.filter(b => b.id !== id));
   };
 
   const handleDetailUpdate = (b: IncubationBatch) => {
-    save(batches.map(x => x.id === b.id ? b : x));
+    saveBatches(batches.map(x => x.id === b.id ? b : x));
     setDetailBatch(b);
     if (selectedBatch?.id === b.id) setSelectedBatch(b);
   };

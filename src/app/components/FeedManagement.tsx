@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus, Minus, ShoppingCart, Calendar, History, Package, Info, ArrowRight, CheckCircle, ThermometerSun, ThermometerSnowflake, Thermometer } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
+import { toast } from "sonner";
 
 interface FeedEntry {
   id: string;
@@ -66,7 +67,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { poultryType, poultryBreed, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allChickens, setAllChickens] = useState<any[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -137,7 +138,7 @@ export function FeedManagement() {
 
   const saveEntries = (newEntries: FeedEntry[]) => {
     setEntries(newEntries);
-    SyncService.saveCollection("feed", newEntries);
+    saveData("feed", newEntries);
   };
 
   const handleSaveRecipe = () => {

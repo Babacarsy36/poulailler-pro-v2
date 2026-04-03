@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { Logo } from "./Logo";
-import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, Sun, LogOut, Wallet, ChevronDown, Check, RefreshCw, Crown, Zap, Activity, Calculator, FlaskConical } from "lucide-react";
+import { LayoutDashboard, Egg, ShoppingCart, Bird, Heart, Moon, Sun, LogOut, Wallet, ChevronDown, Check, RefreshCw, Crown, Zap, Activity, Calculator, FlaskConical, Users } from "lucide-react";
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useState } from "react";
@@ -22,6 +22,7 @@ export function Layout() {
     { name: "ALIMENTATION", short: "Aliment", href: "/feed", icon: ShoppingCart },
     { name: "SANTÉ", short: "Santé", href: "/health", icon: Heart },
     { name: "FINANCES", short: "Finances", href: "/finances", icon: Wallet },
+    { name: "ÉQUIPE", short: "Équipe", href: "/team", icon: Users },
   ];
 
   const species = [

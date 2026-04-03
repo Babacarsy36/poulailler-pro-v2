@@ -4,16 +4,24 @@ import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation"];
 
 export const SyncService = {
+  // Helper to get correctly scoped doc ref
+  getDocRef(key: string, id: string, isFarm = false) {
+    if (isFarm) {
+      return doc(db, "farms", id, "collections", key);
+    }
+    return doc(db, "users", id, "collections", key);
+  },
+
   // Pushes local data to the cloud
-  async pushLocalToCloud(userId?: string) {
-    const uid = userId || auth.currentUser?.uid;
-    if (!uid) return;
+  async pushLocalToCloud(id?: string, isFarm = false) {
+    const targetId = id || auth.currentUser?.uid;
+    if (!targetId) return;
 
     for (const key of STORAGE_KEYS) {
       try {
         const localData = JSON.parse(localStorage.getItem(key) || "[]");
-        const userDocRef = doc(db, "users", uid, "collections", key);
-        await setDoc(userDocRef, { data: localData, lastUpdated: Date.now() });
+        const docRef = this.getDocRef(key, targetId, isFarm);
+        await setDoc(docRef, { data: localData, lastUpdated: Date.now() });
       } catch (err) {
         console.error(`Failed to push ${key} to cloud:`, err);
       }
@@ -21,14 +29,14 @@ export const SyncService = {
   },
 
   // Pulls cloud data to local storage
-  async pullCloudToLocal(userId?: string) {
-    const uid = userId || auth.currentUser?.uid;
-    if (!uid) return;
+  async pullCloudToLocal(id?: string, isFarm = false) {
+    const targetId = id || auth.currentUser?.uid;
+    if (!targetId) return;
 
     for (const key of STORAGE_KEYS) {
       try {
-        const userDocRef = doc(db, "users", uid, "collections", key);
-        const docSnap = await getDoc(userDocRef);
+        const docRef = this.getDocRef(key, targetId, isFarm);
+        const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           localStorage.setItem(key, JSON.stringify(docSnap.data().data));
         }
@@ -39,14 +47,14 @@ export const SyncService = {
   },
 
   // Subscribes to cloud changes
-  startRealtimeSync(onUpdate: () => void, userId?: string) {
-    const uid = userId || auth.currentUser?.uid;
-    if (!uid) return () => {};
+  startRealtimeSync(onUpdate: () => void, id?: string, isFarm = false) {
+    const targetId = id || auth.currentUser?.uid;
+    if (!targetId) return () => {};
 
     const unsubscribes = STORAGE_KEYS.map(key => {
-      return onSnapshot(doc(db, "users", uid, "collections", key), (docSnap) => {
+      const docRef = this.getDocRef(key, targetId, isFarm);
+      return onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists() && docSnap.metadata.hasPendingWrites === false) {
-           // Update local only if change comes from server
            localStorage.setItem(key, JSON.stringify(docSnap.data().data));
            onUpdate();
         }
@@ -57,20 +65,21 @@ export const SyncService = {
   },
 
   // Save utility to be used by components
-  async saveCollection(key: string, data: any[], userId?: string) {
+  async saveCollection(key: string, data: any[], id?: string, isFarm = false) {
     localStorage.setItem(key, JSON.stringify(data));
-    const uid = userId || auth.currentUser?.uid;
-    if (uid) {
-      const userDocRef = doc(db, "users", uid, "collections", key);
-      await setDoc(userDocRef, { data, lastUpdated: Date.now() });
+    const targetId = id || auth.currentUser?.uid;
+    if (targetId) {
+      const docRef = this.getDocRef(key, targetId, isFarm);
+      await setDoc(docRef, { data, lastUpdated: Date.now() });
     }
   },
 
   // Injects realistic test scenarios
-  async injectTestData(userId?: string) {
+  async injectTestData(id?: string, isFarm = false) {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
-    const uid = userId || auth.currentUser?.uid;
+    const targetId = id || auth.currentUser?.uid;
+    if (!targetId) return false;
 
     const testChickens = [
       { id: "test1", name: "Lot 01", poultryType: "poulet", breed: "Goliath", age: 4, ageUnit: "months", count: 120, femaleCount: 100, maleCount: 20, status: "active", startDate: new Date(now - 120 * day).toISOString().split('T')[0] },
@@ -107,12 +116,12 @@ export const SyncService = {
     ];
 
     // Bulk save
-    await this.saveCollection("chickens", testChickens, uid);
-    await this.saveCollection("eggs", testEggs, uid);
-    await this.saveCollection("feed", testFeed, uid);
-    await this.saveCollection("health", testHealth, uid);
-    await this.saveCollection("finances", testFinances, uid);
-    await this.saveCollection("incubation", testIncubation, uid);
+    await this.saveCollection("chickens", testChickens, targetId, isFarm);
+    await this.saveCollection("eggs", testEggs, targetId, isFarm);
+    await this.saveCollection("feed", testFeed, targetId, isFarm);
+    await this.saveCollection("health", testHealth, targetId, isFarm);
+    await this.saveCollection("finances", testFinances, targetId, isFarm);
+    await this.saveCollection("incubation", testIncubation, targetId, isFarm);
     
     return true;
   }

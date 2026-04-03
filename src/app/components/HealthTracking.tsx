@@ -60,7 +60,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
 }
 
 export function HealthTracking() {
-  const { poultryType, poultryBreed, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   
@@ -112,7 +112,7 @@ export function HealthTracking() {
 
   const saveRecords = (newRecords: HealthRecord[]) => {
     setRecords(newRecords);
-    SyncService.saveCollection("health", newRecords);
+    saveData("health", newRecords);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -169,7 +169,8 @@ export function HealthTracking() {
     { title: "Poudre de Moringa", desc: "Super-aliment, booster de croissance (Fer, Calcium).", usage: "Saupoudrer 1 cuillère à soupe rase (15g) par kilo d'aliment." },
     { title: "Ail", desc: "Antibiotique et antiviral naturel très puissant.", usage: "Écraser 1 grosse gousse par litre d'eau, laisser macérer 12h. Cure conseillée : 3 jours consécutifs." },
     { title: "Aloe Vera", desc: "Boisson (Immunité/Coryza) & Gel Externe (Soin des plaies).", usage: "Boisson: Mixer 1 c.à.s de gel pur pour 2L d'eau. Externe: Appliquer le gel pur sur les plaies de picage (très amer, éloigne les autres)." },
-    { title: "Papayer (Feuilles)", desc: "Vermifuge naturel et puissant anti-coccidiose.", usage: "Piler 2 grandes feuilles, macérer dans 1 Litre d'eau pdt 2h. Filtrer le jus pour le service." }
+    { title: "Papayer (Feuilles)", desc: "Vermifuge naturel et puissant anti-coccidiose.", usage: "Piler 2 grandes feuilles, macérer dans 1 Litre d'eau pdt 2h. Filtrer le jus pour le service." },
+    { title: "Khassou Xay (Caïlcédrat)", desc: "Écorce amère, puissant antibiotique et anti-parasitaire.", usage: "Faire bouillir un morceau d'écorce dans 1L d'eau (décoction). Ajouter 2 c.à.s de ce liquide par litre d'eau de boisson pdt 3j." }
   ];
 
   const currentProphylaxis = getProtocolsForBreed(selectedBreed);

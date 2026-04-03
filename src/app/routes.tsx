@@ -62,6 +62,11 @@ async function loadFinancesRoute() {
   return { Component: module.FinanceManagement };
 }
 
+async function loadTeamRoute() {
+  const module = await import("./components/TeamManagement");
+  return { Component: module.TeamManagement };
+}
+
 export const router = createBrowserRouter([
   {
     path: "/login",
@@ -95,6 +100,7 @@ export const router = createBrowserRouter([
                 children: [
                   { path: "finances", lazy: loadFinancesRoute },
                   { path: "incubator", lazy: loadIncubatorRoute },
+                  { path: "team", lazy: loadTeamRoute },
                 ]
               },
             ],

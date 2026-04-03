@@ -19,7 +19,7 @@ export type Transaction = {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { poultryType, syncTrigger, isPro } = useAuth();
+  const { poultryType, syncTrigger, isPro, role, saveData } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   
   // form states
@@ -55,7 +55,7 @@ export function FinanceManagement() {
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
     setTransactions(newTransactions);
-    await SyncService.saveCollection("finances", newTransactions);
+    await saveData("finances", newTransactions);
   };
 
   const handleAddTransaction = async (e: React.FormEvent) => {
@@ -137,6 +137,26 @@ export function FinanceManagement() {
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
   const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
   const currentCategories = type === 'expense' ? expenseCategories : incomeCategories;
+
+  if (role === 'worker') {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8 bg-white rounded-[2.5rem] shadow-premium border border-gray-50 border-dashed">
+         <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mb-6">
+            <Shield className="w-10 h-10" />
+         </div>
+         <h2 className="text-2xl font-black text-babs-brown uppercase tracking-tight mb-2">Accès Restreint</h2>
+         <p className="text-gray-400 font-bold max-w-xs text-sm leading-relaxed mb-8">
+            Désolé, votre rôle d'**Employé** ne vous permet pas de consulter les données financières de la ferme.
+         </p>
+         <button 
+           onClick={() => navigate("/")}
+           className="px-8 py-4 bg-babs-brown text-white rounded-2xl font-black shadow-lg hover:scale-105 transition-transform"
+         >
+            Retour au Tableau de Bord
+         </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, query, collection, where, getDocs, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 import { SyncService } from './SyncService';
 
@@ -12,7 +12,9 @@ interface AuthContextType {
     loading: boolean;
     poultryType: PoultryType;
     poultryBreed: PoultryBreed;
-    syncTrigger: number; // Used to tell components to re-read from localStorage
+    role: 'owner' | 'manager' | 'worker';
+    farmId: string | null;
+    syncTrigger: number;
     isDarkMode: boolean;
     toggleDarkMode: () => void;
     updatePoultrySelection: (type: PoultryType, breed: PoultryBreed) => void;
@@ -20,6 +22,7 @@ interface AuthContextType {
     isSyncing: boolean;
     isPro: boolean;
     togglePro: () => Promise<void>;
+    saveData: (key: string, data: any[]) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -33,6 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isPro, setIsPro] = useState(false);
+    const [role, setRole] = useState<'owner' | 'manager' | 'worker'>('owner');
+    const [farmId, setFarmId] = useState<string | null>(null);
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
     // Persist and apply theme
@@ -81,21 +86,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setIsPro(subDoc.data().active === true);
                     }
                 }).catch(() => {});
+
+                // Check for pending invitations before finalizing profile
+                const checkInvitations = async () => {
+                    if (!currentUser.email) return;
+                    const invQ = query(collection(db, "invitations"), 
+                        where("email", "==", currentUser.email.toLowerCase()), 
+                        where("status", "==", "pending")
+                    );
+                    const invSnap = await getDocs(invQ);
+                    
+                    if (!invSnap.empty) {
+                        const invitation = invSnap.docs[0].data();
+                        const invId = invSnap.docs[0].id;
+                        
+                        // Accept invitation: link user to farm
+                        await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'), {
+                            role: invitation.role,
+                            farmId: invitation.farmId,
+                            displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+                            updatedAt: Date.now()
+                        });
+                        
+                        // Mark invitation as accepted
+                        await updateDoc(doc(db, "invitations", invId), {
+                            status: 'accepted',
+                            acceptedAt: Date.now(),
+                            acceptedBy: currentUser.uid
+                        });
+                        
+                        return { role: invitation.role, farmId: invitation.farmId };
+                    }
+                    return null;
+                };
+
+                // Pull or Initialize Profile & FarmId
+                getDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile')).then(async (profDoc) => {
+                    let userRole = 'owner';
+                    let userFarmId = currentUser.uid;
+
+                    if (profDoc.exists()) {
+                        const data = profDoc.data();
+                        userRole = data.role || 'owner';
+                        userFarmId = data.farmId || currentUser.uid;
+                    } else {
+                        // Potential new invited user?
+                        const acceptedInvite = await checkInvitations();
+                        if (acceptedInvite) {
+                            userRole = acceptedInvite.role;
+                            userFarmId = acceptedInvite.farmId;
+                        } else {
+                            // Initialize new user as owner of their own farm
+                            await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'), {
+                                role: 'owner',
+                                farmId: currentUser.uid,
+                                displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+                                updatedAt: Date.now()
+                            });
+                        }
+                    }
+
+                    setRole(userRole as any);
+                    setFarmId(userFarmId);
+                    
+                    setIsSyncing(true);
+                    SyncService.pullCloudToLocal(userFarmId, userFarmId !== currentUser.uid).finally(() => {
+                        setIsSyncing(false);
+                        setSyncTrigger(prev => prev + 1);
+                    });
+                }).catch(() => {});
             }
             setLoading(false);
         });
         return () => unsubscribe();
     }, []);
 
-    // Start real-time sync when user is logged in
     useEffect(() => {
-        if (user) {
+        if (user && farmId) {
             const stopSync = SyncService.startRealtimeSync(() => {
                 setSyncTrigger(prev => prev + 1);
-            }, user.uid);
+            }, farmId, farmId !== user.uid);
             return () => stopSync();
         }
-    }, [user]);
+    }, [user, farmId]);
 
     // Load selection from localStorage on mount
     useEffect(() => {
@@ -127,6 +200,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clearSelection = () => {
         setPoultryType(null);
         setPoultryBreed(null);
+    };
+
+    const saveData = async (key: string, data: any[]) => {
+        const isFarm = !!farmId && farmId !== user?.uid;
+        const targetId = farmId || user?.uid;
+        if (targetId) {
+            await SyncService.saveCollection(key, data, targetId, isFarm);
+            setSyncTrigger(prev => prev + 1);
+        }
     };
 
     const togglePro = async () => {
@@ -161,6 +243,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isSyncing,
             isPro,
             togglePro,
+            saveData,
+            role,
+            farmId,
             logout
         }}>
             {children}

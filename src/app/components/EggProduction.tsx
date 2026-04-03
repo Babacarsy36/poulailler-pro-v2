@@ -13,7 +13,7 @@ interface EggRecord {
 }
 
 export function EggProduction() {
-  const { poultryType, poultryBreed, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -46,7 +46,7 @@ export function EggProduction() {
 
   const saveRecords = (newRecords: EggRecord[]) => {
     setRecords(newRecords);
-    SyncService.saveCollection("eggs", newRecords);
+    saveData("eggs", newRecords);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

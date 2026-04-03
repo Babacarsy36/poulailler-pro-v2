@@ -18,7 +18,7 @@ interface Chicken {
 }
 
 export function ChickenInventory() {
-  const { poultryType, poultryBreed, syncTrigger } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
@@ -109,7 +109,7 @@ export function ChickenInventory() {
 
   const saveChickens = (newChickens: Chicken[]) => {
     setChickens(newChickens);
-    SyncService.saveCollection("chickens", newChickens);
+    saveData("chickens", newChickens);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
