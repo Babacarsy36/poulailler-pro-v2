@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2, Printer } from "lucide-react";
+import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2, Printer, Crown, Info, Landmark, Receipt, Target } from "lucide-react";
 import { useAuth } from "../AuthContext";
+import { useNavigate } from "react-router";
 import { SyncService } from "../SyncService";
 import { toast } from "sonner";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -17,7 +18,8 @@ export type Transaction = {
 };
 
 export function FinanceManagement() {
-  const { poultryType, syncTrigger } = useAuth();
+  const navigate = useNavigate();
+  const { poultryType, syncTrigger, isPro } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   
   // form states
@@ -31,8 +33,8 @@ export function FinanceManagement() {
 
   const isCaille = poultryType === 'caille';
   const customColors = {
-    income: isCaille ? "#10b981" : "#eab308", // emerald or yellow
-    expense: "#ef4444", // red
+    income: isCaille ? "#10b981" : "#eab308",
+    expense: "#ef4444",
     accent: isCaille ? "var(--babs-emerald)" : "var(--babs-orange)",
     bgAccent: isCaille ? "bg-babs-emerald" : "bg-babs-orange",
     textAccent: isCaille ? "text-babs-emerald" : "text-babs-orange",
@@ -46,7 +48,7 @@ export function FinanceManagement() {
     const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
     const activeLots = chickens.filter((c: any) => c.status === 'active' || c.count > 0).map((c: any) => ({
        id: c.id,
-       name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)}`
+       name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
     }));
     setBatches(activeLots);
   }, [syncTrigger]);
@@ -98,7 +100,7 @@ export function FinanceManagement() {
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  // Chart Data Preparation (last 7 or 14 days grouped by date)
+  // Chart Data Preparation
   const chartDataMap: Record<string, any> = {};
   transactions.forEach(t => {
      if(!chartDataMap[t.date]) {
@@ -110,6 +112,27 @@ export function FinanceManagement() {
   
   const chartData = Object.values(chartDataMap).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  // Profitability per Lot
+  const lotStats = batches.map(batch => {
+    const batchTransactions = transactions.filter(t => t.batchId === batch.id);
+    const income = batchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = batchTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const profit = income - expense;
+    // Extract bird count from name (e.g. "Goliath (50u)")
+    const countMatch = batch.name.match(/\((\d+)u\)/);
+    const count = countMatch ? parseInt(countMatch[1]) : 1;
+    const costPerBird = count > 0 ? Math.round(expense / count) : 0;
+
+    return {
+      ...batch,
+      income,
+      expense,
+      profit,
+      costPerBird,
+      roi: expense > 0 ? Math.round((profit / expense) * 100) : 0
+    };
+  }).filter(l => l.income > 0 || l.expense > 0);
+
   // predefined categories
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
   const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
@@ -117,6 +140,18 @@ export function FinanceManagement() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
+          body { background: white !important; padding: 0 !important; }
+          .bg-white { border: none !important; shadow: none !important; }
+          .shadow-premium { box-shadow: none !important; border: 1px solid #eee !important; }
+          canvas { max-width: 100% !important; height: auto !important; }
+        }
+        .print-only { display: none; }
+      `}</style>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">Finances</h2>
@@ -134,14 +169,6 @@ export function FinanceManagement() {
 
       {/* Print-only Header */}
       <div className="print-only mb-8 border-b-2 border-gray-100 pb-6 w-full">
-        <h1 className="text-3xl font-black text-black">POULAILLER PRO - RAPPORT FINANCIER</h1>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
-          Généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
-
-      {/* Print-only Header */}
-      <div className="print-only mb-8 border-b-2 border-gray-100 pb-6">
         <h1 className="text-3xl font-black text-black">POULAILLER PRO - RAPPORT FINANCIER</h1>
         <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
           Généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -180,7 +207,7 @@ export function FinanceManagement() {
           
           {/* Add form */}
           <div className="lg:col-span-1 space-y-6">
-             <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
+             <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 no-print">
                <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Enregistrer</h3>
                
                <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
@@ -272,50 +299,147 @@ export function FinanceManagement() {
           <div className="lg:col-span-2 space-y-6">
               {/* Chart */}
               <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
-                 <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Évolution</h3>
+                 <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Évolution Financière</h3>
                  <div className="h-64 w-full">
-                   {chartData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                            </linearGradient>
-                            <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                          <XAxis 
-                            dataKey="date" 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
-                            tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day:'numeric', month: 'short' })}
-                          />
-                          <YAxis 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
-                            tickFormatter={(val) => val >= 1000 ? `${val/1000}k` : val}
-                          />
-                          <Tooltip 
-                            contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                            labelStyle={{ fontWeight: 'bold', color: '#4b5563' }}
-                            formatter={(value: number) => [`${value} F`, undefined]}
-                          />
-                          <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
-                          <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                   ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                         <p className="text-gray-400 font-bold text-sm">Pas encore de données</p>
-                      </div>
-                   )}
+                    {chartData.length > 0 ? (
+                       <ResponsiveContainer width="100%" height="100%">
+                         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                           <defs>
+                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                               <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                               <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                             </linearGradient>
+                             <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                               <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                               <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                             </linearGradient>
+                           </defs>
+                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                           <XAxis 
+                             dataKey="date" 
+                             axisLine={false}
+                             tickLine={false}
+                             tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
+                             tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day:'numeric', month: 'short' })}
+                           />
+                           <YAxis 
+                             axisLine={false}
+                             tickLine={false}
+                             tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
+                             tickFormatter={(val) => val >= 1000 ? `${val/1000}k` : val}
+                           />
+                           <Tooltip 
+                             contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                             labelStyle={{ fontWeight: 'bold', color: '#4b5563' }}
+                             formatter={(value: number) => [`${value} F`, undefined]}
+                           />
+                           <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+                           <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
+                         </AreaChart>
+                       </ResponsiveContainer>
+                    ) : (
+                       <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                          <p className="text-gray-400 font-bold text-sm">Pas encore de données</p>
+                       </div>
+                    )}
                  </div>
+              </div>
+
+              {/* Advanced Analytics (Batch Profitability) - PRO Only */}
+              <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden">
+                <div className="flex items-center justify-between mb-8 px-2">
+                   <div className="flex items-center gap-3">
+                      <div className={`p-4 rounded-2xl ${customColors.bgAccent} text-white shadow-xl`}>
+                        <Landmark className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-babs-brown tracking-tight">Analyse par Lot</h3>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Rentabilité du cheptel</p>
+                      </div>
+                   </div>
+                   {!isPro && (
+                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-600">
+                       <Crown className="w-3.5 h-3.5" />
+                       <span className="text-[10px] font-black uppercase tracking-widest">PRO</span>
+                     </div>
+                   )}
+                </div>
+
+                <div className={`space-y-4 ${!isPro ? 'blur-sm grayscale opacity-30 select-none' : ''}`}>
+                   {lotStats.length === 0 ? (
+                     <div className="py-12 text-center bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100 flex flex-col items-center">
+                        <Info className="w-12 h-12 text-gray-300 mb-2" />
+                        <p className="text-gray-400 font-bold text-xs">Associez vos transactions à des lots pour voir la rentabilité.</p>
+                     </div>
+                   ) : (
+                     <div className="space-y-4">
+                       <div className="hidden lg:grid grid-cols-5 gap-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                          <span className="col-span-1">Désignation du Lot</span>
+                          <span className="text-center">Dépenses</span>
+                          <span className="text-center">Revenus</span>
+                          <span className="text-center">Marge Net</span>
+                          <span className="text-right">Statut ROI</span>
+                       </div>
+                       
+                       {lotStats.map(stat => (
+                         <div key={stat.id} className="p-6 rounded-3xl border border-gray-50 bg-gray-50/20 hover:bg-white hover:shadow-md transition-all flex flex-col lg:grid lg:grid-cols-5 gap-4 items-center">
+                            <div className="col-span-1 w-full lg:w-auto text-center lg:text-left">
+                               <p className="font-black text-babs-brown text-base truncate">{stat.name}</p>
+                               <div className="flex items-center justify-center lg:justify-start gap-2 mt-1">
+                                  <Receipt className="w-3 h-3 text-gray-300" />
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Coût/sujet: {stat.costPerBird.toLocaleString()} F</p>
+                               </div>
+                            </div>
+                            <div className="flex lg:block flex-col items-center text-center">
+                               <p className="text-[8px] lg:hidden text-gray-400 font-bold uppercase mb-1">Dépenses</p>
+                               <p className="font-bold text-red-500">{stat.expense.toLocaleString()} F</p>
+                            </div>
+                            <div className="flex lg:block flex-col items-center text-center">
+                               <p className="text-[8px] lg:hidden text-gray-400 font-bold uppercase mb-1">Revenus</p>
+                               <p className="font-bold text-green-500">{stat.income.toLocaleString()} F</p>
+                            </div>
+                            <div className="flex lg:block flex-col items-center text-center">
+                               <p className="text-[8px] lg:hidden text-gray-400 font-bold uppercase mb-1">Net</p>
+                               <p className={`font-black ${stat.profit >= 0 ? 'text-babs-brown' : 'text-red-600'}`}>
+                                  {stat.profit > 0 ? '+' : ''}{stat.profit.toLocaleString()} F
+                               </p>
+                            </div>
+                            <div className="w-full lg:w-auto text-right flex justify-center lg:justify-end">
+                               <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 shadow-sm ${
+                                 stat.roi >= 20 ? 'bg-emerald-500 text-white' : 
+                                 stat.roi >= 0 ? 'bg-amber-500 text-white' : 
+                                 'bg-red-500 text-white'
+                               }`}>
+                                 <span className="text-[10px] font-black">{stat.roi}% ROI</span>
+                               </div>
+                            </div>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                </div>
+
+                {!isPro && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/5 backdrop-blur-[1px]">
+                    <div className="bg-white/95 backdrop-blur-2xl p-10 rounded-[3rem] shadow-2xl border border-white flex flex-col items-center text-center space-y-6 max-w-sm">
+                        <div className="w-20 h-20 bg-gradient-to-br from-amber-300 to-orange-500 rounded-3xl flex items-center justify-center shadow-2xl rotate-3">
+                          <Crown className="w-12 h-12 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="text-2xl font-black text-babs-brown">Analyses Financières PRO</h4>
+                          <p className="text-xs text-gray-400 font-bold leading-relaxed mt-2 px-2">
+                             Visualisez la rentabilité exacte de chaque lot pour optimiser vos revenus.
+                          </p>
+                        </div>
+                        <button 
+                           onClick={() => navigate('/?upgrade=true')}
+                           className="w-full py-5 bg-babs-orange text-white rounded-[1.5rem] font-black shadow-xl"
+                        >
+                           Devenir Membre PRO 🚀
+                        </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* History */}
