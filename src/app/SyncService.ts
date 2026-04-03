@@ -1,18 +1,18 @@
 import { db, auth } from "./firebaseConfig";
-import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 
 const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation"];
 
 export const SyncService = {
   // Pushes local data to the cloud
-  async pushLocalToCloud() {
-    const user = auth.currentUser;
-    if (!user) return;
+  async pushLocalToCloud(userId?: string) {
+    const uid = userId || auth.currentUser?.uid;
+    if (!uid) return;
 
     for (const key of STORAGE_KEYS) {
       try {
         const localData = JSON.parse(localStorage.getItem(key) || "[]");
-        const userDocRef = doc(db, "users", user.uid, "collections", key);
+        const userDocRef = doc(db, "users", uid, "collections", key);
         await setDoc(userDocRef, { data: localData, lastUpdated: Date.now() });
       } catch (err) {
         console.error(`Failed to push ${key} to cloud:`, err);
@@ -21,13 +21,13 @@ export const SyncService = {
   },
 
   // Pulls cloud data to local storage
-  async pullCloudToLocal() {
-    const user = auth.currentUser;
-    if (!user) return;
+  async pullCloudToLocal(userId?: string) {
+    const uid = userId || auth.currentUser?.uid;
+    if (!uid) return;
 
     for (const key of STORAGE_KEYS) {
       try {
-        const userDocRef = doc(db, "users", user.uid, "collections", key);
+        const userDocRef = doc(db, "users", uid, "collections", key);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           localStorage.setItem(key, JSON.stringify(docSnap.data().data));
@@ -39,12 +39,12 @@ export const SyncService = {
   },
 
   // Subscribes to cloud changes
-  startRealtimeSync(onUpdate: () => void) {
-    const user = auth.currentUser;
-    if (!user) return () => {};
+  startRealtimeSync(onUpdate: () => void, userId?: string) {
+    const uid = userId || auth.currentUser?.uid;
+    if (!uid) return () => {};
 
     const unsubscribes = STORAGE_KEYS.map(key => {
-      return onSnapshot(doc(db, "users", user.uid, "collections", key), (docSnap) => {
+      return onSnapshot(doc(db, "users", uid, "collections", key), (docSnap) => {
         if (docSnap.exists() && docSnap.metadata.hasPendingWrites === false) {
            // Update local only if change comes from server
            localStorage.setItem(key, JSON.stringify(docSnap.data().data));
@@ -57,19 +57,20 @@ export const SyncService = {
   },
 
   // Save utility to be used by components
-  async saveCollection(key: string, data: any[]) {
+  async saveCollection(key: string, data: any[], userId?: string) {
     localStorage.setItem(key, JSON.stringify(data));
-    const user = auth.currentUser;
-    if (user) {
-      const userDocRef = doc(db, "users", user.uid, "collections", key);
+    const uid = userId || auth.currentUser?.uid;
+    if (uid) {
+      const userDocRef = doc(db, "users", uid, "collections", key);
       await setDoc(userDocRef, { data, lastUpdated: Date.now() });
     }
   },
 
   // Injects realistic test scenarios
-  async injectTestData() {
+  async injectTestData(userId?: string) {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
+    const uid = userId || auth.currentUser?.uid;
 
     const testChickens = [
       { id: "test1", name: "Lot 01", poultryType: "poulet", breed: "Goliath", age: 4, ageUnit: "months", count: 120, femaleCount: 100, maleCount: 20, status: "active", startDate: new Date(now - 120 * day).toISOString().split('T')[0] },
@@ -106,12 +107,12 @@ export const SyncService = {
     ];
 
     // Bulk save
-    await this.saveCollection("chickens", testChickens);
-    await this.saveCollection("eggs", testEggs);
-    await this.saveCollection("feed", testFeed);
-    await this.saveCollection("health", testHealth);
-    await this.saveCollection("finances", testFinances);
-    await this.saveCollection("incubation", testIncubation);
+    await this.saveCollection("chickens", testChickens, uid);
+    await this.saveCollection("eggs", testEggs, uid);
+    await this.saveCollection("feed", testFeed, uid);
+    await this.saveCollection("health", testHealth, uid);
+    await this.saveCollection("finances", testFinances, uid);
+    await this.saveCollection("incubation", testIncubation, uid);
     
     return true;
   }

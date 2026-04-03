@@ -53,9 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                // Background cloud pull - don't block the UI
+                // Background cloud pull - pass UID explicitly to avoid race conditions
                 setIsSyncing(true);
-                SyncService.pullCloudToLocal().finally(() => {
+                SyncService.pullCloudToLocal(currentUser.uid).finally(() => {
                     setIsSyncing(false);
                     setSyncTrigger(prev => prev + 1);
                 });
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
             const stopSync = SyncService.startRealtimeSync(() => {
                 setSyncTrigger(prev => prev + 1);
-            });
+            }, user.uid);
             return () => stopSync();
         }
     }, [user]);
