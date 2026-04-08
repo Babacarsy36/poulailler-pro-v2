@@ -172,61 +172,64 @@ export function FinanceManagement() {
         </div>
       </div>
 
-      {/* Balance Hero */}
-      <div className={`clean-card rounded-2xl p-5 border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'} relative overflow-hidden`}>
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Solde Total</p>
-        <p className={`font-['JetBrains_Mono'] text-4xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
-          {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-base text-gray-400 font-normal">FCFA</span>
-        </p>
-        <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
-          <div>
-            <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Recettes</p>
-            <p className="font-['JetBrains_Mono'] text-sm font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
-          </div>
-          <div className="w-px bg-gray-100"></div>
-          <div>
-            <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Dépenses</p>
-            <p className="font-['JetBrains_Mono'] text-sm font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
+      {/* Balance & Chart Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Balance Hero */}
+        <div className={`clean-card rounded-2xl p-5 border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'} relative overflow-hidden flex flex-col justify-center`}>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Solde Total</p>
+          <p className={`font-['JetBrains_Mono'] text-4xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
+            {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-base text-gray-400 font-normal">FCFA</span>
+          </p>
+          <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
+            <div>
+              <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Recettes</p>
+              <p className="font-['JetBrains_Mono'] text-sm font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
+            </div>
+            <div className="w-px bg-gray-100"></div>
+            <div>
+              <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Dépenses</p>
+              <p className="font-['JetBrains_Mono'] text-sm font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Chart */}
-      {chartData.length > 0 && (
-        <div className="clean-card rounded-3xl p-5 select-none">
-          <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4">Évolution Financière</h2>
-          <div className="h-[120px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="finIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2}></stop>
-                    <stop offset="100%" stopColor="#22c55e" stopOpacity={0.0}></stop>
-                  </linearGradient>
-                  <linearGradient id="finExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}></stop>
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.0}></stop>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 9, fill: '#9ca3af' }}
-                  tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: '16px', border: '1px solid #F3F4F6', fontSize: '10px', fontFamily: 'DM Sans' }}
-                  formatter={(value: number) => [`${value.toLocaleString()} F`, undefined]}
-                />
-                <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={2} fill="url(#finIncome)" />
-                <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={2} fill="url(#finExpense)" />
-              </AreaChart>
-            </ResponsiveContainer>
+        {/* Chart */}
+        {chartData.length > 0 && (
+          <div className="clean-card rounded-3xl p-5 select-none h-full">
+            <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4">Évolution Financière</h2>
+            <div className="h-[120px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="finIncome" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2}></stop>
+                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0.0}></stop>
+                    </linearGradient>
+                    <linearGradient id="finExpense" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}></stop>
+                      <stop offset="100%" stopColor="#ef4444" stopOpacity={0.0}></stop>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 9, fill: '#9ca3af' }}
+                    tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '16px', border: '1px solid #F3F4F6', fontSize: '10px', fontFamily: 'DM Sans' }}
+                    formatter={(value: number) => [`${value.toLocaleString()} F`, undefined]}
+                  />
+                  <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={2} fill="url(#finIncome)" />
+                  <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={2} fill="url(#finExpense)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Analyse par Lot (PRO) */}
       <div className="relative">

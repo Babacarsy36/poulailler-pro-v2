@@ -29,12 +29,12 @@ export function Layout() {
 
   return (
     <div className={`flex justify-center min-h-screen w-full transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950' : 'bg-[#E5E7EB]'}`}>
-      {/* Mobile App Wrapper */}
-      <div className={`w-full max-w-md relative shadow-2xl flex flex-col h-screen overflow-hidden font-['DM_Sans'] transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900 text-zinc-100' : 'bg-[#F9FAFB] text-gray-900'}`}>
+      {/* App Container */}
+      <div className={`w-full relative shadow-2xl flex flex-col min-h-screen font-['DM_Sans'] transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900 text-zinc-100' : 'bg-[#F9FAFB] text-gray-900'}`}>
           
-        {/* Top Header */}
-        <header className={`absolute top-0 inset-x-0 z-40 backdrop-blur-md border-b pt-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
-            <div className="flex items-center justify-between px-4 h-16">
+        {/* Top Header - Fixed */}
+        <header className={`fixed top-0 inset-x-0 z-40 backdrop-blur-md border-b pt-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
+            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4 h-16">
                 {/* Logo & Indicator */}
                 <div className="flex items-center gap-2">
                     <span className={`font-['Syne'] font-medium text-lg tracking-tight ${isDarkMode ? 'text-zinc-100' : 'text-gray-900'}`}>PLP</span>
@@ -43,7 +43,7 @@ export function Layout() {
 
                 {/* Species Switcher */}
                 <div className="flex-1 overflow-x-auto no-scrollbar mx-3 select-none">
-                    <div className="flex gap-2 w-max">
+                    <div className="flex gap-2 w-max mx-auto">
                         {speciesList.map((s) => {
                             const isActive = (!poultryType && s.id === 'poulet') || s.id === poultryType;
                             return (
@@ -76,7 +76,6 @@ export function Layout() {
 
                 {/* Actions: Dark Mode + Notifications */}
                 <div className="flex items-center gap-1 shrink-0">
-                  {/* Dark Mode Toggle */}
                   <button
                     onClick={toggleDarkMode}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
@@ -84,14 +83,9 @@ export function Layout() {
                         ? 'bg-zinc-800 text-amber-400 hover:bg-zinc-700' 
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
-                    aria-label="Basculer le mode sombre"
                   >
-                    <iconify-icon 
-                      icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} 
-                      class="text-lg"
-                    ></iconify-icon>
+                    <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-lg"></iconify-icon>
                   </button>
-                  {/* Notifications */}
                   <div className="relative">
                     <NotificationCenter />
                   </div>
@@ -99,14 +93,14 @@ export function Layout() {
             </div>
         </header>
 
-        {/* Main Content (Scrollable) */}
-        <main className="flex-1 overflow-y-auto no-scrollbar pt-20 pb-28 px-4 scroll-smooth">
+        {/* Main Content - Centered max-width */}
+        <main className="flex-1 w-full max-w-5xl mx-auto pt-20 pb-28 px-4 scroll-smooth min-h-screen">
             <Outlet />
         </main>
 
-        {/* Bottom Navigation */}
-        <nav className={`absolute bottom-0 inset-x-0 z-50 backdrop-blur-md border-t pb-safe select-none transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800 shadow-[0_-1px_3px_rgba(0,0,0,0.2)]' : 'bg-white/90 border-gray-200 shadow-[0_-1px_3px_rgba(0,0,0,0.02)]'}`}>
-            <div className="flex justify-around items-center h-20 px-2 pb-2">
+        {/* Bottom Navigation - Fixed */}
+        <nav className={`fixed bottom-0 inset-x-0 z-50 backdrop-blur-md border-t pb-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]' : 'bg-white/90 border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]'}`}>
+            <div className="max-w-lg mx-auto flex justify-around items-center h-20 px-2 pb-2">
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     return (

@@ -218,50 +218,48 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* KPIs Horizontal Scroll */}
-      <div className="-mx-4 px-4 overflow-x-auto no-scrollbar select-none">
-          <div className="flex gap-4 w-max pb-2">
-              {/* KPI 1 : Effectif Global */}
-              <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform" onClick={() => navigate('/inventory')}>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-                      <iconify-icon icon="solar:users-group-rounded-linear" stroke-width="1.5" className="text-xl text-indigo-500"></iconify-icon>
-                      <span className="truncate font-medium">{poultryType ? "Effectif" : "Effectif Total"}</span>
-                  </div>
-                  <div>
-                      <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{stats.totalChickens}</div>
-                      <div className="text-xs text-indigo-700 font-medium tracking-tight bg-indigo-50 inline-block px-1.5 py-0.5 rounded truncate max-w-[110px]">
-                        {stats.breakdown}
-                      </div>
+      {/* KPIs Section */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {/* KPI 1 : Effectif Global */}
+          <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/inventory')}>
+              <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+                  <iconify-icon icon="solar:users-group-rounded-linear" stroke-width="1.5" className="text-xl text-indigo-500"></iconify-icon>
+                  <span className="truncate font-medium">{poultryType ? "Effectif" : "Effectif Total"}</span>
+              </div>
+              <div>
+                  <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{stats.totalChickens}</div>
+                  <div className="text-xs text-indigo-700 font-medium tracking-tight bg-indigo-50 inline-block px-1.5 py-0.5 rounded truncate max-w-full">
+                    {stats.breakdown}
                   </div>
               </div>
+          </div>
 
-              {/* KPI 2 : Ponte / Récolte */}
-              {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
-                <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-emerald-500 hover:scale-105 transition-transform" onClick={() => navigate('/eggs')}>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-                        <iconify-icon icon="solar:record-circle-linear" stroke-width="1.5" className="text-xl text-emerald-500"></iconify-icon>
-                        <span className="truncate font-medium">Production</span>
-                    </div>
-                    <div>
-                        <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{poultryType ? `${stats.layingRate}%` : `${stats.eggsToday}`}</div>
-                        <div className="text-xs text-emerald-700 font-medium tracking-tight bg-emerald-50 inline-block px-1.5 py-0.5 rounded truncate max-w-[110px]">
-                          {poultryType ? stats.layingRateLabel : "œufs récoltés"}
-                        </div>
+          {/* KPI 2 : Ponte / Récolte */}
+          {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
+            <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-emerald-500 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/eggs')}>
+                <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+                    <iconify-icon icon="solar:record-circle-linear" stroke-width="1.5" className="text-xl text-emerald-500"></iconify-icon>
+                    <span className="truncate font-medium">Production</span>
+                </div>
+                <div>
+                    <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{poultryType ? `${stats.layingRate}%` : `${stats.eggsToday}`}</div>
+                    <div className="text-xs text-emerald-700 font-medium tracking-tight bg-emerald-50 inline-block px-1.5 py-0.5 rounded truncate max-w-full">
+                      {poultryType ? stats.layingRateLabel : "œufs récoltés"}
                     </div>
                 </div>
-              )}
+            </div>
+          )}
 
-              {/* KPI 3 : Stock Aliment */}
-              <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-orange-500 hover:scale-105 transition-transform" onClick={() => navigate('/feed')}>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-                      <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" className="text-xl text-orange-500"></iconify-icon>
-                      <span className="truncate font-medium">Stock Aliment</span>
-                  </div>
-                  <div>
-                      <div className="font-['JetBrains_Mono'] text-xl tracking-tight text-gray-900 mb-1 font-medium">{Math.round(stats.feedRemaining)} <span className="text-xs text-gray-400 font-normal">kg</span></div>
-                      <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${stats.feedAutonomy < 5 ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'}`}>
-                        {stats.feedAutonomy === Infinity ? 'Non calculé' : `${stats.feedAutonomy}j d'autonomie`}
-                      </div>
+          {/* KPI 3 : Stock Aliment */}
+          <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-orange-500 hover:scale-105 transition-transform cursor-pointer col-span-2 md:col-span-1" onClick={() => navigate('/feed')}>
+              <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+                  <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" className="text-xl text-orange-500"></iconify-icon>
+                  <span className="truncate font-medium">Stock Aliment</span>
+              </div>
+              <div>
+                  <div className="font-['JetBrains_Mono'] text-xl tracking-tight text-gray-900 mb-1 font-medium">{Math.round(stats.feedRemaining)} <span className="text-xs text-gray-400 font-normal">kg</span></div>
+                  <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${stats.feedAutonomy < 5 ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'}`}>
+                    {stats.feedAutonomy === Infinity ? 'Non calculé' : `${stats.feedAutonomy}j d'autonomie`}
                   </div>
               </div>
           </div>
@@ -271,7 +269,7 @@ export function Dashboard() {
       {!poultryType && stats.globalBreakdown && stats.globalBreakdown.length > 0 && (
         <div className="clean-card rounded-3xl p-5 select-none">
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Répartition Globale</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {stats.globalBreakdown.map((item) => (
               <div key={item.type} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100/50">
                 <div className="flex items-center gap-4">
