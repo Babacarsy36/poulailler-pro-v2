@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2, Printer, Crown, Info, Landmark, Receipt, Target } from "lucide-react";
+import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2, Printer, Crown, Info, Landmark, Receipt, Shield } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router";
 import { SyncService } from "../SyncService";
+import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useForm } from "react-hook-form";
+import { Chicken } from "../types";
 
 export type Transaction = {
   id: string;
@@ -15,21 +18,40 @@ export type Transaction = {
   date: string;
   batchId?: string;
   batchName?: string;
+  updatedAt?: number;
 };
+
+interface FinanceFormData {
+  type: 'income' | 'expense';
+  amount: string;
+  category: string;
+  description: string;
+  date: string;
+  selectedBatchId: string;
+}
 
 export function FinanceManagement() {
   const navigate = useNavigate();
   const { poultryType, syncTrigger, isPro, role, saveData } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  
-  // form states
-  const [type, setType] = useState<'income' | 'expense'>('expense');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedBatchId, setSelectedBatchId] = useState<string>('none');
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
+
+  const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
+  const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
+
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FinanceFormData>({
+    defaultValues: {
+      type: 'expense',
+      amount: '',
+      category: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0],
+      selectedBatchId: 'none',
+    }
+  });
+
+  const formType = watch('type');
+  const currentCategories = formType === 'expense' ? expenseCategories : incomeCategories;
 
   const isCaille = poultryType === 'caille';
   const customColors = {
@@ -41,12 +63,11 @@ export function FinanceManagement() {
   };
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("finances") || "[]");
+    const data = StorageService.getItem<Transaction[]>("finances") || [];
     setTransactions(data);
     
-    // Fetch chickens to link lots
-    const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
-    const activeLots = chickens.filter((c: any) => c.status === 'active' || c.count > 0).map((c: any) => ({
+    const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
+    const activeLots = chickens.filter((c: Chicken) => c.status === 'active' || Number(c.count) > 0).map((c: Chicken) => ({
        id: c.id,
        name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
     }));
@@ -58,32 +79,33 @@ export function FinanceManagement() {
     await saveData("finances", newTransactions);
   };
 
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      toast.error("Veuillez entrer un montant valide.");
-      return;
-    }
-
-    const currentCategories = type === 'expense' ? expenseCategories : incomeCategories;
-    const finalCategory = category || currentCategories[0];
+  const onFormSubmit = async (data: FinanceFormData) => {
+    const now = Date.now();
+    const finalCategory = data.category || currentCategories[0];
 
     const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      type,
-      amount: Number(amount),
+      id: now.toString(),
+      type: data.type,
+      amount: Number(data.amount),
       category: finalCategory,
-      description,
-      date,
-      batchId: selectedBatchId === 'none' ? undefined : selectedBatchId,
-      batchName: selectedBatchId === 'none' ? undefined : batches.find(b => b.id === selectedBatchId)?.name
+      description: data.description,
+      date: data.date,
+      batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
+      batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
+      updatedAt: now
     };
 
     const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     await saveTransactions(newTransactions);
     
-    setAmount('');
-    setDescription('');
+    reset({
+      type: data.type,
+      amount: '',
+      category: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0],
+      selectedBatchId: 'none',
+    });
     toast.success("Transaction enregistrée !");
   };
 
@@ -95,12 +117,10 @@ export function FinanceManagement() {
     }
   };
 
-  // Stats
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  // Chart Data Preparation
   const chartDataMap: Record<string, any> = {};
   transactions.forEach(t => {
      if(!chartDataMap[t.date]) {
@@ -112,13 +132,11 @@ export function FinanceManagement() {
   
   const chartData = Object.values(chartDataMap).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Profitability per Lot
   const lotStats = batches.map(batch => {
     const batchTransactions = transactions.filter(t => t.batchId === batch.id);
     const income = batchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const expense = batchTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const profit = income - expense;
-    // Extract bird count from name (e.g. "Goliath (50u)")
     const countMatch = batch.name.match(/\((\d+)u\)/);
     const count = countMatch ? parseInt(countMatch[1]) : 1;
     const costPerBird = count > 0 ? Math.round(expense / count) : 0;
@@ -132,11 +150,6 @@ export function FinanceManagement() {
       roi: expense > 0 ? Math.round((profit / expense) * 100) : 0
     };
   }).filter(l => l.income > 0 || l.expense > 0);
-
-  // predefined categories
-  const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
-  const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
-  const currentCategories = type === 'expense' ? expenseCategories : incomeCategories;
 
   if (role === 'worker') {
     return (
@@ -187,7 +200,6 @@ export function FinanceManagement() {
         </button>
       </div>
 
-      {/* Print-only Header */}
       <div className="print-only mb-8 border-b-2 border-gray-100 pb-6 w-full">
         <h1 className="text-3xl font-black text-black">POULAILLER PRO - RAPPORT FINANCIER</h1>
         <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
@@ -195,7 +207,6 @@ export function FinanceManagement() {
         </p>
       </div>
 
-       {/* Summaries */}
        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-white rounded-[2rem] p-6 shadow-premium border border-gray-50 flex flex-col justify-center relative overflow-hidden group hover:scale-[1.02] transition-transform">
              <div className="absolute top-6 right-6 p-3 bg-gray-50 rounded-2xl group-hover:scale-110 transition-transform">
@@ -222,47 +233,43 @@ export function FinanceManagement() {
           </div>
        </div>
 
-       {/* Main grids */}
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Add form */}
           <div className="lg:col-span-1 space-y-6">
              <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 no-print">
                <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Enregistrer</h3>
                
                <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
                   <button 
-                    onClick={() => { setType('expense'); setCategory(''); }}
-                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${type === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    onClick={() => { setValue('type', 'expense'); setValue('category', ''); }}
+                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${formType === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
                   >
                     Dépense
                   </button>
                   <button 
-                    onClick={() => { setType('income'); setCategory(''); }}
-                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${type === 'income' ? `bg-white shadow-sm text-green-500` : 'text-gray-400 hover:text-gray-600'}`}
+                    onClick={() => { setValue('type', 'income'); setValue('category', ''); }}
+                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${formType === 'income' ? `bg-white shadow-sm text-green-500` : 'text-gray-400 hover:text-gray-600'}`}
                   >
                     Recette
                   </button>
                </div>
 
-               <form onSubmit={handleAddTransaction} className="space-y-4">
+               <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Montant (FCFA)</label>
                     <input 
                       type="number"
-                      required
-                      value={amount}
-                      onChange={e => setAmount(e.target.value)}
-                      className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all"
+                      className={`w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all ${errors.amount ? 'ring-2 ring-red-500' : ''}`}
                       placeholder="Ex: 5000"
+                      {...register("amount", { required: "Montant requis", min: 1 })}
                     />
+                    {errors.amount && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.amount.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Catégorie</label>
                     <select
-                      value={category}
-                      onChange={e => setCategory(e.target.value)}
-                      className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all appearance-none"
+                      className={`w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all appearance-none ${errors.category ? 'ring-2 ring-red-500' : ''}`}
+                      {...register("category", { required: "Catégorie requise" })}
                     >
                        <option value="" disabled>Sélectionner...</option>
                        {currentCategories.map(cat => (
@@ -274,29 +281,25 @@ export function FinanceManagement() {
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Description / Note</label>
                     <input 
                       type="text"
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
                       className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all"
                       placeholder="Facultatif"
+                      {...register("description")}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date</label>
                     <input 
                       type="date"
-                      required
-                      value={date}
-                      onChange={e => setDate(e.target.value)}
                       className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all"
+                      {...register("date", { required: true })}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Lier à un lot (Optionnel)</label>
                     <select
-                      value={selectedBatchId}
-                      onChange={e => setSelectedBatchId(e.target.value)}
                       className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all appearance-none"
+                      {...register("selectedBatchId")}
                     >
                        <option value="none">Hors lot (Frais généraux)</option>
                        {batches.map(b => (
@@ -307,17 +310,16 @@ export function FinanceManagement() {
                   
                   <button 
                     type="submit"
-                    className={`w-full text-white font-black rounded-2xl py-5 shadow-lg transition-all mt-4 flex items-center justify-center gap-2 ${type === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                    className={`w-full text-white font-black rounded-2xl py-5 shadow-lg transition-all mt-4 flex items-center justify-center gap-2 ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
                   >
-                    {type === 'expense' ? <MinusCircle className="w-5 h-5"/> : <PlusCircle className="w-5 h-5"/>}
-                    Ajouter {type === 'expense' ? 'la dépense' : 'la recette'}
+                    {formType === 'expense' ? <MinusCircle className="w-5 h-5"/> : <PlusCircle className="w-5 h-5"/>}
+                    Ajouter {formType === 'expense' ? 'la dépense' : 'la recette'}
                   </button>
                </form>
              </div>
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-              {/* Chart */}
               <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
                  <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Évolution Financière</h3>
                  <div className="h-64 w-full">
@@ -365,7 +367,6 @@ export function FinanceManagement() {
                  </div>
               </div>
 
-              {/* Advanced Analytics (Batch Profitability) - PRO Only */}
               <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-8 px-2">
                    <div className="flex items-center gap-3">
@@ -462,7 +463,6 @@ export function FinanceManagement() {
                 )}
               </div>
 
-              {/* History */}
               <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden">
                  <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Transactions Récentes</h3>
                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar relative z-10">

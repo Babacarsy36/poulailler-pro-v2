@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth, PoultryType, PoultryBreed } from '../AuthContext';
 import { useNavigate } from 'react-router';
-import { Bird, ChevronRight, Check, LogOut, Info, Star } from 'lucide-react';
+import { ChevronRight, Check, LogOut, Info, Star } from 'lucide-react';
 import { Logo } from './Logo';
 
 export function SelectionPage() {
@@ -50,25 +50,25 @@ export function SelectionPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Poulet Card */}
                     <div 
                         onClick={() => setType('poulet')}
-                        className={`group relative bg-white rounded-[2.5rem] p-8 cursor-pointer transition-all duration-500 border-2 ${
+                        className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
                             type === 'poulet' ? 'border-babs-orange shadow-premium ring-4 ring-orange-50' : 'border-transparent shadow-sm hover:shadow-premium'
                         }`}
                     >
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors ${
-                            type === 'poulet' ? 'bg-babs-orange text-white' : 'bg-orange-50 text-babs-orange'
+                        <div className={`w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center mb-4 lg:mb-6 transition-all overflow-hidden border-2 ${
+                            type === 'poulet' ? 'border-babs-orange shadow-lg scale-110' : 'border-transparent bg-orange-50/50'
                         }`}>
-                            <Bird className="w-8 h-8" />
+                            <img src="/assets/icons/poulet.png" alt="Poulet" className={`w-full h-full object-cover scale-110 ${type !== 'poulet' ? 'mix-blend-multiply opacity-80' : ''}`} />
                         </div>
-                        <h2 className="text-2xl font-black text-babs-brown mb-2">Poulets</h2>
-                        <p className="text-xs text-gray-400 font-bold">Goliath, Brahma, Cochin, Pondeuses...</p>
+                        <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Poulets</h2>
+                        <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Goliath, Brahma, Cochin...</p>
                         
                         {type === 'poulet' && (
-                            <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-babs-orange text-white flex items-center justify-center animate-in zoom-in">
-                                <Check className="w-5 h-5" />
+                            <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-babs-orange text-white flex items-center justify-center animate-in zoom-in">
+                                <Check className="w-4 h-4 lg:w-5 lg:h-5" />
                             </div>
                         )}
                     </div>
@@ -76,21 +76,65 @@ export function SelectionPage() {
                     {/* Caille Card */}
                     <div 
                         onClick={() => { setType('caille'); setBreed(null); }}
-                        className={`group relative bg-white rounded-[2.5rem] p-8 cursor-pointer transition-all duration-500 border-2 ${
+                        className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
                             type === 'caille' ? 'border-babs-emerald shadow-premium ring-4 ring-emerald-50' : 'border-transparent shadow-sm hover:shadow-premium'
                         }`}
                     >
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors ${
-                            type === 'caille' ? 'bg-babs-emerald text-white' : 'bg-emerald-50 text-babs-emerald'
+                        <div className={`w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center mb-4 lg:mb-6 transition-all overflow-hidden border-2 ${
+                            type === 'caille' ? 'border-babs-emerald shadow-lg scale-110' : 'border-transparent bg-emerald-50/50'
                         }`}>
-                            <Bird className="w-8 h-8" />
+                            <img src="/assets/icons/caille.png" alt="Caille" className={`w-full h-full object-cover scale-110 ${type !== 'caille' ? 'mix-blend-multiply opacity-80' : ''}`} />
                         </div>
-                        <h2 className="text-2xl font-black text-babs-brown mb-2">Cailles</h2>
-                        <p className="text-xs text-gray-400 font-bold">Production d'œufs et chair</p>
+                        <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Cailles</h2>
+                        <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Production d'œufs et chair</p>
                         
                         {type === 'caille' && (
-                            <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-babs-emerald text-white flex items-center justify-center animate-in zoom-in">
-                                <Check className="w-5 h-5" />
+                            <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-babs-emerald text-white flex items-center justify-center animate-in zoom-in">
+                                <Check className="w-4 h-4 lg:w-5 lg:h-5" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Pigeon Card */}
+                    <div 
+                        onClick={() => { setType('pigeon'); setBreed(null); }}
+                        className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
+                            type === 'pigeon' ? 'border-purple-500 shadow-premium ring-4 ring-purple-50' : 'border-transparent shadow-sm hover:shadow-premium'
+                        }`}
+                    >
+                        <div className={`w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center mb-4 lg:mb-6 transition-all overflow-hidden border-2 ${
+                            type === 'pigeon' ? 'border-purple-500 shadow-lg scale-110' : 'border-transparent bg-purple-50/50'
+                        }`}>
+                            <img src="/assets/icons/pigeon.png" alt="Pigeon" className={`w-full h-full object-cover scale-110 ${type !== 'pigeon' ? 'mix-blend-multiply opacity-80' : ''}`} />
+                        </div>
+                        <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Pigeons</h2>
+                        <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Élevage de chair & ornement</p>
+                        
+                        {type === 'pigeon' && (
+                            <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-purple-500 text-white flex items-center justify-center animate-in zoom-in">
+                                <Check className="w-4 h-4 lg:w-5 lg:h-5" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Lapin Card */}
+                    <div 
+                        onClick={() => { setType('lapin'); setBreed(null); }}
+                        className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
+                            type === 'lapin' ? 'border-amber-500 shadow-premium ring-4 ring-amber-50' : 'border-transparent shadow-sm hover:shadow-premium'
+                        }`}
+                    >
+                        <div className={`w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center mb-4 lg:mb-6 transition-all overflow-hidden border-2 ${
+                            type === 'lapin' ? 'border-amber-500 shadow-lg scale-110' : 'border-transparent bg-amber-50/50'
+                        }`}>
+                            <img src="/assets/icons/lapin.png" alt="Lapin" className={`w-full h-full object-cover scale-110 ${type !== 'lapin' ? 'mix-blend-multiply opacity-80' : ''}`} />
+                        </div>
+                        <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Lapins</h2>
+                        <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Cuniculture (Chair, Poils)</p>
+                        
+                        {type === 'lapin' && (
+                            <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-amber-500 text-white flex items-center justify-center animate-in zoom-in">
+                                <Check className="w-4 h-4 lg:w-5 lg:h-5" />
                             </div>
                         )}
                     </div>
@@ -152,7 +196,9 @@ export function SelectionPage() {
                     onClick={handleConfirm}
                     className={`w-full py-6 text-xl font-black rounded-3xl transition-all duration-500 shadow-xl flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale ${
                         type === 'caille' 
-                            ? 'bg-babs-emerald hover:bg-emerald-700 text-white shadow-emerald-200' 
+                            ? 'bg-babs-emerald hover:bg-emerald-700 text-white shadow-emerald-200'
+                            : type === 'pigeon' ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-purple-200'
+                            : type === 'lapin' ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200'
                             : 'bg-babs-orange hover:bg-orange-700 text-white shadow-orange-200'
                     }`}
                 >

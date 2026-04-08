@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { Heart, Plus, Shield, Leaf, AlertCircle, ChevronRight, History, Trash2, Calendar, CheckCircle } from "lucide-react";
+import { Heart, Plus, Leaf, History, Trash2, Calendar, CheckCircle } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
+import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
 
 interface HealthRecord {
+  [key: string]: any;
   id: string;
   date: string;
   type: "Vaccin" | "Traitement" | "Prévention";
@@ -13,6 +16,15 @@ interface HealthRecord {
   status: "Complété" | "En attente";
   poultryType?: string;
   poultryBreed?: string;
+  updatedAt?: number;
+}
+
+interface HealthFormData {
+  date: string;
+  type: "Vaccin" | "Traitement" | "Prévention";
+  title: string;
+  target: string;
+  status: "Complété" | "En attente";
 }
 
 type ProphylaxisStep = {
@@ -26,7 +38,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
   const commonEarly: ProphylaxisStep[] = [
     { day: 1, type: "Prévention", title: "Eau Sucrée + Vinaigre cidre", description: "Diluer 50g de sucre par litre d'eau (énergie) + 1 c.à.s (15ml) de Vinaigre de cidre pour nettoyer l'intestin." },
     { day: 3, type: "Prévention", title: "Vitamines", description: "Complexe vitaminé dans l'eau de boisson (Anti-stress)." },
-    { day: 7, type: "Vaccin", title: "Newcastle (HB1) + Bronchite", description: "Dans l'eau de boisson ou goutte œil." },
+    { day: 7, type: "Vaccin", title: "Newcastle (HB1) + Bronchite", description: "Dans l'eau de boisson or goutte œil." },
     { day: 10, type: "Prévention", title: "Cure de Moringa", description: "Mélanger 15g de poudre (1 c.à.s) pour 1 kg d'aliment pour doper les vitamines, pdt 3j." },
     { day: 14, type: "Vaccin", title: "Gumboro", description: "Dans l'eau de boisson (soif préalable de 2h)." },
     { day: 15, type: "Prévention", title: "Ail (Démarrage)", description: "Écraser 1 grosse gousse (5g) dans 1L d'eau, laisser macérer 12h. Donner pdt 3j (Antibiotique naturel)." },
@@ -42,6 +54,24 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
     ]
   }
 
+  if(breed === 'Lapin') {
+    return [
+       { day: 15, type: "Prévention", title: "Anti-coccidiose", description: "Dans l'eau de boisson pour éviter les diarrhées (ex: Sulfaquinoxaline)." },
+       { day: 35, type: "Vaccin", title: "VHD (Maladie Hémorragique)", description: "Vaccination vétérinaire sous-cutanée." },
+       { day: 42, type: "Vaccin", title: "Myxomatose", description: "Vaccin contre la myxomatose (ou vaccin combiné VHD-Myxo à 5 semaines)." },
+       { day: 60, type: "Prévention", title: "Vermifuge pur", description: "Déparasitage interne essentiel." }
+    ]
+  }
+
+  if(breed === 'Pigeon') {
+    return [
+       { day: 14, type: "Vaccin", title: "Paramyxovirose", description: "Même virus que Newcastle, gouttes ou sous-cutané." },
+       { day: 21, type: "Vaccin", title: "Variole colombaire", description: "Transfixion ou arrachage d'une plume (cuisse)." },
+       { day: 35, type: "Prévention", title: "Trichomonose (Muguet)", description: "Traitement préventif régulier." },
+       { day: 60, type: "Prévention", title: "Vermifuge complet", description: "Dans l'eau ou goutte individuelle avant l'accouplement." }
+    ]
+  }
+
   if(breed === 'Pondeuse') {
     return [
       ...commonEarly,
@@ -49,6 +79,16 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
       { day: 35, type: "Vaccin", title: "Variole aviaire", description: "Transfixion alaire (aile)." },
       { day: 42, type: "Vaccin", title: "Coryza", description: "Vaccination sous-cutanée." },
       { day: 60, type: "Prévention", title: "Ail + Papaye (Rappel)", description: "Vermifuge naturel avant l'entrée en ponte." }
+    ]
+  }
+
+  if(breed === 'Goliath' || breed === 'Brahma' || breed === 'Reproducteur') {
+    return [
+      ...commonEarly,
+      { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
+      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) pour éliminer les vers." },
+      { day: 42, type: "Prévention", title: "Vitamines Régulières (Leva 200)", description: "Programme régulier de vitamines et minéraux pour optimiser la ponte et la fécondité." },
+      { day: 60, type: "Prévention", title: "Rappel Vermifuge + Anticocc", description: "Entretien régulier pour maintenir la santé des reproducteurs." }
     ]
   }
 
@@ -64,9 +104,18 @@ export function HealthTracking() {
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   
-  // Prophylaxis Generator State
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<HealthFormData>({
+    defaultValues: {
+      date: new Date().toISOString().split("T")[0],
+      type: "Vaccin",
+      title: "",
+      target: "",
+      status: "Complété",
+    }
+  });
 
   const isCaille = poultryType === 'caille';
   const customColors = {
@@ -76,23 +125,22 @@ export function HealthTracking() {
      bgBtn: isCaille ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
   }
 
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
-    type: "Vaccin" as const,
-    title: "",
-    target: "",
-    status: "Complété" as const,
-  });
-
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("health") || "[]");
-    setRecords(saved.length > 0 ? saved : []);
+    const saved = StorageService.getItem<HealthRecord[]>("health");
+    if (saved) {
+      setRecords(saved);
+    }
   }, [syncTrigger]);
 
   useEffect(() => {
     if (poultryType === "caille") {
-      setSelectedBreed("Caille");
-      return;
+      setSelectedBreed("Caille"); return;
+    }
+    if (poultryType === "pigeon") {
+      setSelectedBreed("Pigeon"); return;
+    }
+    if (poultryType === "lapin") {
+      setSelectedBreed("Lapin"); return;
     }
 
     if (poultryBreed) {
@@ -102,8 +150,9 @@ export function HealthTracking() {
         cochin: "Cochin",
         pondeuse: "Pondeuse",
         chair: "Poulet de chair",
+        reproducteur: "Reproducteur",
       };
-      setSelectedBreed(breedLabelMap[poultryBreed] || "Poulet de chair");
+      setSelectedBreed(breedLabelMap[poultryBreed.toLowerCase()] || "Poulet de chair");
       return;
     }
 
@@ -115,16 +164,17 @@ export function HealthTracking() {
     saveData("health", newRecords);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onFormSubmit = (data: HealthFormData) => {
+    const now = Date.now();
     const newRecord: HealthRecord = {
-      id: Date.now().toString(),
-      ...formData,
+      id: now.toString(),
+      ...data,
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined
+      poultryBreed: poultryBreed || undefined,
+      updatedAt: now
     };
     saveRecords([newRecord, ...records]);
-    setFormData({
+    reset({
       date: new Date().toISOString().split("T")[0],
       type: "Vaccin",
       title: "",
@@ -136,15 +186,17 @@ export function HealthTracking() {
   };
 
   const markStepAsDone = (step: ProphylaxisStep, dateStr: string) => {
+    const now = Date.now();
     const newRecord: HealthRecord = {
-      id: Date.now().toString(),
+      id: now.toString(),
       date: dateStr,
       type: step.type,
       title: step.title,
       target: selectedBreed,
       status: "Complété",
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined
+      poultryBreed: poultryBreed || undefined,
+      updatedAt: now
     };
     saveRecords([newRecord, ...records]);
     toast.success(`${step.title} marqué comme réalisé !`);
@@ -157,14 +209,12 @@ export function HealthTracking() {
   };
 
   const filteredRecords = records.filter(r => {
-    const typeMatch = !r.poultryType || r.poultryType === poultryType;
-    const breedMatch = !r.poultryBreed || r.poultryBreed === poultryBreed;
+    const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && (!r.poultryType || r.poultryType === 'poulet'));
+    const breedMatch = !poultryBreed || r.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
     return typeMatch && breedMatch;
   });
 
-  const [expandedRemedy, setExpandedRemedy] = useState<number | null>(null);
-
-  const protocols = [
+  const remediesProtocols = [
     { title: "Gombo", desc: "Favorise une excellente digestion et plein de vitamines.", usage: "Hacher 3 fruits de gombo frais dans 1L d'eau. Laisser macérer une demi-journée pour libérer le mucilage." },
     { title: "Poudre de Moringa", desc: "Super-aliment, booster de croissance (Fer, Calcium).", usage: "Saupoudrer 1 cuillère à soupe rase (15g) par kilo d'aliment." },
     { title: "Ail", desc: "Antibiotique et antiviral naturel très puissant.", usage: "Écraser 1 grosse gousse par litre d'eau, laisser macérer 12h. Cure conseillée : 3 jours consécutifs." },
@@ -219,6 +269,7 @@ export function HealthTracking() {
                   <option value="Brahma">Poulet Brahma</option>
                   <option value="Cochin">Poulet Cochin</option>
                   <option value="Rainbow Plus">Rainbow Plus</option>
+                  <option value="Reproducteur">Reproducteur</option>
                   <option value="Caille">Caille</option>
                 </select>
               </div>
@@ -241,7 +292,6 @@ export function HealthTracking() {
                     stepDateObj.setDate(stepDateObj.getDate() + (step.day - 1));
                     const stepDateStr = stepDateObj.toISOString().split("T")[0];
                     const isPast = new Date() > stepDateObj;
-                    // Check if already in records (filtered by current breed for accuracy)
                     const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
 
                     return (
@@ -259,14 +309,14 @@ export function HealthTracking() {
                                   </p>
                                </div>
                                {!isDone ? (
-                                  <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
-                                    <CheckCircle className="w-6 h-6" />
-                                  </button>
-                                ) : (
-                                  <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
-                                    <CheckCircle className="w-6 h-6" />
-                                  </button>
-                                )}
+                                   <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
+                                     <CheckCircle className="w-6 h-6" />
+                                   </button>
+                                 ) : (
+                                   <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
+                                     <CheckCircle className="w-6 h-6" />
+                                   </button>
+                                 )}
                             </div>
                             <p className="text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
                          </div>
@@ -326,7 +376,7 @@ export function HealthTracking() {
              </div>
              
              <div className="overflow-x-auto pb-4 custom-scrollbar flex gap-4">
-               {protocols.map((p, i) => (
+               {remediesProtocols.map((p, i) => (
                  <div key={i} className="min-w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-emerald-50">
                     <p className="font-black text-emerald-700 text-sm mb-1">{p.title}</p>
                     <p className="text-[10px] text-gray-500 font-medium mb-2">{p.desc}</p>
@@ -342,24 +392,21 @@ export function HealthTracking() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
             <h3 className="text-3xl font-black text-babs-brown mb-8">Nouveau Soin Manuel</h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
                   <input 
                     type="date"
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
-                    value={formData.date}
-                    onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    required
+                    {...register("date", { required: true })}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type de soin</label>
                   <select 
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
-                    value={formData.type}
-                    onChange={e => setFormData({ ...formData, type: e.target.value as any })}
+                    {...register("type")}
                   >
                     <option value="Vaccin">Vaccination</option>
                     <option value="Traitement">Traitement Curatif</option>
@@ -370,22 +417,20 @@ export function HealthTracking() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Libellé du soin</label>
                 <input 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
-                  value={formData.title}
-                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 outline-none ${errors.title ? 'ring-2 ring-red-500' : ''}`}
                   placeholder="Ex: Vitamine A..."
-                  required
+                  {...register("title", { required: "Libellé requis" })}
                 />
+                {errors.title && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.title.message}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Lot cible</label>
                 <input 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
-                  value={formData.target}
-                  onChange={e => setFormData({ ...formData, target: e.target.value })}
+                  className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 outline-none ${errors.target ? 'ring-2 ring-red-500' : ''}`}
                   placeholder="Ex: Goliath de Janvier..."
-                  required
+                  {...register("target", { required: "Lot cible requis" })}
                 />
+                {errors.target && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.target.message}</p>}
               </div>
               <div className="flex gap-4 pt-4">
                 <button 

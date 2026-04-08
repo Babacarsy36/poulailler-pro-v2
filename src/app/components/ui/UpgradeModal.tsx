@@ -1,5 +1,6 @@
 import { Crown, Check, X, ShieldCheck, Zap, BarChart3, FlaskConical } from "lucide-react";
 import { useAuth } from "../../AuthContext";
+import { useState } from "react";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -7,13 +8,23 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
+  const [isupgrading, setIsUpgrading] = useState(false);
   const { togglePro } = useAuth();
 
   if (!isOpen) return null;
 
   const handleUpgrade = async () => {
-    await togglePro();
-    onClose();
+    setIsUpgrading(true);
+    try {
+      await togglePro();
+      // Short delay to show the success toast before closing
+      setTimeout(() => {
+        setIsUpgrading(false);
+        onClose();
+      }, 500);
+    } catch (e) {
+      setIsUpgrading(false);
+    }
   };
 
   return (
@@ -83,9 +94,11 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
                <button 
                 onClick={handleUpgrade}
-                className="w-full bg-babs-orange hover:bg-orange-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-orange-100 transition-all flex items-center justify-center gap-3 text-lg"
+                disabled={isupgrading}
+                className={`w-full bg-babs-orange hover:bg-orange-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-orange-100 transition-all flex items-center justify-center gap-3 text-lg ${isupgrading ? 'opacity-70 cursor-not-allowed' : ''}`}
                >
-                 Confirmer l'Abonnement
+                 {isupgrading && <Zap className="w-5 h-5 animate-pulse" />}
+                 {isupgrading ? "Validation..." : "Confirmer l'Abonnement"}
                </button>
             </div>
           </div>

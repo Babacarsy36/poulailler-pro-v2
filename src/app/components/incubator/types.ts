@@ -1,7 +1,7 @@
 export interface IncubationBatch {
   id: string;
   name: string;
-  species: 'poulet' | 'caille' | 'canard' | 'oie' | 'dinde';
+  species: 'poulet' | 'caille' | 'canard' | 'oie' | 'dinde' | 'pigeon';
   startDate: string;
   totalDays: number;
   incubatorName: string;
@@ -14,14 +14,17 @@ export interface IncubationBatch {
   revenue: number;
   status: 'ongoing' | 'hatched' | 'cancelled';
   brooder: 'none' | 'on' | 'off';
-  dailyChecks: boolean[];
   notes: string;
   lastUpdated: number;
+  hatchedCount?: number;
+  unhatchedCount?: number;
+  [key: string]: any;
 }
 
 export const SPECIES_CONFIG = {
   poulet: { label: 'Poulet', emoji: '🐔', totalDays: 21, tempC: 37.7, tempF: 99.9, humidity: '50-55%', humidityHatch: '65-75%' },
   caille:  { label: 'Caille', emoji: '🐦', totalDays: 17, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '65-70%' },
+  pigeon:  { label: 'Pigeon', emoji: '🕊️', totalDays: 18, tempC: 37.5, tempF: 99.5, humidity: '55-60%', humidityHatch: '65-70%' },
   canard:  { label: 'Canard', emoji: '🦆', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '58-62%', humidityHatch: '70-75%' },
   oie:     { label: 'Oie', emoji: '🪿', totalDays: 30, tempC: 37.4, tempF: 99.3, humidity: '55-60%', humidityHatch: '70-75%' },
   dinde:   { label: 'Dinde', emoji: '🦃', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '70-75%' },
@@ -40,8 +43,8 @@ export function getDayTip(species: SpeciesKey, day: number, totalDays: number): 
     tips[18] = "⚠️ ARRÊT BRUTAL du retournement ! Augmentez l'humidité à 65-75% pour l'éclosion.";
     tips[19] = "🤫 SILENCE : Ne plus ouvrir l'incubateur. Le poussin se prépare au bréchage.";
     tips[21] = "🐣 ÉCLOSION ! Laissez les poussins sécher (24h) avant de les sortir vers l'éleveuse.";
-  } else if (species === 'caille') {
-    tips[1] = "🚀 MISE EN PLACE : Température 37.5°C, humidité 50-55%.";
+  } else if (species === 'caille' || species === 'pigeon') {
+    tips[1] = "🚀 MISE EN PLACE : Température 37.5°C, humidité 50-60%.";
     tips[7] = "🔦 MIRAGE : Mirage recommandé. Les œufs de caille sont sombres, soyez attentif.";
     tips[14] = "⚠️ ARRÊT du retournement ! Transition vers l'éclosion, humidité à 65-70%.";
     tips[17] = "🐣 ÉCLOSION des cailles ! Bravo !";

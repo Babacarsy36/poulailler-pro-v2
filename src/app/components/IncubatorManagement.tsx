@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Plus, Egg, BarChart3, Calendar, DollarSign, HelpCircle } from 'lucide-react';
+import { Plus, Egg, BarChart3, Calendar, DollarSign, HelpCircle, Bell, AlertTriangle, Info } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { SyncService } from '../SyncService';
+import { StorageService } from '../services/StorageService';
 import { IncubationBatch, SPECIES_CONFIG, SpeciesKey } from './incubator/types';
 import { BatchCard } from './incubator/BatchCard';
 import { BatchWizard } from './incubator/BatchWizard';
@@ -11,7 +12,6 @@ import { HatchSummary } from './incubator/HatchSummary';
 import { FinancialSummary } from './incubator/FinancialSummary';
 import { FAQSection } from './incubator/FAQSection';
 import { getDaysElapsed, getDayTip } from './incubator/types';
-import { AlertTriangle, Info, Bell } from 'lucide-react';
 
 type TabId = 'batches' | 'summary' | 'finances' | 'faq';
 
@@ -44,8 +44,8 @@ export function IncubatorManagement() {
   }).filter((x): x is NonNullable<typeof x> => x !== null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('incubation');
-    if (saved) setBatches(JSON.parse(saved));
+    const saved = StorageService.getItem<IncubationBatch[]>('incubation');
+    if (saved) setBatches(saved);
   }, [syncTrigger]);
 
   const saveBatches = (updated: IncubationBatch[]) => {
@@ -74,7 +74,7 @@ export function IncubatorManagement() {
     if (selectedBatch?.id === b.id) setSelectedBatch(b);
   };
 
-  const tabs: { id: TabId; label: string; icon: any; short: string }[] = [
+  const tabs: { id: TabId; label: string; icon: React.ElementType; short: string }[] = [
     { id: 'batches', label: 'Mes Lots', icon: Egg, short: 'Lots' },
     { id: 'summary', label: 'Bilan', icon: BarChart3, short: 'Bilan' },
     { id: 'finances', label: 'Finances', icon: DollarSign, short: 'Finance' },
@@ -183,14 +183,14 @@ export function IncubatorManagement() {
       )}
 
       {/* Tab navigation */}
-      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 gap-1">
+      <div className="flex bg-gray-100 rounded-2xl p-1 gap-1">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
             className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
               activeTab === t.id
-                ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm'
+                ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-400 hover:text-gray-600'
             }`}
           >

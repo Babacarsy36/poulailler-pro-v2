@@ -4,12 +4,13 @@ import { useAuth } from "../AuthContext";
 import { db } from "../firebaseConfig";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
+import { UserRole } from "../types";
 
 interface TeamMember {
   uid: string;
   displayName: string;
   email: string;
-  role: 'owner' | 'manager' | 'worker';
+  role: UserRole;
   joinedAt: number;
 }
 
@@ -19,6 +20,7 @@ interface Invitation {
   role: 'manager' | 'worker';
   status: 'pending' | 'accepted';
   createdAt: number;
+  farmId: string;
 }
 
 export function TeamManagement() {
@@ -38,6 +40,7 @@ export function TeamManagement() {
   }, [farmId]);
 
   const fetchTeamData = async () => {
+    if (!farmId) return;
     setLoading(true);
     try {
       // 1. Fetch Members (from users where farmId = current)
@@ -53,7 +56,7 @@ export function TeamManagement() {
             uid: docSnap.id,
             displayName: profile.displayName || "Sans nom",
             email: data.email || "N/A",
-            role: profile.role || 'worker',
+            role: (profile.role as UserRole) || 'worker',
             joinedAt: profile.updatedAt || Date.now()
           });
         }
@@ -79,7 +82,7 @@ export function TeamManagement() {
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isOwner) return;
+    if (!isOwner || !farmId) return;
     if (!inviteEmail.trim()) return;
 
     try {
@@ -174,7 +177,7 @@ export function TeamManagement() {
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Rôle attribué</label>
                     <select
                        value={inviteRole}
-                       onChange={e => setInviteRole(e.target.value as any)}
+                       onChange={e => setInviteRole(e.target.value as 'manager' | 'worker')}
                        className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none text-sm"
                     >
                        <option value="worker">Employé (Production uniquement)</option>
@@ -182,17 +185,36 @@ export function TeamManagement() {
                     </select>
                  </div>
 
-                 <button 
+                  <button 
                     type="submit"
                     className="w-full bg-blue-600 text-white font-black rounded-2xl py-5 shadow-lg shadow-blue-100 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-2 mt-4"
-                 >
+                  >
                     <BadgeCheck className="w-5 h-5" />
-                    Envoyer l'invitation
-                 </button>
+                    Créer l'invitation
+                  </button>
 
-                 <p className="text-[9px] text-gray-400 font-bold leading-relaxed text-center px-4">
-                    Le collaborateur recevra une invitation à rejoindre la ferme **{farmId?.slice(-6)}** lors de sa prochaine connexion.
-                 </p>
+                  <div className="flex flex-col gap-3 mt-4">
+                    <p className="text-[9px] text-gray-400 font-bold leading-relaxed text-center px-4">
+                      Note: Le collaborateur doit se connecter à l'application pour accepter l'invitation.
+                    </p>
+                    
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const text = `Rejoins mon équipe sur Poulailler Pro ! \nMon ID de ferme : ${farmId}\nConnecte-toi avec ton email pour voir l'invitation.`;
+                        if (navigator.share) {
+                          navigator.share({ title: 'Invitation Poulailler Pro', text });
+                        } else {
+                          navigator.clipboard.writeText(text);
+                          toast.success("Lien d'invitation copié !");
+                        }
+                      }}
+                      className="w-full bg-gray-100 text-babs-brown font-black rounded-2xl py-4 text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Partager l'invitation
+                    </button>
+                  </div>
               </form>
            </div>
         </div>

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Egg, Calendar, History, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Egg, Calendar, History, TrendingUp, Edit2 } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
+import { StorageService } from "../services/StorageService";
+import { useForm } from "react-hook-form";
+import { Chicken } from "../types";
 
 interface EggRecord {
   id: string;
@@ -10,37 +13,51 @@ interface EggRecord {
   notes: string;
   poultryType?: string;
   poultryBreed?: string;
+  updatedAt?: number;
+  [key: string]: any;
+}
+
+interface EggFormData {
+  date: string;
+  quantity: string;
+  notes: string;
 }
 
 export function EggProduction() {
   const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
-    quantity: "",
-    notes: "",
+  const [totalFemales, setTotalFemales] = useState(0);
+
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<EggFormData>({
+    defaultValues: {
+      date: new Date().toISOString().split("T")[0],
+      quantity: "",
+      notes: "",
+    }
   });
 
+  const formData = watch();
   const isCaille = poultryType === 'caille';
-  const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
   const iconBg = isCaille ? "bg-babs-emerald text-white" : "bg-babs-orange text-white";
   const btnBg = isCaille ? "bg-babs-emerald hover:bg-emerald-600" : "bg-babs-orange hover:bg-orange-600";
 
   useEffect(() => {
-    const saved = localStorage.getItem("eggs");
+    const saved = StorageService.getItem<EggRecord[]>("eggs");
     if (saved) {
-      setRecords(JSON.parse(saved));
+      setRecords(saved);
     }
   }, [syncTrigger]);
   
-  // Calculate females from inventory
-  const [totalFemales, setTotalFemales] = useState(0);
   useEffect(() => {
-     const chickens = JSON.parse(localStorage.getItem("chickens") || "[]");
+     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
      const females = chickens
-       .filter((c: any) => (!poultryType || c.poultryType === poultryType) && (!poultryBreed || c.breed === poultryBreed))
-       .reduce((sum: number, c: any) => sum + (parseInt(c.femaleCount) || 0), 0);
+       .filter((c: Chicken) => {
+         const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+         const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+         return typeMatch && breedMatch;
+       })
+       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
      setTotalFemales(females);
   }, [syncTrigger, poultryType, poultryBreed]);
 
@@ -49,18 +66,19 @@ export function EggProduction() {
     saveData("eggs", newRecords);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onFormSubmit = (data: EggFormData) => {
+    const now = Date.now();
     const newRecord: EggRecord = {
-      id: Date.now().toString(),
-      date: formData.date,
-      quantity: Number(formData.quantity),
-      notes: formData.notes,
+      id: now.toString(),
+      date: data.date,
+      quantity: Number(data.quantity),
+      notes: data.notes,
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined
+      poultryBreed: poultryBreed || undefined,
+      updatedAt: now
     };
     saveRecords([newRecord, ...records]);
-    setFormData({
+    reset({
       date: new Date().toISOString().split("T")[0],
       quantity: "",
       notes: "",
@@ -69,8 +87,8 @@ export function EggProduction() {
   };
 
   const filteredRecords = records.filter(r => {
-    const typeMatch = !r.poultryType || r.poultryType === poultryType;
-    const breedMatch = !r.poultryBreed || r.poultryBreed === poultryBreed;
+    const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && !r.poultryType);
+    const breedMatch = !poultryBreed || r.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
     return typeMatch && breedMatch;
   });
 
@@ -178,7 +196,22 @@ export function EggProduction() {
               <div className="flex items-center gap-4">
                 {record.notes && <span className="hidden sm:inline text-xs italic text-gray-400 max-w-[150px] truncate">{record.notes}</span>}
                 <button 
-                  onClick={() => saveRecords(records.filter(r => r.id !== record.id))}
+                  onClick={() => {
+                    const newVal = window.prompt(`Modifier la quantité d'œufs pour le ${new Date(record.date).toLocaleDateString()}:`, record.quantity.toString());
+                    if (newVal !== null) {
+                      const parsed = parseInt(newVal);
+                      if (!isNaN(parsed) && parsed >= 0) {
+                        const updatedRecords = records.map(r => r.id === record.id ? { ...r, quantity: parsed, updatedAt: Date.now() } : r);
+                        saveRecords(updatedRecords);
+                      }
+                    }
+                  }}
+                  className="p-3 bg-gray-50 hover:bg-blue-50 rounded-xl text-gray-400 hover:text-blue-500 transition-colors"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => { if(window.confirm("Supprimer cette récolte ?")) saveRecords(records.filter(r => r.id !== record.id)); }}
                   className="p-3 bg-red-50 hover:bg-red-100 rounded-xl text-red-500 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -200,35 +233,30 @@ export function EggProduction() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl animate-in zoom-in-95 duration-300">
             <h3 className="text-3xl font-black text-babs-brown mb-8">Nouvelle Récolte</h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date de collecte</label>
                 <input 
                   type="date"
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
-                  value={formData.date}
-                  onChange={e => setFormData({ ...formData, date: e.target.value })}
-                  required
+                  {...register("date", { required: true })}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nombre d'œufs</label>
                 <input 
                   type="number"
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
-                  value={formData.quantity}
-                  onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-                  required
-                  min="1"
+                  className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 ${errors.quantity ? 'ring-2 ring-red-500' : ''}`}
+                  {...register("quantity", { required: "Quantité requise", min: 1 })}
                 />
+                {errors.quantity && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.quantity.message}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes particulières</label>
                 <input 
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
-                  value={formData.notes}
-                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Ex: Quelques œufs fêlés..."
+                  {...register("notes")}
                 />
               </div>
               <div className="flex gap-4 pt-4">

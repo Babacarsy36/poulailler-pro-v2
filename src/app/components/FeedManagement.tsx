@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Plus, Minus, ShoppingCart, Calendar, History, Package, Info, ArrowRight, CheckCircle, ThermometerSun, ThermometerSnowflake, Thermometer } from "lucide-react";
+import { Plus, Minus, ShoppingCart, Calendar, History, Package, Info, ArrowRight, CheckCircle, ThermometerSun, ThermometerSnowflake, Thermometer, Edit2, FlaskConical, Calculator } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
+import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { Chicken } from "../types";
 
 interface FeedEntry {
   id: string;
@@ -13,6 +16,16 @@ interface FeedEntry {
   notes: string;
   poultryType?: string;
   poultryBreed?: string;
+  updatedAt?: number;
+  [key: string]: string | number | undefined;
+}
+
+interface FeedFormData {
+  date: string;
+  type: "achat" | "utilisation";
+  quantity: string;
+  feedType: string;
+  notes: string;
 }
 
 interface Ingredient {
@@ -69,15 +82,20 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 export function FeedManagement() {
   const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
-  const [allChickens, setAllChickens] = useState<any[]>([]);
+  const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
-    type: "achat" as "achat" | "utilisation",
-    quantity: "",
-    feedType: "",
-    notes: "",
+  
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FeedFormData>({
+    defaultValues: {
+      date: new Date().toISOString().split("T")[0],
+      type: "achat",
+      quantity: "",
+      feedType: "",
+      notes: "",
+    }
   });
+
+  const entryFormData = watch();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { id: '1', name: 'Maïs', protein: 9, percentage: 60 },
@@ -91,6 +109,79 @@ export function FeedManagement() {
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
+
+  const [calcGoal, setCalcGoal] = useState<string>("Pondeuse");
+  const [calcAmount, setCalcAmount] = useState<number>(50);
+
+  const STANDARD_RECIPES: Record<string, { type: string, ingredients: {name: string, pct: number, isProt?: boolean}[] }> = {
+    "Pondeuse": {
+       type: "Ponte",
+       ingredients: [
+         { name: "Maïs concassé", pct: 60 },
+         { name: "Tourteau (Soja/Arachide)", pct: 20, isProt: true },
+         { name: "Farine de Poisson", pct: 5, isProt: true },
+         { name: "Son de blé / Mil", pct: 5 },
+         { name: "Coquillage (Calcium)", pct: 8 },
+         { name: "CMV (Minéraux/Vitamines)", pct: 2 }
+       ]
+    },
+    "Poulet de chair Démarrage": {
+       type: "Chair",
+       ingredients: [
+         { name: "Maïs concassé", pct: 55 },
+         { name: "Tourteau (Soja/Arachide)", pct: 32, isProt: true },
+         { name: "Farine de Poisson", pct: 8, isProt: true },
+         { name: "CMV / Minéraux purs", pct: 5 }
+       ]
+    },
+    "Poulet de chair Finition": {
+       type: "Chair",
+       ingredients: [
+         { name: "Maïs concassé", pct: 65 },
+         { name: "Tourteau (Soja/Arachide)", pct: 25, isProt: true },
+         { name: "Farine de Poisson", pct: 5, isProt: true },
+         { name: "CMV / Minéraux purs", pct: 5 }
+       ]
+    },
+    "Poulet Brahma herminé en ponte": {
+       type: "Ponte",
+       ingredients: [
+         { name: "Maïs concassé", pct: 50 },
+         { name: "Tourteau (Soja/Arachide)", pct: 25, isProt: true },
+         { name: "Son de blé (Fibre)", pct: 15 },
+         { name: "Coquillage (Calcium)", pct: 8 },
+         { name: "CMV / Minéraux purs", pct: 2 }
+       ]
+    },
+    "Poulet Goliath adulte en ponte": {
+       type: "Ponte",
+       ingredients: [
+         { name: "Maïs concassé", pct: 55 },
+         { name: "Tourteau (Soja/Arachide)", pct: 25, isProt: true },
+         { name: "Son de blé / Mil", pct: 10 },
+         { name: "Coquillage (Calcium)", pct: 8 },
+         { name: "CMV / Minéraux purs", pct: 2 }
+       ]
+    },
+    "Lapin": {
+       type: "Lapin",
+       ingredients: [
+         { name: "Granulés Luzerne/Foin (Fibre)", pct: 60 },
+         { name: "Orge / Son de blé", pct: 30 },
+         { name: "Tourteau (Protéine)", pct: 8, isProt: true },
+         { name: "CMV / Sel minéral", pct: 2 }
+       ]
+    },
+    "Pigeon": {
+       type: "Pigeon",
+       ingredients: [
+         { name: "Maïs concassé / Graines", pct: 35 },
+         { name: "Blé entier", pct: 25 },
+         { name: "Pois / Vesces", pct: 30, isProt: true },
+         { name: "Sorgho / Dari", pct: 10 }
+       ]
+    }
+  };
 
   useEffect(() => {
     if (poultryType === 'caille') {
@@ -124,16 +215,16 @@ export function FeedManagement() {
   }
 
   useEffect(() => {
-    const saved = localStorage.getItem("feed");
+    const saved = StorageService.getItem<FeedEntry[]>("feed");
     if (saved) {
-      setEntries(JSON.parse(saved));
+      setEntries(saved);
     }
-    const savedChickens = localStorage.getItem("chickens");
+    const savedChickens = StorageService.getItem<Chicken[]>("chickens");
     if (savedChickens) {
-      setAllChickens(JSON.parse(savedChickens));
+      setAllChickens(savedChickens);
     }
-    const savedRecipes = localStorage.getItem("feed_recipes");
-    if (savedRecipes) setSavedRecipes(JSON.parse(savedRecipes));
+    const savedRecipes = StorageService.getItem<FeedRecipe[]>("feed_recipes");
+    if (savedRecipes) setSavedRecipes(savedRecipes);
   }, [syncTrigger]);
 
   const saveEntries = (newEntries: FeedEntry[]) => {
@@ -152,7 +243,7 @@ export function FeedManagement() {
     };
     const updated = [newRecipe, ...savedRecipes];
     setSavedRecipes(updated);
-    localStorage.setItem("feed_recipes", JSON.stringify(updated));
+    StorageService.setItem("feed_recipes", updated);
     setRecipeName("");
     toast.success("Recette enregistrée !");
   };
@@ -161,17 +252,18 @@ export function FeedManagement() {
     setIngredients(ingredients.map(ing => ing.id === id ? { ...ing, [field]: value } : ing));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onEntrySubmit = (data: FeedFormData) => {
+    const now = Date.now();
     const newEntry: FeedEntry = {
-      id: Date.now().toString(),
-      ...formData,
-      quantity: Number(formData.quantity),
+      id: now.toString(),
+      ...data,
+      quantity: Number(data.quantity),
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined
+      poultryBreed: poultryBreed || undefined,
+      updatedAt: now
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setFormData({
+    reset({
       date: new Date().toISOString().split("T")[0],
       type: "achat",
       quantity: "",
@@ -182,8 +274,8 @@ export function FeedManagement() {
   };
 
   const filteredEntries = entries.filter(e => {
-    const typeMatch = !e.poultryType || e.poultryType === poultryType;
-    const breedMatch = !e.poultryBreed || e.poultryBreed === poultryBreed;
+    const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
+    const breedMatch = !poultryBreed || e.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
     return typeMatch && breedMatch;
   });
 
@@ -194,30 +286,23 @@ export function FeedManagement() {
   // Consumption Calculation Engine
   const calculateDailyConsumption = () => {
     let dailyTotalKg = 0;
-    
-    // Filter chickens by current breed/type selection for specific autonomy, or all?
-    // Let's do ALL to reflect the REAL stock depletion
     allChickens.filter(c => c.status === 'active').forEach(c => {
       const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
       const phases = getPhasesForBreed(breed);
       
-      const arrDate = new Date(c.arrivalDate || c.date || Date.now());
+      const arrDate = new Date(c.arrivalDate || c.startDate || c.date || Date.now());
       const ageDays = Math.ceil(Math.abs(Date.now() - arrDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       
       let phase = phases.find(p => ageDays >= p.duration[0] && ageDays <= p.duration[1]);
       if(!phase) phase = phases[phases.length - 1];
 
-      // Extract numeric values from "Xg à Yg"
       const matches = phase.consumption.match(/\d+/g);
       if (matches) {
         const avgGrams = matches.length === 2 
           ? (parseInt(matches[0]) + parseInt(matches[1])) / 2 
           : parseInt(matches[0]);
-        
-        // Multiplier for weather
         const weatherFactor = weather === 'hot' ? 0.85 : weather === 'cold' ? 1.15 : 1.0;
-        
-        const count = parseInt(c.count) || 1;
+        const count = Number(c.count) || 1;
         dailyTotalKg += (avgGrams * count * weatherFactor) / 1000;
       }
     });
@@ -229,15 +314,14 @@ export function FeedManagement() {
   const autonomyDays = dailyConsumption > 0 ? Math.floor(totalFeed / dailyConsumption) : Infinity;
   const autonomyColor = autonomyDays > 7 ? 'text-emerald-500' : autonomyDays > 3 ? 'text-orange-500' : 'text-red-500';
 
-  // Calculate current phase
   const phases = getPhasesForBreed(selectedBreed);
   const currentDate = new Date();
   const arrDate = new Date(arrivalDate);
   const diffTime = Math.abs(currentDate.getTime() - arrDate.getTime());
-  const currentAgeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Day 1 is arrival day
+  const currentAgeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
   let currentPhaseIndex = phases.findIndex(p => currentAgeDays >= p.duration[0] && currentAgeDays <= p.duration[1]);
-  if(currentPhaseIndex === -1 && currentAgeDays > 0) currentPhaseIndex = phases.length - 1; // Default to last if very old
+  if(currentPhaseIndex === -1 && currentAgeDays > 0) currentPhaseIndex = phases.length - 1;
 
   const activePhaseToExpand = expandedPhase !== null ? expandedPhase : currentPhaseIndex;
 
@@ -396,6 +480,73 @@ export function FeedManagement() {
              </div>
            </div>
 
+           {/* Feed Calculator (Standard) */}
+           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-babs-orange mt-8 flex flex-col relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-4 opacity-5 bg-babs-orange rounded-bl-[4rem]">
+                 <Calculator className="w-24 h-24 text-babs-orange" />
+             </div>
+             <div className="flex items-center gap-3 mb-6 relative z-10">
+                 <div className="p-3 rounded-xl bg-orange-50 text-orange-600">
+                    <FlaskConical className="w-5 h-5" />
+                 </div>
+                 <div>
+                   <h3 className="text-lg font-black text-babs-brown uppercase tracking-wider">Formulation Maison</h3>
+                   <p className="text-[10px] uppercase font-bold text-gray-400">Calculez vos propres mélanges</p>
+                 </div>
+             </div>
+
+             <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 block mb-1">Objectif Elevage</label>
+                  <select 
+                    className="w-full bg-gray-50 border border-transparent focus:border-orange-200 rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none transition-colors"
+                    value={calcGoal}
+                    onChange={(e) => setCalcGoal(e.target.value)}
+                  >
+                    {Object.keys(STANDARD_RECIPES).map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 block mb-1">Quantité (kg)</label>
+                  <input 
+                    type="number"
+                    className="w-full bg-gray-50 border border-transparent focus:border-orange-200 rounded-2xl p-4 font-bold text-babs-brown outline-none transition-colors"
+                    value={calcAmount}
+                    onChange={(e) => setCalcAmount(Math.max(1, Number(e.target.value)))}
+                  />
+                </div>
+             </div>
+
+             <div className="bg-orange-50 rounded-2xl p-6 relative z-10">
+                <p className="text-xs font-black text-orange-800 uppercase tracking-widest mb-4 flex justify-between">
+                   Recette pour {calcAmount} kilos
+                   <span>🎯 {STANDARD_RECIPES[calcGoal].type}</span>
+                </p>
+                <div className="space-y-2">
+                   {STANDARD_RECIPES[calcGoal].ingredients.map((ing, i) => {
+                      const kg = (ing.pct * calcAmount) / 100;
+                      return (
+                         <div key={i} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm">
+                            <span className="text-sm font-bold text-babs-brown flex items-center gap-2">
+                               {ing.isProt && <span className="w-2 h-2 rounded-full bg-purple-500 line-block" title="Source Protéique principale"/>}
+                               {!ing.isProt && <span className="w-2 h-2 rounded-full bg-orange-400 line-block" title="Énergie / Apport standard"/>}
+                               {ing.name}
+                            </span>
+                            <div className="text-right">
+                               <p className="text-sm font-black text-orange-600">{kg.toFixed(1)} <span className="text-[10px]">kg</span></p>
+                               <p className="text-[9px] font-bold text-gray-400">{ing.pct}%</p>
+                            </div>
+                         </div>
+                      )
+                   })}
+                </div>
+                <div className="mt-4 pt-4 border-t border-orange-200 flex justify-between items-center px-2">
+                   <span className="text-xs font-black text-orange-800 uppercase">Total Mélange</span>
+                   <span className="text-xl font-black text-orange-600">{calcAmount} <span className="text-xs">kg</span></span>
+                </div>
+             </div>
+           </div>
+
            {/* Feed Optimizer (Mixer) */}
            <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 mt-8">
               <div className="flex items-center gap-3 mb-6">
@@ -499,16 +650,16 @@ export function FeedManagement() {
                       )}
 
                       {totalPercent === 100 && (
-                        <div className="mt-6 flex gap-2">
+                        <div className="mt-6 flex flex-col sm:flex-row gap-3">
                            <input 
                              placeholder="Nom de la recette..."
-                             className="flex-1 bg-white border border-purple-100 rounded-xl px-4 py-2 text-xs font-bold text-babs-brown outline-none"
+                             className="w-full sm:flex-1 bg-white border border-purple-100 rounded-xl px-4 py-2 text-xs font-bold text-babs-brown outline-none"
                              value={recipeName}
                              onChange={(e) => setRecipeName(e.target.value)}
                            />
                            <button 
                              onClick={handleSaveRecipe}
-                             className="bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase shadow-lg shadow-purple-100 hover:scale-105 transition-all"
+                             className="w-full sm:w-auto bg-purple-500 text-white px-6 py-2 rounded-xl text-xs font-black uppercase shadow-lg shadow-purple-100 hover:scale-105 transition-all whitespace-nowrap"
                            >
                               Enregistrer
                            </button>
@@ -539,7 +690,7 @@ export function FeedManagement() {
                                onClick={() => {
                                  const updated = savedRecipes.filter(r => r.id !== recipe.id);
                                  setSavedRecipes(updated);
-                                 localStorage.setItem("feed_recipes", JSON.stringify(updated));
+                                 StorageService.setItem("feed_recipes", updated);
                                }}
                                className="bg-white p-2 rounded-lg shadow-sm text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all font-black text-xs"
                             >
@@ -584,13 +735,29 @@ export function FeedManagement() {
                       <span className={`text-xl font-black ${entry.type === 'achat' ? 'text-emerald-500' : 'text-orange-500'}`}>
                          {entry.type === 'achat' ? '+' : '-'}{entry.quantity} <span className="text-sm">kg</span>
                       </span>
-                      <button 
-                        onClick={() => saveEntries(entries.filter(e => e.id !== entry.id))}
-                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
-                        title="Supprimer l'opération"
-                      >
-                         <Minus className="w-4 h-4 transform rotate-45" /> {/* Use X essentially or trash, minus rotated serves as X */}
-                      </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <button 
+                          onClick={() => {
+                            const val = window.prompt(`Nouvelle quantité (kg) pour ${entry.feedType} :`, entry.quantity.toString());
+                            if (val && !isNaN(parseFloat(val))) {
+                              const newEntries = entries.map(e => e.id === entry.id ? { ...e, quantity: parseFloat(val), updatedAt: Date.now() } : e);
+                              saveEntries(newEntries);
+                              toast.success("Quantité modifiée");
+                            }
+                          }}
+                          className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
+                          title="Modifier la quantité"
+                        >
+                           <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => saveEntries(entries.filter(e => e.id !== entry.id))}
+                          className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                          title="Supprimer l'opération"
+                        >
+                           <Minus className="w-4 h-4 transform rotate-45" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -613,24 +780,21 @@ export function FeedManagement() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
             <h3 className="text-3xl font-black text-babs-brown mb-8">Nouvelle opération</h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onEntrySubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
                   <input 
                     type="date"
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
-                    value={formData.date}
-                    onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    required
+                    {...register("date", { required: true })}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type</label>
                   <select 
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
-                    value={formData.type}
-                    onChange={e => setFormData({ ...formData, type: e.target.value as any })}
+                    {...register("type", { required: true })}
                   >
                     <option value="achat">Achat / Stock</option>
                     <option value="utilisation">Utilisation / Ration</option>
@@ -643,31 +807,27 @@ export function FeedManagement() {
                   <input 
                     type="number"
                     step="0.1"
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
-                    value={formData.quantity}
-                    onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-                    required
-                    min="0.1"
+                    className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.quantity ? 'ring-2 ring-red-500' : ''}`}
+                    {...register("quantity", { required: "Quantité requise", min: 0.1 })}
                   />
+                  {errors.quantity && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.quantity.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Aliment</label>
                   <input 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
-                    value={formData.feedType}
-                    onChange={e => setFormData({ ...formData, feedType: e.target.value })}
+                    className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.feedType ? 'ring-2 ring-red-500' : ''}`}
                     placeholder="Ex: Miettes Croissance..."
-                    required
+                    {...register("feedType", { required: "Type d'aliment requis" })}
                   />
+                  {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>
                 <input 
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
-                  value={formData.notes}
-                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Facultatif"
+                  {...register("notes")}
                 />
               </div>
               <div className="flex gap-4 pt-4">

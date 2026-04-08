@@ -37,8 +37,6 @@ export default defineConfig({
           if (
             id.includes('/@radix-ui/') ||
             id.includes('/lucide-react/') ||
-            id.includes('/@mui/') ||
-            id.includes('/react-day-picker/') ||
             id.includes('/sonner/')
           ) {
             return 'ui-vendor';

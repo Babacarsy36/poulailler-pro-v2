@@ -30,7 +30,8 @@ function AuthGuard() {
 // Guard to ensure species is selected
 function SelectionGuard() {
   const { poultryType } = useAuth();
-  if (!poultryType) return <Navigate to="/selection" replace />;
+  const hasSelected = localStorage.getItem('has_selected_species') === 'true';
+  if (!poultryType && !hasSelected) return <Navigate to="/selection" replace />;
   return <Outlet />;
 }
 

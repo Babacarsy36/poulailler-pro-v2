@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning, ShoppingCart, Printer } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
+import { StorageService } from "../services/StorageService";
+import { useForm } from "react-hook-form";
 
 interface Chicken {
   id: string;
@@ -15,6 +17,19 @@ interface Chicken {
   maleCount?: number;
   status: "active" | "malade" | "retraite";
   startDate?: string;
+  updatedAt?: number;
+}
+
+interface ChickenFormData {
+  name: string;
+  breed: string;
+  age: string;
+  ageUnit: "weeks" | "months";
+  count: string;
+  femaleCount: string;
+  maleCount: string;
+  status: "active" | "malade" | "retraite";
+  startDate: string;
 }
 
 export function ChickenInventory() {
@@ -22,18 +37,22 @@ export function ChickenInventory() {
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    breed: poultryBreed || "",
-    age: "",
-    ageUnit: "months" as "weeks" | "months",
-    count: "1",
-    femaleCount: "0",
-    maleCount: "0",
-    status: "active" as "active" | "malade" | "retraite",
-    startDate: new Date().toISOString().split('T')[0],
+  
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ChickenFormData>({
+    defaultValues: {
+      name: "",
+      breed: poultryBreed || "",
+      age: "",
+      ageUnit: "months",
+      count: "1",
+      femaleCount: "0",
+      maleCount: "0",
+      status: "active",
+      startDate: new Date().toISOString().split('T')[0],
+    }
   });
 
+  const formData = watch();
   const [simFemales, setSimFemales] = useState("10");
 
   const isCaille = poultryType === 'caille';
@@ -43,7 +62,8 @@ export function ChickenInventory() {
   const btnBg = isCaille ? "bg-babs-emerald hover:bg-emerald-600" : "bg-babs-orange hover:bg-orange-600";
 
   const filteredChickens = chickens.filter((c) => {
-    const typeMatch = c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+    // If poultryType is null, we are in "Vue Globale", so show everything
+    const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
     const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
     return typeMatch && breedMatch;
   });
@@ -93,11 +113,10 @@ export function ChickenInventory() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem("chickens");
+    const saved = StorageService.getItem<Chicken[]>("chickens");
     if (saved) {
-      const parsed = JSON.parse(saved);
-      // Ensure old entries have a count
-      const migrated = parsed.map((c: any) => ({
+      // Ensure old entries have a count and type
+      const migrated = saved.map((c: any) => ({
         ...c,
         poultryType: c.poultryType || (c.breed?.toLowerCase().includes("caille") ? "caille" : (poultryType || "poulet")),
         count: c.count ? parseInt(c.count) : 1,
@@ -112,52 +131,45 @@ export function ChickenInventory() {
     saveData("chickens", newChickens);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const countVal = Number(formData.count);
-    const femVal = Number(formData.femaleCount);
-    const maleVal = Number(formData.maleCount);
+  const onFormSubmit = (data: ChickenFormData) => {
+    const countVal = Number(data.count);
+    const femVal = Number(data.femaleCount);
+    const maleVal = Number(data.maleCount);
 
     const actualCount = (femVal > 0 || maleVal > 0) ? femVal + maleVal : countVal;
+    const now = Date.now();
 
     if (editingChicken) {
       const updated = chickens.map((c) =>
         c.id === editingChicken.id ? { 
           ...c, 
-          ...formData, 
+          ...data, 
           poultryType: poultryType || c.poultryType || "poulet",
-          age: Number(formData.age), 
-          ageUnit: formData.ageUnit,
+          age: Number(data.age), 
           count: actualCount,
           femaleCount: femVal,
-          maleCount: maleVal
+          maleCount: maleVal,
+          updatedAt: now
         } : c
       );
       saveChickens(updated);
       setEditingChicken(null);
     } else {
       const newChicken: Chicken = {
-        id: Date.now().toString(),
-        ...formData,
+        id: now.toString(),
+        ...data,
         poultryType: (poultryType || "poulet").toLowerCase() as "poulet" | "caille",
-        age: Number(formData.age),
-        ageUnit: formData.ageUnit,
+        age: Number(data.age),
         count: actualCount,
         femaleCount: femVal,
         maleCount: maleVal,
-        startDate: formData.startDate
+        updatedAt: now
       };
       saveChickens([...chickens, newChicken]);
     }
-    setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
+    reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
     setIsAddOpen(false);
   };
-
-  const filtered = chickens.filter((c) => {
-    const typeMatch = c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-    const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
-    return typeMatch && breedMatch;
-  });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -172,7 +184,7 @@ export function ChickenInventory() {
           <button 
             onClick={() => {
               setEditingChicken(null);
-              setFormData({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
+              reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
               setIsAddOpen(true);
             }}
             className={`${btnBg} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print`}
@@ -313,14 +325,14 @@ export function ChickenInventory() {
                 <button 
                   onClick={() => {
                     setEditingChicken(chicken);
-                    setFormData({ 
+                    reset({ 
                       ...chicken, 
                       age: chicken.age.toString(), 
                       count: chicken.count.toString(),
                       femaleCount: (chicken.femaleCount || "0").toString(),
                       maleCount: (chicken.maleCount || "0").toString(),
                       startDate: chicken.startDate || new Date().toISOString().split('T')[0]
-                    });
+                    } as any);
                     setIsAddOpen(true);
                   }}
                   className="flex-1 bg-gray-50 hover:bg-gray-100 p-3 rounded-xl text-babs-brown font-bold text-xs transition-colors flex items-center justify-center gap-2"
@@ -345,16 +357,15 @@ export function ChickenInventory() {
             <h3 className="text-3xl font-black text-babs-brown mb-8">
               {editingChicken ? "Modifier le lot" : "Nouvel enregistrement en Lot"}
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nom du Lot / Identifiant</label>
                 <input 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none ${errors.name ? 'ring-2 ring-red-500' : ''}`}
                   placeholder="Ex: Arrivage Goliath Janvier..."
-                  required
+                  {...register("name", { required: "Nom requis" })}
                 />
+                {errors.name && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.name.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -364,15 +375,12 @@ export function ChickenInventory() {
                       type="number"
                       step="0.1"
                       className="w-20 bg-transparent border-none p-3 font-bold text-babs-brown focus:ring-0 outline-none"
-                      value={formData.age}
-                      onChange={e => setFormData({ ...formData, age: e.target.value })}
-                      required
+                      {...register("age", { required: true, min: 0 })}
                     />
                     <div className="w-[1px] bg-gray-200 my-2"></div>
                     <select
                       className="flex-1 bg-transparent border-none px-3 font-bold text-xs text-babs-brown outline-none cursor-pointer"
-                      value={formData.ageUnit}
-                      onChange={e => setFormData({ ...formData, ageUnit: e.target.value as any })}
+                      {...register("ageUnit")}
                     >
                       <option value="months">Mois</option>
                       <option value="weeks">Semaines</option>
@@ -384,10 +392,7 @@ export function ChickenInventory() {
                   <input 
                     type="number"
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 transition-all outline-none"
-                    value={formData.count}
-                    onChange={e => setFormData({ ...formData, count: e.target.value })}
-                    required
-                    min="1"
+                    {...register("count", { required: true, min: 1 })}
                   />
                 </div>
               </div>
@@ -413,8 +418,7 @@ export function ChickenInventory() {
                      <input 
                        type="number"
                        className="w-full bg-white border-none rounded-xl p-3 font-bold text-babs-brown outline-none"
-                       value={formData.femaleCount}
-                       onChange={e => setFormData({ ...formData, femaleCount: e.target.value })}
+                       {...register("femaleCount")}
                      />
                    </div>
                    <div className="space-y-2">
@@ -422,8 +426,7 @@ export function ChickenInventory() {
                      <input 
                        type="number"
                        className="w-full bg-white border-none rounded-xl p-3 font-bold text-babs-brown outline-none"
-                       value={formData.maleCount}
-                       onChange={e => setFormData({ ...formData, maleCount: e.target.value })}
+                       {...register("maleCount")}
                      />
                    </div>
                  </div>
@@ -434,8 +437,7 @@ export function ChickenInventory() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Statut de santé du lot</label>
                 <select 
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none focus:ring-2 focus:ring-orange-200 outline-none"
-                  value={formData.status}
-                  onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+                  {...register("status")}
                 >
                   <option value="active">En pleine forme</option>
                   <option value="malade">Soins requis / Isolement</option>
@@ -447,9 +449,7 @@ export function ChickenInventory() {
                 <input 
                   type="date"
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown"
-                  value={formData.startDate}
-                  onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                  required
+                  {...register("startDate", { required: true })}
                 />
               </div>
               <div className="flex gap-4 pt-4">

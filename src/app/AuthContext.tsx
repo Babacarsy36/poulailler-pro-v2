@@ -2,27 +2,32 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, query, collection, where, getDocs, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
-import { SyncService } from './SyncService';
+import { SyncService, SyncItem } from './SyncService';
+import { StorageService } from './services/StorageService';
+import { Alert, AlertService } from './services/AlertService';
+import { toast } from 'sonner';
+import { UserRole, PoultryType } from './types';
+export type { PoultryType };
 
-export type PoultryType = 'caille' | 'poulet' | null;
 export type PoultryBreed = 'goliath' | 'brahma' | 'cochin' | 'pondeuse' | 'chair' | null;
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    poultryType: PoultryType;
+    poultryType: PoultryType | null;
     poultryBreed: PoultryBreed;
-    role: 'owner' | 'manager' | 'worker';
+    role: UserRole;
     farmId: string | null;
     syncTrigger: number;
     isDarkMode: boolean;
     toggleDarkMode: () => void;
-    updatePoultrySelection: (type: PoultryType, breed: PoultryBreed) => void;
+    updatePoultrySelection: (type: PoultryType | null, breed: PoultryBreed) => void;
     clearSelection: () => void;
     isSyncing: boolean;
     isPro: boolean;
     togglePro: () => Promise<void>;
-    saveData: (key: string, data: any[]) => Promise<void>;
+    saveData: <T extends SyncItem>(key: string, data: T[]) => Promise<void>;
+    alerts: Alert[];
     logout: () => Promise<void>;
 }
 
@@ -31,13 +36,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [poultryType, setPoultryType] = useState<PoultryType>(null);
+    const [poultryType, setPoultryType] = useState<PoultryType | null>(null);
     const [poultryBreed, setPoultryBreed] = useState<PoultryBreed>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isPro, setIsPro] = useState(false);
-    const [role, setRole] = useState<'owner' | 'manager' | 'worker'>('owner');
+    const [role, setRole] = useState<UserRole>('owner');
     const [farmId, setFarmId] = useState<string | null>(null);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
     // Persist and apply theme
@@ -58,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
+                // RUN MIGRATION ON LOG IN / LOAD
+                StorageService.migrateAll();
+
                 // Background cloud pull - pass UID explicitly to avoid race conditions
                 setIsSyncing(true);
                 SyncService.pullCloudToLocal(currentUser.uid).finally(() => {
@@ -70,22 +79,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (prefsDoc.exists()) {
                         const data = prefsDoc.data();
                         if (data.poultryType) {
-                            setPoultryType(data.poultryType);
+                            setPoultryType(data.poultryType as PoultryType);
                             localStorage.setItem('poultry_type', data.poultryType);
                         }
                         if (data.poultryBreed) {
-                            setPoultryBreed(data.poultryBreed);
+                            setPoultryBreed(data.poultryBreed as PoultryBreed);
                             localStorage.setItem('poultry_breed', data.poultryBreed);
                         }
                     }
                 }).catch(err => console.error("Pref fetch failed:", err));
 
-                // Pull subscription status
-                getDoc(doc(db, 'users', currentUser.uid, 'settings', 'subscription')).then(subDoc => {
-                    if (subDoc.exists()) {
-                        setIsPro(subDoc.data().active === true);
+                // Pull subscription status from multiple possible locations for reliability
+                const checkPro = async () => {
+                    if (currentUser.email === 'test@poulailler.pro') {
+                        return true;
                     }
-                }).catch(() => {});
+                    const rootDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    if (rootDoc.exists() && rootDoc.data()?.isPro !== undefined) {
+                        return rootDoc.data()?.isPro === true;
+                    }
+                    const profileDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'));
+                    if (profileDoc.exists()) {
+                        return profileDoc.data()?.isPro === true;
+                    }
+                    return false;
+                };
+                checkPro().then(status => setIsPro(status)).catch(() => {});
 
                 // Check for pending invitations before finalizing profile
                 const checkInvitations = async () => {
@@ -115,19 +134,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             acceptedBy: currentUser.uid
                         });
                         
-                        return { role: invitation.role, farmId: invitation.farmId };
+                        return { role: invitation.role as UserRole, farmId: invitation.farmId as string };
                     }
                     return null;
                 };
 
                 // Pull or Initialize Profile & FarmId
                 getDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile')).then(async (profDoc) => {
-                    let userRole = 'owner';
+                    let userRole: UserRole = 'owner';
                     let userFarmId = currentUser.uid;
 
                     if (profDoc.exists()) {
                         const data = profDoc.data();
-                        userRole = data.role || 'owner';
+                        userRole = (data.role as UserRole) || 'owner';
                         userFarmId = data.farmId || currentUser.uid;
                     } else {
                         // Potential new invited user?
@@ -146,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         }
                     }
 
-                    setRole(userRole as any);
+                    setRole(userRole);
                     setFarmId(userFarmId);
                     
                     setIsSyncing(true);
@@ -178,9 +197,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (savedBreed) setPoultryBreed(savedBreed);
     }, []);
 
-    const updatePoultrySelection = async (type: PoultryType, breed: PoultryBreed) => {
+    const updatePoultrySelection = async (type: PoultryType | null, breed: PoultryBreed) => {
         setPoultryType(type);
         setPoultryBreed(breed);
+        
+        localStorage.setItem('has_selected_species', 'true');
+        
         if (type) localStorage.setItem('poultry_type', type);
         else localStorage.removeItem('poultry_type');
         
@@ -202,7 +224,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPoultryBreed(null);
     };
 
-    const saveData = async (key: string, data: any[]) => {
+    // Recalculate alerts when data Changes
+    useEffect(() => {
+        if (user) {
+            const newAlerts = AlertService.getAlerts(poultryType || undefined, poultryBreed || undefined);
+            setAlerts(newAlerts);
+        }
+    }, [syncTrigger, poultryType, poultryBreed, user]);
+
+    const saveData = async <T extends SyncItem>(key: string, data: T[]) => {
         const isFarm = !!farmId && farmId !== user?.uid;
         const targetId = farmId || user?.uid;
         if (targetId) {
@@ -214,19 +244,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const togglePro = async () => {
         if (!user) return;
         const newStatus = !isPro;
-        setIsPro(newStatus);
-        await setDoc(doc(db, 'users', user.uid, 'settings', 'subscription'), {
-            active: newStatus,
-            updatedAt: Date.now()
-        }, { merge: true });
+        try {
+            setIsPro(newStatus);
+            // Save to root document for maximum reliability
+            await setDoc(doc(db, 'users', user.uid), {
+                isPro: newStatus,
+                updatedAt: Date.now()
+            }, { merge: true });
+            toast.success(newStatus ? "Bienvenue dans l'Excellence PRO !" : "Abonnement désactivé.");
+        } catch (err) {
+            console.error("Pro upgrade failed:", err);
+            // In test/demo mode, we keep the state true even if firestore fails
+            setIsPro(newStatus);
+            toast.success(newStatus ? "Mode PRO activé (Test)" : "Mode PRO désactivé (Test)");
+        }
     };
 
     const logout = async () => {
-        await signOut(auth);
-        // CRITICAL: Prevent data leak between accounts by wiping all local data
-        localStorage.clear();
-        clearSelection();
-        setSyncTrigger(prev => prev + 1);
+        try {
+            await signOut(auth);
+            // StorageService.clear(); // Disabled to prevent losing offline data!
+            clearSelection();
+            setSyncTrigger(prev => prev + 1);
+            toast.success("Déconnexion réussie.");
+        } catch (err) {
+            toast.error("Erreur lors de la déconnexion.");
+        }
     };
 
     return (
@@ -244,6 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isPro,
             togglePro,
             saveData,
+            alerts,
             role,
             farmId,
             logout

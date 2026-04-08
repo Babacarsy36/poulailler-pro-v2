@@ -36,8 +36,8 @@ export function BatchCard({ batch, onEdit, onDelete, onSelect }: Props) {
       <div className="flex items-center gap-4">
         {/* Left: egg counts */}
         <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-          <span className="flex items-center gap-1">🐣 {batch.fertileCount}</span>
-          <span className="flex items-center gap-1">❌ {batch.deadCount}</span>
+          <span className="flex items-center gap-1">🐣 {batch.status === 'hatched' && batch.hatchedCount !== undefined ? batch.hatchedCount : batch.fertileCount}</span>
+          <span className="flex items-center gap-1">❌ {batch.status === 'hatched' && batch.unhatchedCount !== undefined ? batch.unhatchedCount : batch.deadCount}</span>
           {isAlertStatus && (
             <span className={`flex items-center gap-1 ${dayTip.includes('⚠️') ? 'text-red-500' : 'text-blue-500'} animate-pulse`}>
               <AlertTriangle className="w-3 h-3" />

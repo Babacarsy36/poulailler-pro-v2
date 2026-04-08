@@ -125,11 +125,50 @@ export function IncubatorDetails({ batch, onUpdate, onClose }: Props) {
             ))}
           </div>
 
-          {/* Mark as hatched */}
-          {local.status === 'ongoing' && left === 0 && (
+          {/* Mark as hatched or Stats if already hatched */}
+          {local.status === 'hatched' ? (
+            <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mt-4 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🎉</span>
+                <h4 className="text-sm font-black text-emerald-800">Bilan d'Éclosion</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nombre d'Éclos (🐣)</label>
+                  <input
+                    type="number"
+                    value={local.hatchedCount || ''}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value) || 0;
+                      const updated = { ...local, hatchedCount: v, lastUpdated: Date.now() };
+                      setLocal(updated);
+                      onUpdate(updated);
+                    }}
+                    className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 font-black text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    placeholder="Ex: 85"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Reste / Morts (❌)</label>
+                  <input
+                    type="number"
+                    value={local.unhatchedCount || ''}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value) || 0;
+                      const updated = { ...local, unhatchedCount: v, lastUpdated: Date.now() };
+                      setLocal(updated);
+                      onUpdate(updated);
+                    }}
+                    className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 font-black text-orange-700 outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    placeholder="Ex: 5"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (left <= 3 || pct >= 90) && (
             <button
               onClick={() => {
-                const updated = { ...local, status: 'hatched' as const, lastUpdated: Date.now() };
+                const updated = { ...local, status: 'hatched' as const, hatchedCount: local.fertileCount, unhatchedCount: 0, lastUpdated: Date.now() };
                 setLocal(updated);
                 onUpdate(updated);
               }}
