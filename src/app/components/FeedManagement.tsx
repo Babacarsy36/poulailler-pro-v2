@@ -326,55 +326,62 @@ export function FeedManagement() {
   const activePhaseToExpand = expandedPhase !== null ? expandedPhase : currentPhaseIndex;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <section id="screen-feed" className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-4xl font-black text-babs-brown tracking-tight">Gestion Aliment</h2>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Stock & Programme Nutritionnel</p>
+          <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Alimentation</h1>
+          <p className="text-xs font-light text-gray-500 mt-1">Stock & programme nutritionnel</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsAddOpen(true)}
-          className={`${customColors.bgBtn} text-white px-6 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold`}
+          className={`h-10 px-3 rounded-xl ${customColors.bgBtn} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
         >
-          <Plus className="w-5 h-5" /> Nouvelle opération
+          <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
+          <span className="font-medium text-sm hidden sm:inline">Opération</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         <div className="lg:col-span-1 space-y-8">
-           {/* Stock Display */}
-           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col relative overflow-hidden group">
-             <div className="absolute top-6 right-6 p-3 bg-gray-50 rounded-2xl group-hover:scale-110 transition-transform">
-               <Package className={`w-6 h-6 ${customColors.textDark}`} />
-             </div>
-             <p className="text-[10px] uppercase tracking-widest font-black text-gray-400">Stock Actuel</p>
-             <p className={`text-5xl mt-2 font-black ${totalFeed < 10 ? 'text-red-500' : 'text-babs-brown'}`}>
-                {totalFeed.toFixed(1)} <span className="text-2xl text-gray-300">kg</span>
-             </p>
-             
-             <div className="mt-4 flex flex-col gap-1">
-               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-gray-400">
-                 <span>Conso. estimée</span>
-                 <span className="text-gray-600">{dailyConsumption.toFixed(2)} kg / jour</span>
-               </div>
-               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-gray-400">
-                 <span>Autonomie</span>
-                 <span className={`${autonomyColor} flex items-center gap-1`}>
-                   {autonomyDays === Infinity ? "Lot à définir" : `${autonomyDays} jours`}
-                 </span>
-               </div>
-             </div>
+      {/* Stock KPI */}
+      <div className={`clean-card rounded-2xl p-4 border-l-4 ${totalFeed < 10 ? 'border-l-red-500' : autonomyDays <= 3 ? 'border-l-orange-500' : 'border-l-emerald-500'}`}>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Stock Actuel</p>
+            <p className={`font-['JetBrains_Mono'] text-3xl font-medium ${totalFeed < 10 ? 'text-red-500' : 'text-gray-900'}`}>
+              {totalFeed.toFixed(1)} <span className="text-base text-gray-400 font-normal">kg</span>
+            </p>
+          </div>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${customColors.bgLight}`}>
+            <iconify-icon icon="solar:box-linear" stroke-width="1.5" class={`text-2xl ${customColors.textDark}`}></iconify-icon>
+          </div>
+        </div>
+        <div className="flex gap-6 mt-4 pt-3 border-t border-gray-100">
+          <div>
+            <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Conso. / jour</p>
+            <p className="font-['JetBrains_Mono'] text-sm font-medium text-gray-900">{dailyConsumption.toFixed(2)} kg</p>
+          </div>
+          <div className="w-px bg-gray-100"></div>
+          <div>
+            <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Autonomie</p>
+            <p className={`font-['JetBrains_Mono'] text-sm font-medium ${autonomyColor}`}>
+              {autonomyDays === Infinity ? 'Non calculé' : `${autonomyDays} jours`}
+            </p>
+          </div>
+        </div>
+        {autonomyDays <= 3 && dailyConsumption > 0 && (
+          <div className="mt-3 p-2 bg-red-50 rounded-xl border-l-2 border-l-red-500 flex items-center gap-2">
+            <iconify-icon icon="solar:danger-triangle-linear" class="text-red-500 text-base"></iconify-icon>
+            <p className="text-[10px] font-medium text-red-700">Rupture imminente — {new Date(Date.now() + autonomyDays * 86400000).toLocaleDateString()}</p>
+          </div>
+        )}
+      </div>
 
-             {autonomyDays <= 3 && dailyConsumption > 0 && (
-               <p className="text-[10px] font-black text-red-500 uppercase mt-4 tracking-widest animate-pulse flex items-center gap-1 bg-red-50 p-2 rounded-xl border border-red-100 italic">
-                 ⚠️ Rupture imminente (Date estimée : {new Date(Date.now() + autonomyDays * 86400000).toLocaleDateString()})
-               </p>
-             )}
-             <div className={`absolute bottom-0 left-0 w-full h-2 ${customColors.bgLight}`}></div>
-           </div>
+      <div className="space-y-6">
+         <div className="space-y-6">
+           {/* placeholder div for visual consistency */}
 
            {/* Nutritional Phase Generator */}
-           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
+           <div className="clean-card rounded-3xl p-5">
              <div className="flex items-center gap-3 mb-6">
                  <div className={`p-3 rounded-xl ${customColors.bgLight} ${customColors.textDark}`}>
                     <Calendar className="w-5 h-5" />
@@ -481,7 +488,7 @@ export function FeedManagement() {
            </div>
 
            {/* Feed Calculator (Standard) */}
-           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-babs-orange mt-8 flex flex-col relative overflow-hidden">
+           <div className="clean-card rounded-3xl p-5 border-l-4 border-l-orange-500">
              <div className="absolute top-0 right-0 p-4 opacity-5 bg-babs-orange rounded-bl-[4rem]">
                  <Calculator className="w-24 h-24 text-babs-orange" />
              </div>
@@ -548,7 +555,7 @@ export function FeedManagement() {
            </div>
 
            {/* Feed Optimizer (Mixer) */}
-           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 mt-8">
+           <div className="clean-card rounded-3xl p-5">
               <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
                      <Thermometer className="w-5 h-5" />
@@ -705,16 +712,16 @@ export function FeedManagement() {
          </div>
 
          {/* History */}
-         <div className="lg:col-span-2">
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 h-full flex flex-col">
-              <div className="flex items-center gap-2 mb-8 px-2">
-                <History className="w-5 h-5 text-gray-300" />
-                <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Historique de Mouvements</h3>
+         <div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <iconify-icon icon="solar:history-linear" class="text-xl text-gray-400"></iconify-icon>
+                <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Historique de Mouvements</h2>
               </div>
               
-              <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-[700px]">
+              <div className="space-y-3">
                 {filteredEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-5 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 shadow-sm hover:shadow-md group">
+                   <div key={entry.id} className="clean-card rounded-2xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors group">
                     <div className="flex items-center gap-5">
                       <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center transition-transform ${
                         entry.type === 'achat' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600 group-hover:-rotate-6'
@@ -763,23 +770,20 @@ export function FeedManagement() {
                 ))}
 
                 {filteredEntries.length === 0 && (
-                  <div className="py-12 flex flex-col items-center justify-center text-center">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                       <Package className="w-10 h-10 text-gray-200" />
-                    </div>
-                    <p className="text-gray-400 font-bold italic mb-2">Aucun mouvement enregistré.</p>
-                    <p className="text-[10px] text-gray-300 font-black uppercase tracking-widest">Gérez vos entrées et sorties de stock ici.</p>
-                  </div>
-                )}
+                   <div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200">
+                     <iconify-icon icon="solar:box-line-duotone" class="text-4xl text-gray-300 mb-2 block"></iconify-icon>
+                     <p className="text-xs font-light text-gray-500">Aucun mouvement enregistré.</p>
+                   </div>
+                 )}
               </div>
             </div>
          </div>
-      </div>
+         </div>
 
       {isAddOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="text-3xl font-black text-babs-brown mb-8">Nouvelle opération</h3>
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
+            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">Nouvelle Opération</h3>
             <form onSubmit={handleSubmit(onEntrySubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -830,25 +834,25 @@ export function FeedManagement() {
                   {...register("notes")}
                 />
               </div>
-              <div className="flex gap-4 pt-4">
-                <button 
-                  type="button"
-                  onClick={() => setIsAddOpen(false)}
-                  className="flex-1 p-4 rounded-2xl font-black text-gray-400 hover:bg-gray-50 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit"
-                  className={`flex-1 ${customColors.bgBtn} text-white p-4 rounded-2xl font-black shadow-lg`}
-                >
-                  Confirmer
-                </button>
-              </div>
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                 <button 
+                   type="button"
+                   onClick={() => setIsAddOpen(false)}
+                   className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                 >
+                   Annuler
+                 </button>
+                 <button 
+                   type="submit"
+                   className={`flex-1 py-3 ${customColors.bgBtn} text-white rounded-xl text-sm font-medium shadow-md transition-colors`}
+                 >
+                   Confirmer
+                 </button>
+               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

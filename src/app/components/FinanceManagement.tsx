@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, MinusCircle, Wallet, TrendingUp, TrendingDown, Trash2, Printer, Crown, Info, Landmark, Receipt, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router";
-import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
 
@@ -35,6 +34,8 @@ export function FinanceManagement() {
   const { poultryType, syncTrigger, isPro, role, saveData } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
   const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
@@ -54,22 +55,18 @@ export function FinanceManagement() {
   const currentCategories = formType === 'expense' ? expenseCategories : incomeCategories;
 
   const isCaille = poultryType === 'caille';
-  const customColors = {
-    income: isCaille ? "#10b981" : "#eab308",
-    expense: "#ef4444",
-    accent: isCaille ? "var(--babs-emerald)" : "var(--babs-orange)",
-    bgAccent: isCaille ? "bg-babs-emerald" : "bg-babs-orange",
-    textAccent: isCaille ? "text-babs-emerald" : "text-babs-orange",
-  };
+  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
+  const accentBg = isCaille ? "bg-emerald-500" : "bg-orange-500";
+  const accentBorderLeft = isCaille ? "border-l-emerald-500" : "border-l-orange-500";
+  const accentBgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
 
   useEffect(() => {
     const data = StorageService.getItem<Transaction[]>("finances") || [];
     setTransactions(data);
-    
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
     const activeLots = chickens.filter((c: Chicken) => c.status === 'active' || Number(c.count) > 0).map((c: Chicken) => ({
-       id: c.id,
-       name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
+      id: c.id,
+      name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
     }));
     setBatches(activeLots);
   }, [syncTrigger]);
@@ -82,7 +79,6 @@ export function FinanceManagement() {
   const onFormSubmit = async (data: FinanceFormData) => {
     const now = Date.now();
     const finalCategory = data.category || currentCategories[0];
-
     const newTransaction: Transaction = {
       id: now.toString(),
       type: data.type,
@@ -94,25 +90,16 @@ export function FinanceManagement() {
       batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
       updatedAt: now
     };
-
     const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     await saveTransactions(newTransactions);
-    
-    reset({
-      type: data.type,
-      amount: '',
-      category: '',
-      description: '',
-      date: new Date().toISOString().split('T')[0],
-      selectedBatchId: 'none',
-    });
+    reset({ type: data.type, amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none' });
+    setIsAddOpen(false);
     toast.success("Transaction enregistrée !");
   };
 
   const handleDelete = async (id: string) => {
     if(confirm("Supprimer cette transaction ?")) {
-      const newTransactions = transactions.filter(t => t.id !== id);
-      await saveTransactions(newTransactions);
+      await saveTransactions(transactions.filter(t => t.id !== id));
       toast.success("Transaction supprimée.");
     }
   };
@@ -123,15 +110,15 @@ export function FinanceManagement() {
 
   const chartDataMap: Record<string, any> = {};
   transactions.forEach(t => {
-     if(!chartDataMap[t.date]) {
-       chartDataMap[t.date] = { date: t.date, income: 0, expense: 0 };
-     }
-     if(t.type === 'income') chartDataMap[t.date].income += t.amount;
-     else chartDataMap[t.date].expense += t.amount;
+    if (!chartDataMap[t.date]) chartDataMap[t.date] = { date: t.date, income: 0, expense: 0 };
+    if (t.type === 'income') chartDataMap[t.date].income += t.amount;
+    else chartDataMap[t.date].expense += t.amount;
   });
-  
-  const chartData = Object.values(chartDataMap).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const chartData = Object.values(chartDataMap).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-14);
 
+  const filteredTransactions = transactions.filter(t => activeFilter === 'all' || t.type === activeFilter);
+
+  // Lot profitability analysis
   const lotStats = batches.map(batch => {
     const batchTransactions = transactions.filter(t => t.batchId === batch.id);
     const income = batchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -140,367 +127,327 @@ export function FinanceManagement() {
     const countMatch = batch.name.match(/\((\d+)u\)/);
     const count = countMatch ? parseInt(countMatch[1]) : 1;
     const costPerBird = count > 0 ? Math.round(expense / count) : 0;
-
-    return {
-      ...batch,
-      income,
-      expense,
-      profit,
-      costPerBird,
-      roi: expense > 0 ? Math.round((profit / expense) * 100) : 0
-    };
+    return { ...batch, income, expense, profit, costPerBird, roi: expense > 0 ? Math.round((profit / expense) * 100) : 0 };
   }).filter(l => l.income > 0 || l.expense > 0);
 
   if (role === 'worker') {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8 bg-white rounded-[2.5rem] shadow-premium border border-gray-50 border-dashed">
-         <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mb-6">
-            <Shield className="w-10 h-10" />
-         </div>
-         <h2 className="text-2xl font-black text-babs-brown uppercase tracking-tight mb-2">Accès Restreint</h2>
-         <p className="text-gray-400 font-bold max-w-xs text-sm leading-relaxed mb-8">
-            Désolé, votre rôle d'**Employé** ne vous permet pas de consulter les données financières de la ferme.
-         </p>
-         <button 
-           onClick={() => navigate("/")}
-           className="px-8 py-4 bg-babs-brown text-white rounded-2xl font-black shadow-lg hover:scale-105 transition-transform"
-         >
-            Retour au Tableau de Bord
-         </button>
+      <div className="clean-card rounded-3xl py-16 text-center flex flex-col items-center gap-4">
+        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center">
+          <Shield className="w-8 h-8 text-red-400" />
+        </div>
+        <div>
+          <h2 className="font-['Syne'] text-lg font-semibold text-gray-900">Accès Restreint</h2>
+          <p className="text-xs font-light text-gray-500 mt-1 max-w-xs">Votre rôle d'Employé ne permet pas de consulter les données financières.</p>
+        </div>
+        <button onClick={() => navigate("/")} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-medium">
+          Retour au Tableau de Bord
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          .print-only { display: block !important; }
-          body { background: white !important; padding: 0 !important; }
-          .bg-white { border: none !important; shadow: none !important; }
-          .shadow-premium { box-shadow: none !important; border: 1px solid #eee !important; }
-          canvas { max-width: 100% !important; height: auto !important; }
-        }
-        .print-only { display: none; }
-      `}</style>
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">Finances</h2>
-          <p className="text-babs-brown/60 font-medium uppercase tracking-widest text-[10px]">
-            Rentabilité & Suivi détaillé
-          </p>
+    <section id="screen-finance" className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Finances</h1>
+          <p className="text-xs font-light text-gray-500 mt-1">Rentabilité & suivi détaillé</p>
         </div>
-        <button 
-          onClick={() => window.print()}
-          className="bg-white border-2 border-gray-100 text-gray-500 px-6 py-4 rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2 font-bold no-print"
-        >
-          <Printer className="w-5 h-5" /> Imprimer Rapport
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.print()}
+            className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none"
+          >
+            <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
+          </button>
+          <button
+            onClick={() => setIsAddOpen(true)}
+            className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none"
+          >
+            <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
+            <span className="font-medium text-sm hidden sm:inline">Transaction</span>
+          </button>
+        </div>
       </div>
 
-      <div className="print-only mb-8 border-b-2 border-gray-100 pb-6 w-full">
-        <h1 className="text-3xl font-black text-black">POULAILLER PRO - RAPPORT FINANCIER</h1>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">
-          Généré le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+      {/* Balance Hero */}
+      <div className={`clean-card rounded-2xl p-5 border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'} relative overflow-hidden`}>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Solde Total</p>
+        <p className={`font-['JetBrains_Mono'] text-4xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
+          {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-base text-gray-400 font-normal">FCFA</span>
         </p>
+        <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
+          <div>
+            <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Recettes</p>
+            <p className="font-['JetBrains_Mono'] text-sm font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
+          </div>
+          <div className="w-px bg-gray-100"></div>
+          <div>
+            <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Dépenses</p>
+            <p className="font-['JetBrains_Mono'] text-sm font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
+          </div>
+        </div>
       </div>
 
-       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-white rounded-[2rem] p-6 shadow-premium border border-gray-50 flex flex-col justify-center relative overflow-hidden group hover:scale-[1.02] transition-transform">
-             <div className="absolute top-6 right-6 p-3 bg-gray-50 rounded-2xl group-hover:scale-110 transition-transform">
-               <Wallet className={`w-6 h-6 ${customColors.textAccent}`} />
-             </div>
-             <p className="text-[10px] uppercase tracking-widest font-black text-gray-400">Solde Total</p>
-             <p className={`text-4xl mt-2 font-black ${balance >= 0 ? customColors.textAccent : 'text-red-500'}`}>
-                {balance >= 0 ? '+' : ''}{balance.toLocaleString()} F
-             </p>
+      {/* Chart */}
+      {chartData.length > 0 && (
+        <div className="clean-card rounded-3xl p-5 select-none">
+          <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4">Évolution Financière</h2>
+          <div className="h-[120px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="finIncome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2}></stop>
+                    <stop offset="100%" stopColor="#22c55e" stopOpacity={0.0}></stop>
+                  </linearGradient>
+                  <linearGradient id="finExpense" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}></stop>
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0.0}></stop>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 9, fill: '#9ca3af' }}
+                  tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: '16px', border: '1px solid #F3F4F6', fontSize: '10px', fontFamily: 'DM Sans' }}
+                  formatter={(value: number) => [`${value.toLocaleString()} F`, undefined]}
+                />
+                <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={2} fill="url(#finIncome)" />
+                <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={2} fill="url(#finExpense)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          <div className="bg-white rounded-[2rem] p-6 shadow-premium border border-gray-50 flex flex-col justify-center relative overflow-hidden group hover:scale-[1.02] transition-transform">
-             <div className="absolute top-6 right-6 p-3 bg-green-50 rounded-2xl group-hover:scale-110 transition-transform">
-               <TrendingUp className="w-6 h-6 text-green-500" />
-             </div>
-             <p className="text-[10px] uppercase tracking-widest font-black text-gray-400">Total Recettes</p>
-             <p className="text-3xl mt-2 font-black text-babs-brown">{totalIncome.toLocaleString()} F</p>
-          </div>
-          <div className="bg-white rounded-[2rem] p-6 shadow-premium border border-gray-50 flex flex-col justify-center relative overflow-hidden group hover:scale-[1.02] transition-transform">
-             <div className="absolute top-6 right-6 p-3 bg-red-50 rounded-2xl group-hover:scale-110 transition-transform">
-               <TrendingDown className="w-6 h-6 text-red-500" />
-             </div>
-             <p className="text-[10px] uppercase tracking-widest font-black text-gray-400">Total Dépenses</p>
-             <p className="text-3xl mt-2 font-black text-babs-brown">{totalExpense.toLocaleString()} F</p>
-          </div>
-       </div>
+        </div>
+      )}
 
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-1 space-y-6">
-             <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 no-print">
-               <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Enregistrer</h3>
-               
-               <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
-                  <button 
-                    onClick={() => { setValue('type', 'expense'); setValue('category', ''); }}
-                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${formType === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
-                  >
-                    Dépense
-                  </button>
-                  <button 
-                    onClick={() => { setValue('type', 'income'); setValue('category', ''); }}
-                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${formType === 'income' ? `bg-white shadow-sm text-green-500` : 'text-gray-400 hover:text-gray-600'}`}
-                  >
-                    Recette
-                  </button>
-               </div>
+      {/* Analyse par Lot (PRO) */}
+      <div className="relative">
+        <div className="flex items-center gap-2 mb-3 ml-1">
+          <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Analyse par Lot</h2>
+          {!isPro && (
+            <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-medium flex items-center gap-1">
+              <iconify-icon icon="solar:crown-star-linear"></iconify-icon> PRO
+            </span>
+          )}
+        </div>
 
-               <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Montant (FCFA)</label>
-                    <input 
-                      type="number"
-                      className={`w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all ${errors.amount ? 'ring-2 ring-red-500' : ''}`}
-                      placeholder="Ex: 5000"
-                      {...register("amount", { required: "Montant requis", min: 1 })}
-                    />
-                    {errors.amount && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.amount.message}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Catégorie</label>
-                    <select
-                      className={`w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all appearance-none ${errors.category ? 'ring-2 ring-red-500' : ''}`}
-                      {...register("category", { required: "Catégorie requise" })}
-                    >
-                       <option value="" disabled>Sélectionner...</option>
-                       {currentCategories.map(cat => (
-                         <option key={cat} value={cat}>{cat}</option>
-                       ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Description / Note</label>
-                    <input 
-                      type="text"
-                      className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all"
-                      placeholder="Facultatif"
-                      {...register("description")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date</label>
-                    <input 
-                      type="date"
-                      className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all"
-                      {...register("date", { required: true })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Lier à un lot (Optionnel)</label>
-                    <select
-                      className="w-full bg-gray-50 rounded-2xl py-4 px-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 transition-all appearance-none"
-                      {...register("selectedBatchId")}
-                    >
-                       <option value="none">Hors lot (Frais généraux)</option>
-                       {batches.map(b => (
-                         <option key={b.id} value={b.id}>{b.name}</option>
-                       ))}
-                    </select>
-                  </div>
-                  
-                  <button 
-                    type="submit"
-                    className={`w-full text-white font-black rounded-2xl py-5 shadow-lg transition-all mt-4 flex items-center justify-center gap-2 ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
-                  >
-                    {formType === 'expense' ? <MinusCircle className="w-5 h-5"/> : <PlusCircle className="w-5 h-5"/>}
-                    Ajouter {formType === 'expense' ? 'la dépense' : 'la recette'}
-                  </button>
-               </form>
-             </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50">
-                 <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Évolution Financière</h3>
-                 <div className="h-64 w-full">
-                    {chartData.length > 0 ? (
-                       <ResponsiveContainer width="100%" height="100%">
-                         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                           <defs>
-                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                               <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                               <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                             </linearGradient>
-                             <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                               <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                               <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                             </linearGradient>
-                           </defs>
-                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                           <XAxis 
-                             dataKey="date" 
-                             axisLine={false}
-                             tickLine={false}
-                             tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
-                             tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day:'numeric', month: 'short' })}
-                           />
-                           <YAxis 
-                             axisLine={false}
-                             tickLine={false}
-                             tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
-                             tickFormatter={(val) => val >= 1000 ? `${val/1000}k` : val}
-                           />
-                           <Tooltip 
-                             contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                             labelStyle={{ fontWeight: 'bold', color: '#4b5563' }}
-                             formatter={(value: number) => [`${value} F`, undefined]}
-                           />
-                           <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
-                           <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
-                         </AreaChart>
-                       </ResponsiveContainer>
-                    ) : (
-                       <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                          <p className="text-gray-400 font-bold text-sm">Pas encore de données</p>
-                       </div>
-                    )}
-                 </div>
-              </div>
-
-              <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden">
-                <div className="flex items-center justify-between mb-8 px-2">
-                   <div className="flex items-center gap-3">
-                      <div className={`p-4 rounded-2xl ${customColors.bgAccent} text-white shadow-xl`}>
-                        <Landmark className="w-8 h-8" />
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-black text-babs-brown tracking-tight">Analyse par Lot</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Rentabilité du cheptel</p>
-                      </div>
-                   </div>
-                   {!isPro && (
-                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-600">
-                       <Crown className="w-3.5 h-3.5" />
-                       <span className="text-[10px] font-black uppercase tracking-widest">PRO</span>
-                     </div>
-                   )}
+        <div className={`space-y-3 ${!isPro ? 'blur-sm grayscale opacity-30 select-none pointer-events-none' : ''}`}>
+          {lotStats.length === 0 ? (
+            <div className="clean-card rounded-2xl p-4 text-center py-8">
+              <iconify-icon icon="solar:chart-line-duotone" class="text-2xl text-gray-300 block mb-1"></iconify-icon>
+              <p className="text-xs font-light text-gray-500">Liez des transactions à des lots pour voir la rentabilité.</p>
+            </div>
+          ) : lotStats.map(stat => (
+            <div key={stat.id} className="clean-card rounded-2xl p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 truncate">{stat.name}</p>
+                  <p className="text-[10px] font-light text-gray-500 mt-0.5">Coût/sujet : <span className="font-['JetBrains_Mono'] font-medium">{stat.costPerBird.toLocaleString()} F</span></p>
                 </div>
-
-                <div className={`space-y-4 ${!isPro ? 'blur-sm grayscale opacity-30 select-none' : ''}`}>
-                   {lotStats.length === 0 ? (
-                     <div className="py-12 text-center bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100 flex flex-col items-center">
-                        <Info className="w-12 h-12 text-gray-300 mb-2" />
-                        <p className="text-gray-400 font-bold text-xs">Associez vos transactions à des lots pour voir la rentabilité.</p>
-                     </div>
-                   ) : (
-                     <div className="space-y-4">
-                       <div className="hidden lg:grid grid-cols-5 gap-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                          <span className="col-span-1">Désignation du Lot</span>
-                          <span className="text-center">Dépenses</span>
-                          <span className="text-center">Revenus</span>
-                          <span className="text-center">Marge Net</span>
-                          <span className="text-right">Statut ROI</span>
-                       </div>
-                       
-                       {lotStats.map(stat => (
-                         <div key={stat.id} className="p-6 rounded-3xl border border-gray-50 bg-gray-50/20 hover:bg-white hover:shadow-md transition-all flex flex-col lg:grid lg:grid-cols-5 gap-4 items-center">
-                            <div className="col-span-1 w-full lg:w-auto text-center lg:text-left">
-                               <p className="font-black text-babs-brown text-base truncate">{stat.name}</p>
-                               <div className="flex items-center justify-center lg:justify-start gap-2 mt-1">
-                                  <Receipt className="w-3 h-3 text-gray-300" />
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Coût/sujet: {stat.costPerBird.toLocaleString()} F</p>
-                               </div>
-                            </div>
-                            <div className="flex lg:block flex-col items-center text-center">
-                               <p className="text-[8px] lg:hidden text-gray-400 font-bold uppercase mb-1">Dépenses</p>
-                               <p className="font-bold text-red-500">{stat.expense.toLocaleString()} F</p>
-                            </div>
-                            <div className="flex lg:block flex-col items-center text-center">
-                               <p className="text-[8px] lg:hidden text-gray-400 font-bold uppercase mb-1">Revenus</p>
-                               <p className="font-bold text-green-500">{stat.income.toLocaleString()} F</p>
-                            </div>
-                            <div className="flex lg:block flex-col items-center text-center">
-                               <p className="text-[8px] lg:hidden text-gray-400 font-bold uppercase mb-1">Net</p>
-                               <p className={`font-black ${stat.profit >= 0 ? 'text-babs-brown' : 'text-red-600'}`}>
-                                  {stat.profit > 0 ? '+' : ''}{stat.profit.toLocaleString()} F
-                               </p>
-                            </div>
-                            <div className="w-full lg:w-auto text-right flex justify-center lg:justify-end">
-                               <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 shadow-sm ${
-                                 stat.roi >= 20 ? 'bg-emerald-500 text-white' : 
-                                 stat.roi >= 0 ? 'bg-amber-500 text-white' : 
-                                 'bg-red-500 text-white'
-                               }`}>
-                                 <span className="text-[10px] font-black">{stat.roi}% ROI</span>
-                               </div>
-                            </div>
-                         </div>
-                       ))}
-                     </div>
-                   )}
+                <div className={`px-2 py-1 rounded-lg text-[10px] font-medium ${
+                  stat.roi >= 20 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                  stat.roi >= 0 ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                  'bg-red-50 text-red-700 border border-red-100'
+                }`}>
+                  {stat.roi >= 0 ? '+' : ''}{stat.roi}% ROI
                 </div>
-
-                {!isPro && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/5 backdrop-blur-[1px]">
-                    <div className="bg-white/95 backdrop-blur-2xl p-10 rounded-[3rem] shadow-2xl border border-white flex flex-col items-center text-center space-y-6 max-w-sm">
-                        <div className="w-20 h-20 bg-gradient-to-br from-amber-300 to-orange-500 rounded-3xl flex items-center justify-center shadow-2xl rotate-3">
-                          <Crown className="w-12 h-12 text-white" />
-                        </div>
-                        <div>
-                          <h4 className="text-2xl font-black text-babs-brown">Analyses Financières PRO</h4>
-                          <p className="text-xs text-gray-400 font-bold leading-relaxed mt-2 px-2">
-                             Visualisez la rentabilité exacte de chaque lot pour optimiser vos revenus.
-                          </p>
-                        </div>
-                        <button 
-                           onClick={() => navigate('/?upgrade=true')}
-                           className="w-full py-5 bg-babs-orange text-white rounded-[1.5rem] font-black shadow-xl"
-                        >
-                           Devenir Membre PRO 🚀
-                        </button>
-                    </div>
-                  </div>
-                )}
               </div>
-
-              <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 relative overflow-hidden">
-                 <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Transactions Récentes</h3>
-                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar relative z-10">
-                    {transactions.length === 0 ? (
-                       <div className="text-center py-8 text-gray-400 font-bold flex flex-col items-center">
-                          <Wallet className="w-12 h-12 text-gray-200 mb-2"/>
-                          Aucune transaction enregistrée
-                       </div>
-                    ) : (
-                       transactions.map((t) => (
-                         <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50/50 hover:bg-white border text-left border-transparent hover:border-gray-100 rounded-2xl transition-all group shadow-sm hover:shadow-md">
-                           <div className="flex items-center gap-4">
-                             <div className={`p-3 rounded-xl shadow-sm ${t.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                {t.type === 'income' ? <PlusCircle className="w-5 h-5" /> : <MinusCircle className="w-5 h-5" />}
-                             </div>
-                             <div>
-                               <p className="font-black text-babs-brown text-sm">{t.category}</p>
-                               <p className="text-[10px] font-bold text-gray-400">{new Date(t.date).toLocaleDateString('fr-FR')} {t.description && `• ${t.description}`}</p>
-                             </div>
-                           </div>
-                           <div className="flex items-center gap-4">
-                              <p className={`font-black tracking-tight ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                                {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
-                              </p>
-                              <button 
-                                onClick={() => handleDelete(t.id)}
-                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100 no-print"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                           </div>
-                         </div>
-                       ))
-                    )}
-                 </div>
+              <div className="flex gap-4 pt-3 border-t border-gray-50">
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase">Recettes</p>
+                  <p className="font-['JetBrains_Mono'] text-xs font-medium text-emerald-600">+{stat.income.toLocaleString()} F</p>
+                </div>
+                <div className="w-px bg-gray-100"></div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase">Dépenses</p>
+                  <p className="font-['JetBrains_Mono'] text-xs font-medium text-red-500">-{stat.expense.toLocaleString()} F</p>
+                </div>
+                <div className="w-px bg-gray-100"></div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase">Net</p>
+                  <p className={`font-['JetBrains_Mono'] text-xs font-medium ${stat.profit >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                    {stat.profit >= 0 ? '+' : ''}{stat.profit.toLocaleString()} F
+                  </p>
+                </div>
               </div>
+            </div>
+          ))}
+        </div>
+
+        {!isPro && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+            <div className="bg-white/95 border border-gray-100 rounded-2xl p-5 shadow-xl text-center max-w-[220px]">
+              <iconify-icon icon="solar:crown-star-bold-duotone" class="text-3xl text-amber-500 mb-2 block"></iconify-icon>
+              <p className="text-xs font-medium text-gray-700 mb-3">Débloquez l'analyse de rentabilité par lot</p>
+              <button
+                onClick={() => navigate('/?upgrade=true')}
+                className="w-full py-2 bg-gray-900 text-white rounded-xl text-xs font-medium"
+              >
+                Devenir PRO 🚀
+              </button>
+            </div>
           </div>
-       </div>
-    </div>
+        )}
+      </div>
+
+      {/* Transactions */}
+      <div>
+        <div className="flex items-center justify-between mb-4 ml-1">
+          <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Transactions</h2>
+          {/* Filter tabs */}
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+            {(['all', 'income', 'expense'] as const).map(filter => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}
+              >
+                {filter === 'all' ? 'Tous' : filter === 'income' ? 'Recettes' : 'Dépenses'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {filteredTransactions.map(t => (
+            <div key={t.id} className="clean-card rounded-2xl p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${t.type === 'income' ? 'bg-emerald-50 border border-emerald-100' : 'bg-red-50 border border-red-100'}`}>
+                <iconify-icon
+                  icon={t.type === 'income' ? "solar:arrow-down-linear" : "solar:arrow-up-linear"}
+                  stroke-width="1.5"
+                  class={`text-xl ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}
+                ></iconify-icon>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{t.category}</p>
+                <p className="text-xs font-light text-gray-500 truncate">
+                  {new Date(t.date).toLocaleDateString('fr-FR')}
+                  {t.description && ` • ${t.description}`}
+                  {t.batchName && <span className="ml-2 px-1.5 py-0.5 bg-gray-100 rounded-md text-[9px] text-gray-500">{t.batchName}</span>}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <p className={`font-['JetBrains_Mono'] font-medium text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
+                </p>
+                <button
+                  onClick={() => handleDelete(t.id)}
+                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 no-print"
+                >
+                  <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {filteredTransactions.length === 0 && (
+            <div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200">
+              <iconify-icon icon="solar:wallet-line-duotone" class="text-4xl text-gray-300 mb-2 block"></iconify-icon>
+              <p className="text-xs font-light text-gray-500">Aucune transaction enregistrée.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add Modal */}
+      {isAddOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
+            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">
+              Nouvelle Transaction
+            </h3>
+
+            {/* Type toggle */}
+            <div className="flex bg-gray-100 p-1 rounded-2xl mb-5 gap-1">
+              <button
+                type="button"
+                onClick={() => { setValue('type', 'expense'); setValue('category', ''); }}
+                className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Dépense
+              </button>
+              <button
+                type="button"
+                onClick={() => { setValue('type', 'income'); setValue('category', ''); }}
+                className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'income' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                Recette
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Montant (FCFA)</label>
+                <input
+                  type="number"
+                  className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors ${errors.amount ? 'border-red-300' : 'border-gray-200'}`}
+                  placeholder="Ex: 5000"
+                  {...register("amount", { required: "Montant requis", min: 1 })}
+                />
+                {errors.amount && <p className="text-red-500 text-[10px] font-medium">{errors.amount.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie</label>
+                <select
+                  className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none ${errors.category ? 'border-red-300' : 'border-gray-200'}`}
+                  {...register("category", { required: "Catégorie requise" })}
+                >
+                  <option value="" disabled>Sélectionner...</option>
+                  {currentCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Description / Note</label>
+                <input
+                  type="text"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-gray-400 transition-colors"
+                  placeholder="Facultatif"
+                  {...register("description")}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
+                  <input
+                    type="date"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
+                    {...register("date", { required: true })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label>
+                  <select
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none"
+                    {...register("selectedBatchId")}
+                  >
+                    <option value="none">Hors lot</option>
+                    {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
+                >
+                  Ajouter
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

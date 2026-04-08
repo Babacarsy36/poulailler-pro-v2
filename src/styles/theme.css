@@ -3,13 +3,13 @@
 :root {
   /* Premium Farmer Palette */
   --font-size: 16px;
-  --background: #F5EFE0; /* Warm Golden Beige - visible warmth */
+  --background: #F5EFE0;
   --foreground: #1A1A1A;
-  --card: rgba(255, 255, 255, 0.85); /* For glassmorphism */
+  --card: rgba(255, 255, 255, 0.85);
   --card-foreground: #1A1A1A;
   --popover: #ffffff;
   --popover-foreground: #1A1A1A;
-  --primary: #2D1A0A; /* Deep Wood instead of black */
+  --primary: #2D1A0A;
   --primary-foreground: #ffffff;
   --secondary: #F3F4ED;
   --secondary-foreground: #2D1A0A;
@@ -19,7 +19,7 @@
   --accent-foreground: #2D1A0A;
   --destructive: #E11D48;
   --destructive-foreground: #ffffff;
-  --border: rgba(45, 26, 10, 0.08); /* Warm subtle border */
+  --border: rgba(45, 26, 10, 0.08);
   --input: transparent;
   --input-background: rgba(255, 255, 255, 0.5);
   --switch-background: #D1D1CB;
@@ -31,7 +31,7 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 2rem; /* More rounded as requested previously */
+  --radius: 2rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: #030213;
@@ -41,10 +41,9 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Babs Farmer Accents - Enhanced Saturation for Glow */
-  --babs-orange: #F59E0B; /* More vibrant Amber */
+  --babs-orange: #F59E0B;
   --babs-orange-light: rgba(255, 247, 237, 0.7);
-  --babs-emerald: #10B981; /* More vibrant Emerald */
+  --babs-emerald: #10B981;
   --babs-emerald-light: rgba(236, 253, 245, 0.7);
   --babs-brown: #451A03;
   --babs-cream: #F5EFE0;
@@ -54,74 +53,20 @@
 
 /* Print Overrides */
 @media print {
-  @page {
-    margin: 2cm;
-  }
-
-  body {
-    background: white !important;
-    color: black !important;
-    font-size: 10pt;
-  }
-
-  /* Hide navigation, buttons, and floating UI */
-  .no-print, 
-  nav, 
-  button, 
-  .fixed,
-  aside,
-  [role="dialog"] {
-    display: none !important;
-  }
-
-  /* Force cards to show as simple containers */
-  .bg-card, .bg-white {
-    background: transparent !important;
-    border: 1px solid #eee !important;
-    box-shadow: none !important;
-    break-inside: avoid;
-    margin-bottom: 1cm;
-    border-radius: 1rem !important;
-  }
-
-  .shadow-premium, .shadow-lg, .shadow-2xl {
-    box-shadow: none !important;
-  }
-
-  /* Print Header Utility */
-  .print-only {
-    display: block !important;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th, td {
-    border-bottom: 1px solid #eee;
-    padding: 8pt;
-    text-align: left;
-  }
-
-  h1, h2, h3 {
-    color: black !important;
-    margin-top: 1.5rem !important;
-  }
-
-  .text-babs-brown, .text-babs-orange, .text-babs-emerald {
-    color: black !important;
-  }
-
-  /* Allow charts to print if possible, but keep background white */
-  .recharts-wrapper {
-    background: white !important;
-  }
+  @page { margin: 2cm; }
+  body { background: white !important; color: black !important; font-size: 10pt; }
+  .no-print, nav, button, .fixed, aside, [role="dialog"] { display: none !important; }
+  .bg-card, .bg-white { background: transparent !important; border: 1px solid #eee !important; box-shadow: none !important; break-inside: avoid; margin-bottom: 1cm; border-radius: 1rem !important; }
+  .shadow-premium, .shadow-lg, .shadow-2xl { box-shadow: none !important; }
+  .print-only { display: block !important; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border-bottom: 1px solid #eee; padding: 8pt; text-align: left; }
+  h1, h2, h3 { color: black !important; margin-top: 1.5rem !important; }
+  .text-babs-brown, .text-babs-orange, .text-babs-emerald { color: black !important; }
+  .recharts-wrapper { background: white !important; }
 }
 
-.print-only {
-  display: none;
-}
+.print-only { display: none; }
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -225,68 +170,89 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.18) 0px, transparent 60%),
-      radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 55%),
-      radial-gradient(at 50% 100%, rgba(69, 26, 3, 0.08) 0px, transparent 60%),
-      radial-gradient(at 80% 50%, rgba(245, 158, 11, 0.06) 0px, transparent 40%);
-    background-attachment: fixed;
+    background-color: #E5E7EB;
+    color: #111827;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
+  .dark body {
+    background-color: #09090B;
+    color: #F4F4F5;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .clean-card {
+    background-color: #FFFFFF;
+    border: 1px solid #F3F4F6;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .dark .clean-card {
+    background-color: #18181B;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .pulse-indicator {
+    animation: pulse-green-light 2s infinite;
+  }
+
+  @keyframes pulse-green-light {
+    0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+
+  /* ── Dark Mode Global Overrides ── */
+  .dark .text-gray-900 { color: #F4F4F5 !important; }
+  .dark .text-gray-800 { color: #E4E4E7 !important; }
+  .dark .text-gray-700 { color: #D4D4D8 !important; }
+  .dark .text-gray-600 { color: #A1A1AA !important; }
+  .dark .text-gray-500 { color: #71717A !important; }
+  .dark .text-gray-400 { color: #52525B !important; }
+
+  .dark .bg-white { background-color: #18181B !important; }
+  .dark .bg-gray-50 { background-color: #27272A !important; }
+  .dark .bg-gray-100 { background-color: #3F3F46 !important; }
+  .dark .bg-gray-200 { background-color: #52525B !important; }
+
+  .dark .border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
+  .dark .border-gray-200 { border-color: rgba(255,255,255,0.09) !important; }
+
+  .dark input,
+  .dark select,
+  .dark textarea {
+    background-color: #27272A !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    color: #F4F4F5 !important;
+  }
+  .dark input::placeholder { color: #71717A !important; }
+  .dark select option { background-color: #27272A; color: #F4F4F5; }
+
+  .dark .bg-gray-900 { background-color: #F4F4F5 !important; color: #09090B !important; }
+}
+
+@layer base {
   .bg-card {
     @apply backdrop-blur-2xl border border-white/60 shadow-premium;
     background: rgba(255, 255, 255, 0.7);
   }
 
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
+  html { font-size: var(--font-size); }
 
-  html {
-    font-size: var(--font-size);
-  }
-
-  h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  button {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  input {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
-  }
+  h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  h2 { font-size: var(--text-xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  h3 { font-size: var(--text-lg); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  h4 { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  label { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  button { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+  input { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
 }

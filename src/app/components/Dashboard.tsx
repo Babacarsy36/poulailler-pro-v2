@@ -184,97 +184,109 @@ export function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <section id="screen-dashboard" className="space-y-6">
+      
+      {/* Alert Banner (Critical Alerts) */}
+      {alerts.filter(a => a.severity === 'critical').map(alert => (
+        <div key={alert.id} className="bg-red-50 rounded-2xl p-4 border-l-4 border-l-red-500 flex gap-3 items-start relative group">
+          <iconify-icon icon="solar:danger-triangle-linear" stroke-width="1.5" className="text-2xl text-red-500 shrink-0 mt-0.5 z-10"></iconify-icon>
+          <div className="z-10 pr-4">
+              <p className="font-['Syne'] text-sm text-red-900 font-medium tracking-tight mb-1">{alert.title}</p>
+              <p className="font-['DM_Sans'] font-light text-xs text-red-700 leading-relaxed">{alert.message}</p>
+          </div>
+          <button onClick={() => navigate(alert.link)} className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-700 z-10">
+              <iconify-icon icon="solar:round-alt-arrow-right-linear" stroke-width="1.5"></iconify-icon>
+          </button>
+        </div>
+      ))}
+
       {/* Recovery Banner (Only if no chickens) */}
       {stats.totalChickens === 0 && (
-        <div className="bg-blue-600 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-100 flex flex-col md:flex-row items-center justify-between gap-6 border border-blue-400/30 overflow-hidden relative">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-           <div className="flex items-center gap-5 relative z-10">
-              <div className="p-4 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner"><RefreshCw className={`w-7 h-7 text-white ${isRecovering ? 'animate-spin' : ''}`} /></div>
-              <div>
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 mb-1">Restauration Système</p>
-                 <h4 className="text-xl font-black leading-tight">Données manquantes ?</h4>
-                 <p className="text-xs font-bold opacity-80 mt-1 max-w-sm">Si vos lots de volailles ne s'affichent pas, nous pouvons tenter de les récupérer de votre ancienne version.</p>
-              </div>
-           </div>
-           <button 
-            onClick={handleRecover}
-            disabled={isRecovering}
-            className="relative z-10 whitespace-nowrap px-10 py-5 bg-white text-blue-600 font-black rounded-2xl shadow-2xl shadow-blue-900/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3 uppercase tracking-widest text-[11px]"
-           >
-              {isRecovering && <RefreshCw className="w-4 h-4 animate-spin" />}
-              {isRecovering ? "Opération en cours..." : "Reprendre mes données"}
-           </button>
-        </div>
-      )}
-      {/* Critical Alerts Banner */}
-      {alerts.length > 0 && (
-        <div className="space-y-3">
-           {alerts.filter(a => a.severity === 'critical').map(alert => (
-             <button 
-                key={alert.id}
-                onClick={() => navigate(alert.link)}
-                className="w-full flex items-center gap-4 p-5 bg-red-50 border border-red-100 rounded-[2rem] text-left hover:scale-[1.01] transition-transform shadow-sm group"
-             >
-                <div className="p-3 bg-white rounded-2xl text-red-500 shadow-sm group-hover:rotate-12 transition-transform">
-                   <AlertOctagon className="w-6 h-6" />
-                </div>
-                <div className="flex-1">
-                   <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Attention Immédiate</p>
-                   <p className="font-black text-babs-brown text-sm">{alert.title}</p>
-                   <p className="text-[11px] font-bold text-gray-500 leading-tight">{alert.message}</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-red-300" />
-             </button>
-           ))}
-        </div>
-      )}
-
-      <div className={`grid grid-cols-1 gap-6 ${poultryType === 'lapin' || poultryType === 'pigeon' ? '' : 'sm:grid-cols-2'}`}>
-        <button onClick={() => navigate("/inventory")} className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95">
-          <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg`}><Bird className="w-8 h-8" /></div>
-          <div className="mt-12 space-y-2">
-            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
-              {poultryType ? "EFFECTIF ESPÈCE" : "EFFECTIF TOTAL FERME"}
-            </p>
-            <p className="text-5xl font-black text-babs-brown">{stats.totalChickens}</p>
+        <div className="clean-card rounded-2xl p-4 border-l-4 border-l-blue-500 flex flex-col gap-2 relative overflow-hidden">
+          <div className="flex items-center gap-2">
+            <iconify-icon icon="solar:refresh-circle-linear" class={`text-xl text-blue-500 ${isRecovering ? 'animate-spin' : ''}`}></iconify-icon>
+            <h4 className="font-['Syne'] text-sm font-medium tracking-tight text-blue-900">Données manquantes ?</h4>
           </div>
-        </button>
-
-        {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
-          <button onClick={() => navigate("/eggs")} className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform active:scale-95">
-            <div className={`absolute top-6 right-6 p-3 ${iconBg} rounded-2xl shadow-lg`}><Egg className="w-8 h-8" /></div>
-            <div className="mt-12 space-y-2">
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
-                {poultryType ? stats.layingRateLabel : "RÉCOLTE GLOBALE"}
-              </p>
-              <p className="text-5xl font-black text-babs-brown">
-                {poultryType ? `${stats.layingRate}%` : `${stats.eggsToday} œufs`}
-              </p>
-            </div>
+          <p className="text-xs text-blue-700 font-light">Tentez de récupérer vos données à partir de l'ancienne version.</p>
+          <button 
+           onClick={handleRecover}
+           disabled={isRecovering}
+           className="mt-2 py-2 w-full bg-blue-50 text-blue-600 font-medium text-xs rounded-xl hover:bg-blue-100 transition-colors"
+          >
+             {isRecovering ? "Opération en cours..." : "Lancer la récupération"}
           </button>
-        )}
+        </div>
+      )}
+
+      {/* KPIs Horizontal Scroll */}
+      <div className="-mx-4 px-4 overflow-x-auto no-scrollbar select-none">
+          <div className="flex gap-4 w-max pb-2">
+              {/* KPI 1 : Effectif Global */}
+              <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform" onClick={() => navigate('/inventory')}>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+                      <iconify-icon icon="solar:users-group-rounded-linear" stroke-width="1.5" className="text-xl text-indigo-500"></iconify-icon>
+                      <span className="truncate font-medium">{poultryType ? "Effectif" : "Effectif Total"}</span>
+                  </div>
+                  <div>
+                      <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{stats.totalChickens}</div>
+                      <div className="text-xs text-indigo-700 font-medium tracking-tight bg-indigo-50 inline-block px-1.5 py-0.5 rounded truncate max-w-[110px]">
+                        {stats.breakdown}
+                      </div>
+                  </div>
+              </div>
+
+              {/* KPI 2 : Ponte / Récolte */}
+              {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
+                <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-emerald-500 hover:scale-105 transition-transform" onClick={() => navigate('/eggs')}>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+                        <iconify-icon icon="solar:record-circle-linear" stroke-width="1.5" className="text-xl text-emerald-500"></iconify-icon>
+                        <span className="truncate font-medium">Production</span>
+                    </div>
+                    <div>
+                        <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{poultryType ? `${stats.layingRate}%` : `${stats.eggsToday}`}</div>
+                        <div className="text-xs text-emerald-700 font-medium tracking-tight bg-emerald-50 inline-block px-1.5 py-0.5 rounded truncate max-w-[110px]">
+                          {poultryType ? stats.layingRateLabel : "œufs récoltés"}
+                        </div>
+                    </div>
+                </div>
+              )}
+
+              {/* KPI 3 : Stock Aliment */}
+              <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-orange-500 hover:scale-105 transition-transform" onClick={() => navigate('/feed')}>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+                      <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" className="text-xl text-orange-500"></iconify-icon>
+                      <span className="truncate font-medium">Stock Aliment</span>
+                  </div>
+                  <div>
+                      <div className="font-['JetBrains_Mono'] text-xl tracking-tight text-gray-900 mb-1 font-medium">{Math.round(stats.feedRemaining)} <span className="text-xs text-gray-400 font-normal">kg</span></div>
+                      <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${stats.feedAutonomy < 5 ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'}`}>
+                        {stats.feedAutonomy === Infinity ? 'Non calculé' : `${stats.feedAutonomy}j d'autonomie`}
+                      </div>
+                  </div>
+              </div>
+          </div>
       </div>
 
+      {/* Global Breakdown (Only if no specific poultryType selected) */}
       {!poultryType && stats.globalBreakdown && stats.globalBreakdown.length > 0 && (
-        <div className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 mb-6">
-          <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider mb-6">Répartition par Espèce</h3>
+        <div className="clean-card rounded-3xl p-5 select-none">
+          <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Répartition Globale</h2>
           <div className="space-y-4">
             {stats.globalBreakdown.map((item) => (
-              <div key={item.type} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+              <div key={item.type} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden border border-gray-50">
+                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden border border-gray-50">
                     <img src={`/assets/icons/${item.type}.png`} alt={item.type} className="w-full h-full object-cover scale-110" />
                   </div>
                   <div>
-                    <h4 className="font-black text-babs-brown text-lg capitalize">{item.type}</h4>
-                    <p className="text-xs font-bold text-gray-500">{item.count} sujets actifs</p>
+                    <h4 className="font-medium text-gray-900 text-sm capitalize">{item.type}</h4>
+                    <p className="text-xs font-light text-gray-500">{item.count} sujets actifs</p>
                   </div>
                 </div>
                 {(item.type === 'poulet' || item.type === 'caille') && (
-                  <div className="mt-4 sm:mt-0 px-5 py-2 bg-white rounded-xl shadow-sm text-center border border-gray-100/50">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Production Jour</p>
-                    <p className="font-black text-babs-brown">{item.eggs} œufs</p>
+                  <div className="mt-3 sm:mt-0 flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-100/50">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase">Jour :</span>
+                    <span className="font-['JetBrains_Mono'] font-medium text-sm text-gray-900">{item.eggs}</span>
                   </div>
                 )}
               </div>
@@ -283,61 +295,85 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* Chart */}
       {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
-        <div className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-100 relative overflow-hidden">
-          <div className="flex items-center justify-between mb-8">
-             <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Performance de Ponte</h3>
-             {!isPro && <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-600"><Crown className="w-3.5 h-3.5" /><span className="text-[10px] font-black uppercase">PRO</span></div>}
-          </div>
-
-          <div className={`h-[300px] w-full ${!isPro ? 'blur-md grayscale opacity-30 select-none' : ''}`}>
-             <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#9ca3af' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#9ca3af' }} />
-                  <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }} />
-                  <Area type="monotone" dataKey="production" stroke={isCaille ? "#10b981" : "#f59e0b"} strokeWidth={4} fill={isCaille ? "#d1fae5" : "#fef3c7"} />
-                </AreaChart>
-             </ResponsiveContainer>
-          </div>
-
-          {!isPro && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-white/10 backdrop-blur-[2px]">
-              <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[2rem] shadow-2xl border border-white flex flex-col items-center text-center space-y-4 max-w-sm">
-                  <div className="w-16 h-16 bg-amber-400 rounded-2xl flex items-center justify-center"><Crown className="w-10 h-10 text-white" /></div>
-                  <h4 className="text-xl font-black text-babs-brown">Mode Analytique Pro</h4>
-                  <p className="text-xs text-gray-400 font-bold">Visualisez vos rendements et optimisez la rentabilité.</p>
-                  <button onClick={() => setIsUpgradeModalOpen(true)} className="w-full py-4 bg-babs-orange text-white rounded-2xl font-black shadow-lg">Débloquer maintenant 🚀</button>
-              </div>
+        <div className="clean-card rounded-3xl p-5 select-none relative overflow-hidden">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Tendance Ponte</h2>
+                {!isPro && (
+                  <button onClick={() => setIsUpgradeModalOpen(true)} className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded-md border border-amber-100 font-medium flex items-center gap-1">
+                    <iconify-icon icon="solar:crown-star-linear"></iconify-icon> PRO
+                  </button>
+                )}
+                {isPro && <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-200">15 jours</span>}
             </div>
-          )}
+            <div className={`h-[140px] w-full ${!isPro ? 'blur-sm grayscale opacity-30 select-none' : ''}`}>
+               <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={isCaille ? "#10B981" : "#F59E0B"} stopOpacity={0.2}></stop>
+                            <stop offset="100%" stopColor={isCaille ? "#10B981" : "#F59E0B"} stopOpacity={0.0}></stop>
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" horizontalPoints={[25, 50, 75]} />
+                    <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #F3F4F6', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontSize: '10px', fontWeight: '500', fontFamily: 'DM Sans' }} />
+                    <Area type="monotone" dataKey="production" stroke={isCaille ? "#10B981" : "#F59E0B"} strokeWidth={2} fill="url(#chartGrad)" />
+                  </AreaChart>
+               </ResponsiveContainer>
+            </div>
+            
+            {!isPro && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[1px] p-4 text-center">
+                  <div className="bg-white/95 border border-gray-100 rounded-2xl p-4 shadow-xl max-w-[200px]">
+                    <iconify-icon icon="solar:chart-line-linear" className="text-3xl text-amber-500 mb-2"></iconify-icon>
+                    <p className="text-xs text-gray-600 font-medium mb-3">Débloquez les analyses avancées</p>
+                    <button onClick={() => setIsUpgradeModalOpen(true)} className="w-full text-[10px] font-medium bg-gray-900 text-white rounded-lg py-2">Mettre à niveau</button>
+                  </div>
+              </div>
+            )}
         </div>
       )}
 
-      <div className="bg-card rounded-[2.5rem] p-8 shadow-premium border border-gray-50 mb-10">
-        <h3 className="text-xl font-black text-babs-brown uppercase mb-8">Guide de Gestion</h3>
-        <div className={`grid grid-cols-1 ${poultryType !== 'lapin' && poultryType !== 'pigeon' ? 'sm:grid-cols-2' : ''} gap-4`}>
-          {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
-            <button onClick={() => navigate("/eggs")} className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50/50 border border-transparent hover:border-orange-100 transition-all text-left">
-              <div className={`w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center`}><Egg className={`w-7 h-7 ${accentColor}`} /></div>
-              <div><p className="text-lg font-black text-babs-brown">Ponte</p><p className="text-[10px] font-bold text-gray-400 uppercase">{stats.lastEggText || "Saisir les récoltes"}</p></div>
-            </button>
-          )}
-          <button onClick={() => navigate("/feed")} className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50/50 border border-transparent hover:border-blue-100 transition-all text-left">
-            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center"><ShoppingCart className="w-7 h-7 text-blue-500" /></div>
-            <div><p className="text-lg font-black text-babs-brown">Aliment</p><p className="text-[10px] font-bold text-gray-400 uppercase">{stats.lastFeedText || "Gérer les rations"}</p></div>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex justify-center pb-8">
-        <button onClick={async () => { if (window.confirm("Générer données ?")) { await SyncService.injectTestData(); window.location.reload(); } }} className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gray-100/50 text-gray-400 font-black uppercase text-[10px]">
-          <Database className="w-4 h-4" /> GÉNÉRER DONNÉES
-        </button>
+      {/* Guide de Gestion */}
+      <div>
+          <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Raccourcis</h2>
+          <div className="space-y-3">
+              {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
+                <button onClick={() => navigate("/eggs")} className="w-full clean-card rounded-2xl p-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100">
+                        <iconify-icon icon="solar:egg-bold-duotone" stroke-width="1.5" className="text-xl text-emerald-500"></iconify-icon>
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-gray-900 truncate">Ponte & Production</p>
+                        <p className="text-xs font-light text-gray-500 truncate">{stats.lastEggText || "Saisir les récoltes du jour"}</p>
+                    </div>
+                    <iconify-icon icon="solar:alt-arrow-right-linear" className="text-gray-400"></iconify-icon>
+                </button>
+              )}
+              <button onClick={() => navigate("/feed")} className="w-full clean-card rounded-2xl p-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center shrink-0 border border-orange-100">
+                      <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" className="text-xl text-orange-500"></iconify-icon>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium text-gray-900 truncate">Aliment & Formules</p>
+                      <p className="text-xs font-light text-gray-500 truncate">{stats.lastFeedText || "Gérer les rations"}</p>
+                  </div>
+                  <iconify-icon icon="solar:alt-arrow-right-linear" className="text-gray-400"></iconify-icon>
+              </button>
+              <button onClick={async () => { if (window.confirm("Générer des données pour le test ?")) { await SyncService.injectTestData(); window.location.reload(); } }} className="w-full clean-card rounded-2xl p-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200">
+                      <iconify-icon icon="solar:database-line-duotone" stroke-width="1.5" className="text-xl text-gray-500"></iconify-icon>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium text-gray-900 truncate">Auto-générer</p>
+                      <p className="text-xs font-light text-gray-500 truncate">Injecter des données de démo</p>
+                  </div>
+              </button>
+          </div>
       </div>
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => { setIsUpgradeModalOpen(false); if (location.search.includes('upgrade=true')) navigate('/', { replace: true }); }} />
-    </div>
+    </section>
   );
 }

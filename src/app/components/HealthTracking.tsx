@@ -226,25 +226,25 @@ export function HealthTracking() {
   const currentProphylaxis = getProtocolsForBreed(selectedBreed);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+    <section id="screen-health" className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-black text-babs-brown tracking-tight">Suivi de Santé</h2>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Vitalité & Prophylaxie Automatisée</p>
+          <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Suivi de Santé</h1>
+          <p className="text-xs font-light text-gray-500 mt-1">Vitalité & prophylaxie automatisée</p>
         </div>
-        <button 
+        <button
           onClick={() => setShowAdd(true)}
-          className={`text-white px-5 py-3 rounded-2xl shadow-lg hover:scale-105 transition-transform active:scale-95 flex items-center gap-2 ${customColors.bgBtn}`}
+          className={`h-10 px-3 rounded-xl ${customColors.bgBtn} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
         >
-          <Plus className="w-5 h-5" />
-          <span className="font-bold text-sm hidden sm:inline">Nouveau Soin</span>
+          <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
+          <span className="font-medium text-sm hidden sm:inline">Nouveau Soin</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
+      <div className="space-y-6">
         {/* Prophylaxis Generator Engine */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex flex-col h-[600px]">
+        <div className="clean-card rounded-3xl p-5">
            <div className="flex items-center gap-3 mb-6">
              <div className={`p-3 rounded-xl ${customColors.bgLight} ${customColors.textDark}`}>
                 <Calendar className="w-6 h-6" />
@@ -328,12 +328,12 @@ export function HealthTracking() {
         </div>
 
         {/* History & Remedies */}
-        <div className="space-y-8 flex flex-col h-[600px]">
+        <div className="space-y-6">
            {/* History List */}
-           <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-gray-50 flex-1 overflow-hidden flex flex-col">
-             <div className="flex items-center gap-2 mb-6">
-               <History className="w-5 h-5 text-babs-brown/40" />
-               <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Historique des Soins</h3>
+           <div className="clean-card rounded-3xl p-5 flex-1 overflow-hidden flex flex-col">
+             <div className="flex items-center gap-2 mb-4">
+               <iconify-icon icon="solar:history-linear" class="text-xl text-gray-400"></iconify-icon>
+               <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Historique des Soins</h3>
              </div>
              
              <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
@@ -369,10 +369,10 @@ export function HealthTracking() {
            </div>
 
            {/* Natural Remedies Section */}
-           <div className="bg-emerald-50/30 rounded-[2.5rem] p-8 shadow-premium border border-emerald-50">
-             <div className="flex items-center gap-2 mb-4">
-               <Leaf className="w-6 h-6 text-emerald-500" />
-               <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Bibliothèque Bio</h3>
+           <div className="clean-card rounded-3xl p-5">
+             <div className="flex items-center gap-2 mb-3">
+               <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" class="text-xl text-emerald-500"></iconify-icon>
+               <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Bibliothèque Bio</h3>
              </div>
              
              <div className="overflow-x-auto pb-4 custom-scrollbar flex gap-4">
@@ -390,8 +390,8 @@ export function HealthTracking() {
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="text-3xl font-black text-babs-brown mb-8">Nouveau Soin Manuel</h3>
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
+            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">Nouveau Soin Manuel</h3>
             <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -451,6 +451,6 @@ export function HealthTracking() {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
