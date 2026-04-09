@@ -35,8 +35,9 @@ export function Dashboard() {
   const [isRecovering, setIsRecovering] = useState(false);
 
   const isCaille = poultryType === 'caille';
-  const accentColor = isCaille ? "text-babs-emerald" : "text-babs-orange";
-  const iconBg = isCaille ? "bg-babs-emerald text-white" : "bg-babs-orange text-white";
+  const accentColorClass = isCaille ? 'emerald' : 'orange';
+  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
+  const iconBg = isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
 
   const getDailyRateForBreed = (breed: string) => {
     if (breed.toLowerCase().includes('caille')) return 0.03;
@@ -103,7 +104,7 @@ export function Dashboard() {
 
     const globalBreakdown: { type: string, count: number, eggs: number }[] = [];
     if (!poultryType) {
-      ['poulet', 'caille', 'pigeon', 'lapin'].forEach(type => {
+      ['poulet', 'caille'].forEach(type => {
         const tCount = filteredChickens.filter(c => (c.poultryType || 'poulet') === type && c.status === 'active').reduce((acc, c) => acc + (Number(c.count) || 1), 0);
         let tEggs = 0;
         if (type !== 'lapin' && type !== 'pigeon') {

@@ -50,7 +50,7 @@ export function SelectionPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto">
                     {/* Poulet Card */}
                     <div 
                         onClick={() => setType('poulet')}
@@ -96,6 +96,7 @@ export function SelectionPage() {
                     </div>
 
                     {/* Pigeon Card */}
+                    {/* Pigeon Card - Hidden for now
                     <div 
                         onClick={() => { setType('pigeon'); setBreed(null); }}
                         className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
@@ -116,8 +117,9 @@ export function SelectionPage() {
                             </div>
                         )}
                     </div>
+                    */}
 
-                    {/* Lapin Card */}
+                    {/* Lapin Card - Hidden for now
                     <div 
                         onClick={() => { setType('lapin'); setBreed(null); }}
                         className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
@@ -138,6 +140,7 @@ export function SelectionPage() {
                             </div>
                         )}
                     </div>
+                    */}
                 </div>
 
                 {type === 'poulet' && (

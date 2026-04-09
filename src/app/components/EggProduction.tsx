@@ -36,9 +36,10 @@ export function EggProduction() {
   });
 
   const isCaille = poultryType === 'caille';
+  const accentColorClass = isCaille ? 'emerald' : 'orange';
   const accentIcon = isCaille ? "solar:egg-bold-duotone" : "solar:record-circle-bold-duotone";
   const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
-  const accentBg = isCaille ? "bg-emerald-500" : "bg-orange-500";
+  const accentBg = `bg-${accentColorClass}-500 hover:bg-${accentColorClass}-600`;
   const accentBgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
   const accentBorderLeft = isCaille ? "border-l-emerald-500" : "border-l-orange-500";
 
@@ -160,11 +161,10 @@ export function EggProduction() {
 
       {/* Productivity Alert */}
       {totalFemales > 0 && layingRate !== null && (
-        <div className={`clean-card rounded-2xl p-4 border-l-4 flex items-start gap-3 ${
-          layingRate >= 70 ? 'border-l-emerald-500 bg-emerald-50/40' :
-          layingRate >= 50 ? 'border-l-amber-500 bg-amber-50/40' :
-          'border-l-red-500 bg-red-50/40'
-        }`}>
+        <div className={`clean-card rounded-2xl p-4 border-l-4 flex items-start gap-3 ${layingRate >= 70 ? 'border-l-emerald-500 bg-emerald-50/40' :
+            layingRate >= 50 ? 'border-l-amber-500 bg-amber-50/40' :
+              'border-l-red-500 bg-red-50/40'
+          }`}>
           <iconify-icon
             icon={layingRate >= 70 ? "solar:check-circle-linear" : layingRate >= 50 ? "solar:danger-circle-linear" : "solar:danger-triangle-linear"}
             stroke-width="1.5"
@@ -214,7 +214,7 @@ export function EggProduction() {
                   <iconify-icon icon="solar:pen-linear" class="text-base"></iconify-icon>
                 </button>
                 <button
-                  onClick={() => { if(window.confirm("Supprimer cette récolte ?")) saveRecords(records.filter(r => r.id !== record.id)); }}
+                  onClick={() => { if (window.confirm("Supprimer cette récolte ?")) saveRecords(records.filter(r => r.id !== record.id)); }}
                   className="p-2 bg-gray-50 hover:bg-red-50 rounded-xl text-gray-400 hover:text-red-500 transition-colors"
                 >
                   <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
@@ -272,8 +272,7 @@ export function EggProduction() {
                   onClick={() => setIsAddOpen(false)}
                   className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
-                  Annuler
-                </button>
+                  Annuler </button>
                 <button
                   type="submit"
                   className={`flex-1 py-3 ${accentBg} text-white rounded-xl text-sm font-medium shadow-md transition-colors`}

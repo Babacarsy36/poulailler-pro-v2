@@ -207,11 +207,12 @@ export function FeedManagement() {
   };
 
   const isCaille = poultryType === 'caille';
+  const accentColorClass = isCaille ? 'emerald' : 'orange';
   const customColors = {
      bgLight: isCaille ? 'bg-emerald-50' : 'bg-orange-50',
      textDark: isCaille ? 'text-emerald-700' : 'text-orange-700',
      border: isCaille ? 'border-emerald-100' : 'border-orange-100',
-     bgBtn: isCaille ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
+     bgBtn: `bg-${accentColorClass}-500 hover:bg-${accentColorClass}-600`,
   }
 
   useEffect(() => {
