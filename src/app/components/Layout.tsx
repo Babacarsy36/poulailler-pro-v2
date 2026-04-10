@@ -1,4 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
+/** Version: 1.0.1 (Force Build Trigger) */
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
 
