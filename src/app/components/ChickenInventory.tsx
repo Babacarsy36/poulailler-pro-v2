@@ -411,6 +411,21 @@ export function ChickenInventory() {
                 {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
               </div>
 
+              {poultryBreed === 'fermier' && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
+                  <select 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                    {...register("breed")}
+                  >
+                    <option value="fermier">Standard (Local / Métissé)</option>
+                    <option value="Goliath">Goliath</option>
+                    <option value="Rainbow">Rainbow</option>
+                    <option value="Bleu d'Hollande">Bleu d'Hollande</option>
+                  </select>
+                </div>
+              )}
+
               {poultryBreed === 'ornement' && (
                 <>
                   <div className="space-y-1.5 animate-in slide-in-from-top-2">
