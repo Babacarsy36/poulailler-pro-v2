@@ -6,22 +6,40 @@ import { NotificationCenter } from "./ui/NotificationCenter";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
+  const { poultryType, poultryBreed, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
   
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
     { id: 'caille' as PoultryType, abbr: 'CL', label: 'Caille' },
   ];
 
+  const breedList: Record<string, { id: PoultryBreed, label: string }[]> = {
+    poulet: [
+      { id: 'fermier', label: 'Poulet Fermier' },
+      { id: 'ornement', label: 'Poule d\'Ornement' },
+      { id: 'pondeuse', label: 'Pondeuse' },
+      { id: 'chair', label: 'Poulet de Chair' },
+    ]
+  };
+
   const handleSpeciesSelect = async (type: PoultryType) => {
-    await updatePoultrySelection(type, null as PoultryBreed);
+    if (type === 'caille') {
+        await updatePoultrySelection(type, null);
+        navigate("/");
+    } else {
+        await updatePoultrySelection(type, poultryBreed);
+    }
+  };
+
+  const handleBreedSelect = async (breed: PoultryBreed) => {
+    await updatePoultrySelection('poulet', breed);
     navigate("/");
   };
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'solar:widget-linear', path: '/' },
     { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
-    { id: 'eggs', label: 'Production', icon: 'solar:egg-bold-duotone', path: '/eggs' },
+    { id: 'eggs', label: 'Production', icon: 'ph:egg-bold', path: '/eggs' },
     { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
     { id: 'incubator', label: 'Couvaison', icon: 'solar:fire-linear', path: '/incubator' },
     { id: 'finance', label: 'Finances', icon: 'solar:wallet-linear', path: '/finances' },
@@ -31,6 +49,8 @@ export function Layout() {
 
   const accentColorClass = poultryType === 'caille' ? 'emerald' : 'orange';
   const accentHex = poultryType === 'caille' ? '#10B981' : '#F59E0B';
+
+  const { logout } = useAuth();
 
   return (
     <div className={`flex min-h-screen w-full transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-[#E5E7EB] text-gray-900'}`}>
@@ -67,10 +87,14 @@ export function Layout() {
             })}
         </nav>
 
-        <div className="p-4 border-t border-gray-100 dark:border-zinc-800">
-            <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
+        <div className="p-4 border-t border-gray-100 dark:border-zinc-800 space-y-2">
+            <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
                 <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-xl"></iconify-icon>
                 <span className="text-sm font-medium">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+            <button onClick={logout} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10`}>
+                <iconify-icon icon="solar:logout-3-linear" class="text-xl"></iconify-icon>
+                <span className="text-sm font-medium">Déconnexion</span>
             </button>
         </div>
       </aside>
@@ -80,55 +104,82 @@ export function Layout() {
           
         {/* Top Header - Fixed & Dynamic */}
         <header className={`fixed top-0 inset-x-0 md:left-64 z-40 backdrop-blur-md border-b pt-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
-            <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4 h-16">
-                {/* Mobile Menu Icon / Title */}
-                <div className="flex items-center gap-3 md:hidden">
-                    <span className={`font-['Syne'] font-bold text-lg text-${accentColorClass}-500`}>PLP</span>
+            <div className="max-w-5xl mx-auto w-full flex flex-col px-4">
+                <div className="flex items-center justify-between h-16">
+                    {/* Mobile Menu Icon / Title */}
+                    <div className="flex items-center gap-3 md:hidden">
+                        <span className={`font-['Syne'] font-bold text-lg text-${accentColorClass}-500`}>PLP</span>
+                    </div>
+
+                    {/* Species Switcher */}
+                    <div className="flex-1 overflow-x-auto no-scrollbar mx-3 select-none">
+                        <div className="flex gap-2 w-max mx-auto">
+                            {speciesList.map((s) => {
+                                const isActive = (!poultryType && s.id === 'poulet') || s.id === poultryType;
+                                return (
+                                    <button 
+                                        key={s.id}
+                                        onClick={() => handleSpeciesSelect(s.id)} 
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
+                                            isActive 
+                                                ? `bg-${accentColorClass}-500 border-${accentColorClass}-500 text-white shadow-lg shadow-${accentColorClass}-500/20 scale-105`
+                                                : isDarkMode 
+                                                    ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                                                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <span className={`hidden sm:flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-['Syne'] font-bold ${
+                                            isActive ? 'bg-white/20 text-white' : isDarkMode ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {s.abbr}
+                                        </span>
+                                        <span className={isActive ? 'font-bold' : 'font-medium'}>{s.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="md:hidden flex items-center gap-2">
+                        <button onClick={toggleDarkMode} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
+                          <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-lg"></iconify-icon>
+                        </button>
+                        <button onClick={logout} className="w-9 h-9 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-500 transition-all hover:bg-red-100">
+                          <iconify-icon icon="solar:logout-3-linear" class="text-lg"></iconify-icon>
+                        </button>
+                      </div>
+                      <NotificationCenter />
+                    </div>
                 </div>
 
-                {/* Species Switcher */}
-                <div className="flex-1 overflow-x-auto no-scrollbar mx-3 select-none">
-                    <div className="flex gap-2 w-max mx-auto">
-                        {speciesList.map((s) => {
-                            const isActive = (!poultryType && s.id === 'poulet') || s.id === poultryType;
+                {/* Breed Sub-switcher for Chicken */}
+                {poultryType === 'poulet' && (
+                    <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
+                        {breedList.poulet.map((b) => {
+                            const isCurrentBreed = poultryBreed === b.id;
                             return (
-                                <button 
-                                    key={s.id}
-                                    onClick={() => handleSpeciesSelect(s.id)} 
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
-                                        isActive 
-                                            ? `bg-${accentColorClass}-500 border-${accentColorClass}-500 text-white shadow-lg shadow-${accentColorClass}-500/20 scale-105`
-                                            : isDarkMode 
-                                                ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                <button
+                                    key={b.id}
+                                    onClick={() => handleBreedSelect(b.id)}
+                                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+                                        isCurrentBreed 
+                                            ? 'bg-orange-100 border-orange-200 text-orange-600' 
+                                            : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
                                     }`}
                                 >
-                                    <span className={`hidden sm:flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-['Syne'] font-bold ${
-                                        isActive ? 'bg-white/20 text-white' : isDarkMode ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                        {s.abbr}
-                                    </span>
-                                    <span className={isActive ? 'font-bold' : 'font-medium'}>{s.label}</span>
+                                    {b.label}
                                 </button>
                             );
                         })}
                     </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="md:hidden">
-                    <button onClick={toggleDarkMode} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
-                      <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-lg"></iconify-icon>
-                    </button>
-                  </div>
-                  <NotificationCenter />
-                </div>
+                )}
             </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 w-full max-w-5xl mx-auto pt-20 pb-28 md:pb-8 px-4 scroll-smooth min-h-screen">
+        <main className={`flex-1 w-full max-w-5xl mx-auto ${poultryType === 'poulet' ? 'pt-28' : 'pt-20'} pb-28 md:pb-8 px-4 scroll-smooth min-h-screen`}>
             <Outlet />
         </main>
 

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
+import { motion, AnimatePresence } from "framer-motion";
 
 export type Transaction = {
   id: string;
@@ -31,7 +32,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { poultryType, syncTrigger, isPro, role, saveData } = useAuth();
+  const { poultryType, syncTrigger, hasAccess, role, saveData } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -175,12 +176,20 @@ export function FinanceManagement() {
       {/* Balance & Chart Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Balance Hero */}
-        <div className={`clean-card rounded-2xl p-5 border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'} relative overflow-hidden flex flex-col justify-center`}>
-          <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Solde Total</p>
-          <p className={`font-['JetBrains_Mono'] text-4xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
-            {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-base text-gray-400 font-normal">FCFA</span>
-          </p>
-          <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className={`flex flex-col justify-center p-6 rounded-3xl relative overflow-hidden bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'}`}
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-100 to-transparent rounded-full -mr-16 -mt-16 blur-2xl z-0"></div>
+          <div className="relative z-10">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Solde Total</p>
+            <p className={`font-['JetBrains_Mono'] text-4xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
+              {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-base text-gray-400 font-normal">FCFA</span>
+            </p>
+          </div>
+          <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100/50 relative z-10">
             <div>
               <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Recettes</p>
               <p className="font-['JetBrains_Mono'] text-sm font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
@@ -191,11 +200,15 @@ export function FinanceManagement() {
               <p className="font-['JetBrains_Mono'] text-sm font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Chart */}
         {chartData.length > 0 && (
-          <div className="clean-card rounded-3xl p-5 select-none h-full">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="clean-card rounded-3xl p-5 select-none h-full bg-white/60 backdrop-blur-xl border border-white/40"
+          >
             <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4">Évolution Financière</h2>
             <div className="h-[120px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -219,7 +232,7 @@ export function FinanceManagement() {
                     tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                   />
                   <Tooltip
-                    contentStyle={{ borderRadius: '16px', border: '1px solid #F3F4F6', fontSize: '10px', fontFamily: 'DM Sans' }}
+                    contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', fontSize: '10px', fontFamily: 'DM Sans' }}
                     formatter={(value: number) => [`${value.toLocaleString()} F`, undefined]}
                   />
                   <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={2} fill="url(#finIncome)" />
@@ -227,7 +240,7 @@ export function FinanceManagement() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -235,14 +248,14 @@ export function FinanceManagement() {
       <div className="relative">
         <div className="flex items-center gap-2 mb-3 ml-1">
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Analyse par Lot</h2>
-          {!isPro && (
+          {!hasAccess('PRO') && (
             <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-medium flex items-center gap-1">
               <iconify-icon icon="solar:crown-star-linear"></iconify-icon> PRO
             </span>
           )}
         </div>
 
-        <div className={`space-y-3 ${!isPro ? 'blur-sm grayscale opacity-30 select-none pointer-events-none' : ''}`}>
+        <div className={`space-y-3 ${!hasAccess('PRO') ? 'blur-sm grayscale opacity-30 select-none pointer-events-none' : ''}`}>
           {lotStats.length === 0 ? (
             <div className="clean-card rounded-2xl p-4 text-center py-8">
               <iconify-icon icon="solar:chart-line-duotone" class="text-2xl text-gray-300 block mb-1"></iconify-icon>
@@ -285,9 +298,9 @@ export function FinanceManagement() {
           ))}
         </div>
 
-        {!isPro && (
+        {!hasAccess('PRO') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-            <div className="bg-white/95 border border-gray-100 rounded-2xl p-5 shadow-xl text-center max-w-[220px]">
+            <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl p-5 shadow-xl text-center max-w-[220px]">
               <iconify-icon icon="solar:crown-star-bold-duotone" class="text-3xl text-amber-500 mb-2 block"></iconify-icon>
               <p className="text-xs font-medium text-gray-700 mb-3">Débloquez l'analyse de rentabilité par lot</p>
               <button
@@ -320,36 +333,44 @@ export function FinanceManagement() {
         </div>
 
         <div className="space-y-3">
-          {filteredTransactions.map(t => (
-            <div key={t.id} className="clean-card rounded-2xl p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${t.type === 'income' ? 'bg-emerald-50 border border-emerald-100' : 'bg-red-50 border border-red-100'}`}>
-                <iconify-icon
-                  icon={t.type === 'income' ? "solar:arrow-down-linear" : "solar:arrow-up-linear"}
-                  stroke-width="1.5"
-                  class={`text-xl ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}
-                ></iconify-icon>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{t.category}</p>
-                <p className="text-xs font-light text-gray-500 truncate">
-                  {new Date(t.date).toLocaleDateString('fr-FR')}
-                  {t.description && ` • ${t.description}`}
-                  {t.batchName && <span className="ml-2 px-1.5 py-0.5 bg-gray-100 rounded-md text-[9px] text-gray-500">{t.batchName}</span>}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <p className={`font-['JetBrains_Mono'] font-medium text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
-                </p>
-                <button
-                  onClick={() => handleDelete(t.id)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 no-print"
-                >
-                  <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
-                </button>
-              </div>
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {filteredTransactions.map(t => (
+              <motion.div 
+                key={t.id} 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="clean-card rounded-2xl p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group overflow-hidden"
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${t.type === 'income' ? 'bg-emerald-50 border border-emerald-100' : 'bg-red-50 border border-red-100'}`}>
+                  <iconify-icon
+                    icon={t.type === 'income' ? "solar:arrow-down-linear" : "solar:arrow-up-linear"}
+                    stroke-width="1.5"
+                    class={`text-xl ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}
+                  ></iconify-icon>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{t.category}</p>
+                  <p className="text-xs font-light text-gray-500 truncate">
+                    {new Date(t.date).toLocaleDateString('fr-FR')}
+                    {t.description && ` • ${t.description}`}
+                    {t.batchName && <span className="ml-2 px-1.5 py-0.5 bg-gray-100 rounded-md text-[9px] text-gray-500">{t.batchName}</span>}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <p className={`font-['JetBrains_Mono'] font-medium text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
+                  </p>
+                  <button
+                    onClick={() => handleDelete(t.id)}
+                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 no-print"
+                  >
+                    <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
           {filteredTransactions.length === 0 && (
             <div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200">

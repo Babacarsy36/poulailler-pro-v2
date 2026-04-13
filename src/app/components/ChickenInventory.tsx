@@ -17,6 +17,10 @@ interface Chicken {
   maleCount?: number;
   status: "active" | "malade" | "retraite";
   startDate?: string;
+  ringNumber?: string;
+  variety?: string[];
+  birthYear?: number;
+  club?: string;
   updatedAt?: number;
 }
 
@@ -30,6 +34,10 @@ interface ChickenFormData {
   maleCount: string;
   status: "active" | "malade" | "retraite";
   startDate: string;
+  ringNumber?: string;
+  variety?: string[];
+  birthYear?: string;
+  club?: string;
 }
 
 export function ChickenInventory() {
@@ -49,6 +57,10 @@ export function ChickenInventory() {
       maleCount: "0",
       status: "active",
       startDate: new Date().toISOString().split('T')[0],
+      ringNumber: "",
+      variety: [],
+      birthYear: "",
+      club: "",
     }
   });
 
@@ -146,6 +158,11 @@ export function ChickenInventory() {
           ...c, 
           ...data, 
           poultryType: poultryType || c.poultryType || "poulet",
+          breed: data.breed || poultryBreed || "",
+          ringNumber: data.ringNumber || undefined,
+          variety: data.variety || undefined,
+          birthYear: data.birthYear ? Number(data.birthYear) : undefined,
+          club: data.club || undefined,
           age: Number(data.age), 
           count: actualCount,
           femaleCount: femVal,
@@ -160,6 +177,11 @@ export function ChickenInventory() {
         id: now.toString(),
         ...data,
         poultryType: (poultryType || "poulet").toLowerCase() as "poulet" | "caille",
+        breed: data.breed || poultryBreed || "",
+        ringNumber: data.ringNumber || undefined,
+        variety: data.variety || undefined,
+        birthYear: data.birthYear ? Number(data.birthYear) : undefined,
+        club: data.club || undefined,
         age: Number(data.age),
         count: actualCount,
         femaleCount: femVal,
@@ -168,7 +190,7 @@ export function ChickenInventory() {
       };
       saveChickens([...chickens, newChicken]);
     }
-    reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
+    reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
     setIsAddOpen(false);
   };
 
@@ -190,8 +212,7 @@ export function ChickenInventory() {
           </button>
           <button 
             onClick={() => {
-              setEditingChicken(null);
-              reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0] });
+              reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
               setIsAddOpen(true);
             }}
             className={`h-10 px-3 rounded-xl ${btnBg} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
@@ -305,6 +326,32 @@ export function ChickenInventory() {
                 </div>
               </div>
 
+              {chicken.ringNumber && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1">
+                    <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
+                    <p className="text-[10px] font-['JetBrains_Mono'] font-bold text-gray-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
+                      Bague: {chicken.ringNumber}
+                    </p>
+                  </div>
+                  {chicken.variety && chicken.variety.length > 0 && chicken.variety.map(v => (
+                    <p key={v} className="text-[10px] font-medium text-gray-700 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                      {v}
+                    </p>
+                  ))}
+                  {chicken.birthYear && (
+                    <p className="text-[10px] font-medium text-gray-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                       {chicken.birthYear}
+                    </p>
+                  )}
+                  {chicken.club && (
+                    <p className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 truncate max-w-[120px]">
+                       {chicken.club}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {(chicken.maleCount! > 0 || chicken.femaleCount! > 0) && (
                 <div className="flex items-center gap-3 pt-2 text-[10px] font-medium text-gray-600 bg-gray-50 p-2 rounded-xl border border-gray-100">
                    <span className="flex items-center gap-1"><iconify-icon icon="solar:virus-linear" class="text-emerald-500"></iconify-icon> {chicken.femaleCount} Femelles</span>
@@ -323,7 +370,11 @@ export function ChickenInventory() {
                       count: chicken.count.toString(),
                       femaleCount: (chicken.femaleCount || "0").toString(),
                       maleCount: (chicken.maleCount || "0").toString(),
-                      startDate: chicken.startDate || new Date().toISOString().split('T')[0]
+                      startDate: chicken.startDate || new Date().toISOString().split('T')[0],
+                      ringNumber: chicken.ringNumber || "",
+                      variety: chicken.variety || [],
+                      birthYear: chicken.birthYear ? chicken.birthYear.toString() : "",
+                      club: chicken.club || ""
                     } as any);
                     setIsAddOpen(true);
                   }}
@@ -359,6 +410,86 @@ export function ChickenInventory() {
                 />
                 {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
               </div>
+
+              {poultryBreed === 'ornement' && (
+                <>
+                  <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
+                    <select 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                      {...register("breed")}
+                    >
+                      <option value="Ornement">Autre ornement</option>
+                      <option value="Brahma">Brahma</option>
+                      <option value="Cochin">Cochin</option>
+                      <option value="Pékin">Pékin</option>
+                      <option value="Poule-Soie">Poule-Soie</option>
+                    </select>
+                  </div>
+
+                  {(formData.breed === 'Brahma' || formData.breed === 'Cochin') && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
+                      
+                      {[
+                        { group: "Unies", items: ["Noir", "Blanc", "Bleu", "Fauve"] },
+                        { group: "Herminées", items: ["Blanc herminé noir", "Fauve herminé noir", "Blanc herminé bleu", "Fauve herminé bleu"] },
+                        { group: "Maillées", items: ["Perdrix doré maillé", "Perdrix argenté maillé", "Perdrix bleu doré maillé"] },
+                        { group: "Autres", items: ["Coucou", "Splash", "Caillouté"] }
+                      ].map(g => (
+                        <div key={g.group} className="mt-2 text-left">
+                          <p className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 ml-1">{g.group}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {g.items.map(v => {
+                               const isSelected = formData.variety?.includes(v);
+                               return (
+                                 <label key={v} className={`px-3 py-1.5 rounded-xl border text-[11px] cursor-pointer select-none transition-all duration-200 flex items-center gap-1.5 ${isSelected ? 'bg-orange-50 border-orange-200 text-orange-700 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                                   <input type="checkbox" className="hidden" value={v} {...register("variety")} />
+                                   {isSelected && <iconify-icon icon="solar:check-circle-bold" class="text-orange-500"></iconify-icon>}
+                                   {v}
+                                 </label>
+                               );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année Naissance</label>
+                      <input 
+                        type="number"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                        placeholder="Ex: 2023"
+                        {...register("birthYear")}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Association</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
+                        placeholder="Ex: BCF..."
+                        {...register("club")}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
+                      Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
+                    </label>
+                    <input 
+                      className="w-full bg-orange-50/30 border border-orange-100 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-orange-300 transition-all"
+                      placeholder="Ex: FR-2023-XYZ..."
+                      {...register("ringNumber")}
+                    />
+                    <p className="text-[9px] text-gray-400 italic">Identifiant unique pour les sujets de valeur.</p>
+                  </div>
+                </>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">

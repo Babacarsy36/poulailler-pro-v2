@@ -1,5 +1,7 @@
 export type PoultryType = 'poulet' | 'caille' | 'pigeon' | 'lapin' | null;
 
+export type SubscriptionTier = 'FREE' | 'PRO' | 'BUSINESS';
+
 export interface Chicken {
   id: string;
   count: string | number;
@@ -10,6 +12,10 @@ export interface Chicken {
   date?: string;
   status: 'active' | 'sold' | 'dead';
   poultryType?: PoultryType;
+  ringNumber?: string;
+  variety?: string[];
+  birthYear?: number;
+  club?: string;
   updatedAt?: number;
 }
 

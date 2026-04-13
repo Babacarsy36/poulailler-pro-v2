@@ -120,7 +120,7 @@ export function IncubatorManagement() {
 
       {/* Species Filter & Action */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="flex-1 overflow-x-auto no-scrollbar pb-1 w-full flex gap-2">
+        <div className="flex-1 w-full flex flex-wrap gap-2">
             <button
                 onClick={() => setSpeciesFilter('all')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border transition-all text-xs font-bold whitespace-nowrap ${
@@ -135,7 +135,7 @@ export function IncubatorManagement() {
                 <button
                     key={s}
                     onClick={() => setSpeciesFilter(s)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border transition-all text-xs font-bold whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border transition-all text-xs font-bold whitespace-nowrap flex-1 sm:flex-none justify-center ${
                         speciesFilter === s 
                         ? `${accentBg} border-transparent text-white shadow-lg` 
                         : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-400' : 'bg-white border-gray-100 text-gray-500'
@@ -155,9 +155,9 @@ export function IncubatorManagement() {
         </button>
       </div>
 
-      {/* Alerts Horizontal Scroll */}
+      {/* Alerts Horizontal Scroll / Grid */}
       {activeTab === 'batches' && todayAlerts.length > 0 && (
-        <div className="space-y-3 -mx-4 px-4 overflow-x-auto no-scrollbar pb-2 select-none flex gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
           {todayAlerts.map(alert => (
             <div 
               key={alert.id}
@@ -165,18 +165,18 @@ export function IncubatorManagement() {
                 const b = batches.find(x => x.id === alert.id);
                 if (b) { setSelectedBatch(b); setDetailBatch(b); }
               }}
-              className={`flex-shrink-0 w-[240px] p-4 rounded-2xl border flex items-start gap-3 cursor-pointer hover:scale-[1.02] transition-transform ${
+              className={`w-full p-4 rounded-2xl border flex items-start gap-3 cursor-pointer hover:scale-[1.02] transition-transform ${
                 alert.isDanger ? 'bg-red-50/50 border-red-100' : 'bg-blue-50/50 border-blue-100'
               }`}
             >
-              <div className={`p-2 rounded-xl h-fit ${alert.isDanger ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
+              <div className={`p-2 rounded-xl h-fit shrink-0 ${alert.isDanger ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
                 <iconify-icon icon={alert.isDanger ? "solar:danger-triangle-linear" : "solar:info-circle-linear"} class="text-xl"></iconify-icon>
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${alert.isDanger ? 'text-red-600' : 'text-blue-600'}`}>
                   Jour {alert.day} • {alert.name}
                 </p>
-                <p className="text-xs font-medium text-gray-700 leading-tight mt-1 truncate">
+                <p className="text-xs font-medium text-gray-700 leading-tight mt-1 line-clamp-2">
                   {alert.tip}
                 </p>
               </div>

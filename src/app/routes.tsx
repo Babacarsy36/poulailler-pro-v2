@@ -35,11 +35,11 @@ function SelectionGuard() {
   return <Outlet />;
 }
 
-// Guard to ensure user is Pro
+// Guard to ensure user has Pro or Business tier access
 function ProGuard() {
-  const { isPro, loading } = useAuth();
+  const { hasAccess, loading } = useAuth();
   if (loading) return null;
-  if (!isPro) return <Navigate to="/?upgrade=true" replace />;
+  if (!hasAccess('PRO')) return <Navigate to="/?upgrade=true" replace />;
   return <Outlet />;
 }
 

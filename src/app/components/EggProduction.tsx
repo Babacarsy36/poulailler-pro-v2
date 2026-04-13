@@ -111,52 +111,50 @@ export function EggProduction() {
       </div>
 
       {/* KPI Row */}
-      <div className="-mx-4 px-4 overflow-x-auto no-scrollbar select-none">
-        <div className="flex gap-4 w-max pb-2">
-          {/* Total */}
-          <div className={`clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 ${accentBorderLeft} hover:scale-105 transition-transform`}>
-            <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-              <iconify-icon icon={accentIcon} stroke-width="1.5" class={`text-xl ${accentColor}`}></iconify-icon>
-              <span className="truncate font-medium">Total</span>
-            </div>
-            <div>
-              <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{totalEggs}</div>
-              <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${accentBgLight} ${accentColor}`}>
-                unités récoltées
-              </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 select-none">
+        {/* Total */}
+        <div className={`clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 ${accentBorderLeft} hover:scale-105 transition-transform`}>
+          <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+            <iconify-icon icon={accentIcon} stroke-width="1.5" class={`text-xl ${accentColor}`}></iconify-icon>
+            <span className="truncate font-medium">Total</span>
+          </div>
+          <div>
+            <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{totalEggs}</div>
+            <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${accentBgLight} ${accentColor}`}>
+              unités récoltées
             </div>
           </div>
-
-          {/* Dernière Récolte */}
-          <div className="clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform">
-            <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-              <iconify-icon icon="solar:calendar-linear" stroke-width="1.5" class="text-xl text-indigo-500"></iconify-icon>
-              <span className="truncate font-medium">Dernière</span>
-            </div>
-            <div>
-              <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{lastRecord ? lastRecord.quantity : '—'}</div>
-              <div className="text-xs font-medium tracking-tight bg-indigo-50 text-indigo-700 inline-block px-1.5 py-0.5 rounded truncate max-w-[110px]">
-                œufs récoltés
-              </div>
-            </div>
-          </div>
-
-          {/* Taux de Ponte */}
-          {totalFemales > 0 && layingRate !== null && (
-            <div className={`clean-card rounded-2xl w-[140px] h-[116px] p-3 flex flex-col justify-between border-l-4 ${layingRate >= 70 ? 'border-l-emerald-500' : layingRate >= 50 ? 'border-l-amber-500' : 'border-l-red-500'} hover:scale-105 transition-transform`}>
-              <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-                <iconify-icon icon="solar:chart-line-linear" stroke-width="1.5" class={`text-xl ${layingRate >= 70 ? 'text-emerald-500' : layingRate >= 50 ? 'text-amber-500' : 'text-red-500'}`}></iconify-icon>
-                <span className="truncate font-medium">Productivité</span>
-              </div>
-              <div>
-                <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{layingRate.toFixed(1)}%</div>
-                <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${layingRate >= 70 ? 'bg-emerald-50 text-emerald-700' : layingRate >= 50 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
-                  {layingRate >= 70 ? '🚀 Excellent' : layingRate >= 50 ? '⚖️ Correct' : '⚠️ Faible'}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Dernière Récolte */}
+        <div className="clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform">
+          <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+            <iconify-icon icon="solar:calendar-linear" stroke-width="1.5" class="text-xl text-indigo-500"></iconify-icon>
+            <span className="truncate font-medium">Dernière</span>
+          </div>
+          <div>
+            <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{lastRecord ? lastRecord.quantity : '—'}</div>
+            <div className="text-xs font-medium tracking-tight bg-indigo-50 text-indigo-700 inline-block px-1.5 py-0.5 rounded truncate max-w-full">
+              œufs récoltés
+            </div>
+          </div>
+        </div>
+
+        {/* Taux de Ponte */}
+        {totalFemales > 0 && layingRate !== null && (
+          <div className={`clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 col-span-2 lg:col-span-1 ${layingRate >= 70 ? 'border-l-emerald-500' : layingRate >= 50 ? 'border-l-amber-500' : 'border-l-red-500'} hover:scale-105 transition-transform`}>
+            <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
+              <iconify-icon icon="solar:chart-line-linear" stroke-width="1.5" class={`text-xl ${layingRate >= 70 ? 'text-emerald-500' : layingRate >= 50 ? 'text-amber-500' : 'text-red-500'}`}></iconify-icon>
+              <span className="truncate font-medium">Productivité</span>
+            </div>
+            <div>
+              <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{layingRate.toFixed(1)}%</div>
+              <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${layingRate >= 70 ? 'bg-emerald-50 text-emerald-700' : layingRate >= 50 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
+                {layingRate >= 70 ? '🚀 Excellent' : layingRate >= 50 ? '⚖️ Correct' : '⚠️ Faible'}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Productivity Alert */}

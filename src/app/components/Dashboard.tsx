@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { poultryType, poultryBreed, syncTrigger, isPro, alerts } = useAuth();
+  const { poultryType, poultryBreed, syncTrigger, hasAccess, alerts } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -299,14 +299,14 @@ export function Dashboard() {
         <div className="clean-card rounded-3xl p-5 select-none relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Tendance Ponte</h2>
-                {!isPro && (
+                {!hasAccess('PRO') && (
                   <button onClick={() => setIsUpgradeModalOpen(true)} className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded-md border border-amber-100 font-medium flex items-center gap-1">
                     <iconify-icon icon="solar:crown-star-linear"></iconify-icon> PRO
                   </button>
                 )}
-                {isPro && <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-200">15 jours</span>}
+                {hasAccess('PRO') && <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-200">15 jours</span>}
             </div>
-            <div className={`h-[140px] w-full ${!isPro ? 'blur-sm grayscale opacity-30 select-none' : ''}`}>
+            <div className={`h-[140px] w-full ${!hasAccess('PRO') ? 'blur-sm grayscale opacity-30 select-none' : ''}`}>
                <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
@@ -322,7 +322,7 @@ export function Dashboard() {
                </ResponsiveContainer>
             </div>
             
-            {!isPro && (
+            {!hasAccess('PRO') && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[1px] p-4 text-center">
                   <div className="bg-white/95 border border-gray-100 rounded-2xl p-4 shadow-xl max-w-[200px]">
                     <iconify-icon icon="solar:chart-line-linear" className="text-3xl text-amber-500 mb-2"></iconify-icon>

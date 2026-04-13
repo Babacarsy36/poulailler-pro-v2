@@ -24,7 +24,7 @@ interface Invitation {
 }
 
 export function TeamManagement() {
-  const { user, farmId, role, isPro } = useAuth();
+  const { user, farmId, role, hasAccess } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +132,7 @@ export function TeamManagement() {
     }
   };
 
-  if (!isPro) return null;
+  if (!hasAccess('BUSINESS')) return null;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">

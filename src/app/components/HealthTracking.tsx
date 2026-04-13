@@ -78,24 +78,38 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
       { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "2ème dose Gumboro." },
       { day: 35, type: "Vaccin", title: "Variole aviaire", description: "Transfixion alaire (aile)." },
       { day: 42, type: "Vaccin", title: "Coryza", description: "Vaccination sous-cutanée." },
-      { day: 60, type: "Prévention", title: "Ail + Papaye (Rappel)", description: "Vermifuge naturel avant l'entrée en ponte." }
+      { day: 60, type: "Prévention", title: "Ail + Papaye (Rappel)", description: "Vermifuge naturel avant l'entrée en ponte." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire (Bréchet). Protection contre Coryza, Newcastle, Bronchite et EDS." }
     ]
   }
 
-  if(breed === 'Goliath' || breed === 'Brahma' || breed === 'Reproducteur') {
+  if(breed === 'Poule d\'Ornement' || breed === 'Brahma' || breed === 'Cochin') {
+    return [
+      ...commonEarly,
+      { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
+      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) pour éliminer les vers." },
+      { day: 42, type: "Prévention", title: "Soin Plumage & Vitamines", description: "Complément spécifique pour la beauté du plumage (acides aminés)." },
+      { day: 60, type: "Prévention", title: "Rappel Vermifuge + Anticocc", description: "Entretien régulier pour maintenir la santé des sujets d'exposition." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire pour une protection complète (ND+IB+G+Coryza) indispensable en exposition." }
+    ]
+  }
+
+  if(breed === 'Poulet Fermier' || breed === 'Reproducteur') {
     return [
       ...commonEarly,
       { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
       { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) pour éliminer les vers." },
       { day: 42, type: "Prévention", title: "Vitamines Régulières (Leva 200)", description: "Programme régulier de vitamines et minéraux pour optimiser la ponte et la fécondité." },
-      { day: 60, type: "Prévention", title: "Rappel Vermifuge + Anticocc", description: "Entretien régulier pour maintenir la santé des reproducteurs." }
+      { day: 60, type: "Prévention", title: "Rappel Vermifuge + Anticocc", description: "Entretien régulier pour maintenir la santé des reproducteurs." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire (Bréchet). Protection complète (ND+IB+G+Coryza)." }
     ]
   }
 
   return [
       ...commonEarly,
       { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "Pression virale, 2ème dose." },
-      { day: 35, type: "Prévention", title: "Déparasitage naturel", description: "Feuilles de papayer ou Aloe Vera dans l'eau." }
+      { day: 35, type: "Prévention", title: "Déparasitage naturel", description: "Feuilles de papayer ou Aloe Vera dans l'eau." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K (Optionnel)", description: "Uniquement pour les lots gardés pour la ponte." }
   ]
 }
 
@@ -145,9 +159,8 @@ export function HealthTracking() {
 
     if (poultryBreed) {
       const breedLabelMap: Record<string, string> = {
-        goliath: "Goliath",
-        brahma: "Brahma",
-        cochin: "Cochin",
+        fermier: "Poulet Fermier",
+        ornement: "Poule d'Ornement",
         pondeuse: "Pondeuse",
         chair: "Poulet de chair",
         reproducteur: "Reproducteur",
@@ -265,10 +278,8 @@ export function HealthTracking() {
                 >
                   <option value="Poulet de chair">Poulet de chair</option>
                   <option value="Pondeuse">Pondeuse</option>
-                  <option value="Goliath">Poulet Goliath</option>
-                  <option value="Brahma">Poulet Brahma</option>
-                  <option value="Cochin">Poulet Cochin</option>
-                  <option value="Rainbow Plus">Rainbow Plus</option>
+                  <option value="Poulet Fermier">Poulet Fermier</option>
+                  <option value="Poule d'Ornement">Poule d'Ornement</option>
                   <option value="Reproducteur">Reproducteur</option>
                   <option value="Caille">Caille</option>
                 </select>

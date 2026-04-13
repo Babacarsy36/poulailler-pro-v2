@@ -64,7 +64,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
       { name: "Ponte / Engraissement", duration: [43, 999], description: "Aliment ponte riche en minéraux.", consumption: "25g à 30g par caille/jour" }
     ];
   }
-  if (breed === 'Goliath' || breed === 'Brahma' || breed === 'Cochin') {
+  if (breed === 'Poulet Fermier' || breed === 'Poule d\'Ornement' || breed === 'Goliath' || breed === 'Brahma' || breed === 'Cochin') {
     return [
       { name: "Démarrage", duration: [1, 28], description: "Aliment Démarrage Chair (20-22%).", consumption: "20g à 40g par oiseau/jour" },
       { name: "Croissance", duration: [29, 60], description: "Aliment Croissance Chair (18%).", consumption: "50g à 100g par oiseau/jour" },
@@ -188,9 +188,8 @@ export function FeedManagement() {
       setSelectedBreed('Caille');
     } else if (poultryBreed) {
       const breedMap: Record<string, string> = {
-        goliath: 'Goliath',
-        brahma: 'Brahma',
-        cochin: 'Cochin',
+        fermier: 'Poulet Fermier',
+        ornement: 'Poule d\'Ornement',
         pondeuse: 'Pondeuse',
         chair: 'Poulet de chair'
       };
@@ -403,9 +402,8 @@ export function FeedManagement() {
                   >
                     <option value="Poulet de chair">Poulet de chair / Rainbow</option>
                     <option value="Pondeuse">Pondeuse</option>
-                    <option value="Goliath">Poulet Goliath</option>
-                    <option value="Brahma">Poulet Brahma</option>
-                    <option value="Cochin">Poulet Cochin</option>
+                    <option value="Poulet Fermier">Poulet Fermier</option>
+                    <option value="Poule d'Ornement">Poule d'Ornement</option>
                     <option value="Caille">Caille</option>
                   </select>
                 </div>

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { UserRole, PoultryType } from './types';
 export type { PoultryType };
 
-export type PoultryBreed = 'goliath' | 'brahma' | 'cochin' | 'pondeuse' | 'chair' | null;
+export type PoultryBreed = 'fermier' | 'ornement' | 'pondeuse' | 'chair' | null;
 
 interface AuthContextType {
     user: User | null;
@@ -24,8 +24,9 @@ interface AuthContextType {
     updatePoultrySelection: (type: PoultryType | null, breed: PoultryBreed) => void;
     clearSelection: () => void;
     isSyncing: boolean;
-    isPro: boolean;
-    togglePro: () => Promise<void>;
+    tier: SubscriptionTier;
+    hasAccess: (requiredTier: SubscriptionTier) => boolean;
+    setTierAction: (newTier: SubscriptionTier) => Promise<void>;
     saveData: <T extends SyncItem>(key: string, data: T[]) => Promise<void>;
     alerts: Alert[];
     logout: () => Promise<void>;
@@ -40,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [poultryBreed, setPoultryBreed] = useState<PoultryBreed>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [isPro, setIsPro] = useState(false);
+    const [tier, setTier] = useState<SubscriptionTier>('FREE');
     const [role, setRole] = useState<UserRole>('owner');
     const [farmId, setFarmId] = useState<string | null>(null);
     const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -89,22 +90,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }
                 }).catch(err => console.error("Pref fetch failed:", err));
 
-                // Pull subscription status from multiple possible locations for reliability
-                const checkPro = async () => {
+                // Pull subscription tier from multiple possible locations for reliability
+                const checkTier = async (): Promise<SubscriptionTier> => {
                     if (currentUser.email === 'test@poulailler.pro') {
-                        return true;
+                        return 'PRO';
                     }
                     const rootDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                    if (rootDoc.exists() && rootDoc.data()?.isPro !== undefined) {
-                        return rootDoc.data()?.isPro === true;
+                    if (rootDoc.exists() && rootDoc.data()?.tier) {
+                        return rootDoc.data()?.tier as SubscriptionTier;
+                    }
+                    // Legacy isPro migration
+                    if (rootDoc.exists() && rootDoc.data()?.isPro === true) {
+                        return 'PRO';
                     }
                     const profileDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'));
-                    if (profileDoc.exists()) {
-                        return profileDoc.data()?.isPro === true;
+                    if (profileDoc.exists() && profileDoc.data()?.tier) {
+                        return profileDoc.data()?.tier as SubscriptionTier;
                     }
-                    return false;
+                    if (profileDoc.exists() && profileDoc.data()?.isPro === true) {
+                        return 'PRO';
+                    }
+                    return 'FREE';
                 };
-                checkPro().then(status => setIsPro(status)).catch(() => {});
+                checkTier().then(t => setTier(t)).catch(() => {});
 
                 // Check for pending invitations before finalizing profile
                 const checkInvitations = async () => {
@@ -241,23 +249,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const togglePro = async () => {
+    const setTierAction = async (newTier: SubscriptionTier) => {
         if (!user) return;
-        const newStatus = !isPro;
         try {
-            setIsPro(newStatus);
+            setTier(newTier);
             // Save to root document for maximum reliability
             await setDoc(doc(db, 'users', user.uid), {
-                isPro: newStatus,
+                tier: newTier,
                 updatedAt: Date.now()
             }, { merge: true });
-            toast.success(newStatus ? "Bienvenue dans l'Excellence PRO !" : "Abonnement désactivé.");
+            toast.success(`Niveau ${newTier} activé !`);
         } catch (err) {
-            console.error("Pro upgrade failed:", err);
-            // In test/demo mode, we keep the state true even if firestore fails
-            setIsPro(newStatus);
-            toast.success(newStatus ? "Mode PRO activé (Test)" : "Mode PRO désactivé (Test)");
+            console.error("Tier upgrade failed:", err);
+            // In test/demo mode, we keep the state even if firestore fails
+            setTier(newTier);
+            toast.success(`Mode ${newTier} activé (Test)`);
         }
+    };
+
+    const hasAccess = (requiredTier: SubscriptionTier): boolean => {
+        if (requiredTier === 'FREE') return true;
+        if (requiredTier === 'PRO') return tier === 'PRO' || tier === 'BUSINESS';
+        if (requiredTier === 'BUSINESS') return tier === 'BUSINESS';
+        return false;
     };
 
     const logout = async () => {
@@ -284,8 +298,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatePoultrySelection,
             clearSelection,
             isSyncing,
-            isPro,
-            togglePro,
+            tier,
+            hasAccess,
+            setTierAction,
             saveData,
             alerts,
             role,

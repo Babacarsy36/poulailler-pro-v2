@@ -64,7 +64,7 @@ export function SelectionPage() {
                             <img src="/assets/icons/poulet.png" alt="Poulet" className={`w-full h-full object-cover scale-110 ${type !== 'poulet' ? 'mix-blend-multiply opacity-80' : ''}`} />
                         </div>
                         <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Poulets</h2>
-                        <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Goliath, Brahma, Cochin...</p>
+                        <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Poulet Fermier, Ornement, Pondeuse...</p>
                         
                         {type === 'poulet' && (
                             <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-babs-orange text-white flex items-center justify-center animate-in zoom-in">
@@ -148,7 +148,7 @@ export function SelectionPage() {
                         <div className="bg-white p-8 rounded-[2rem] shadow-premium border border-orange-50 space-y-6 animate-in slide-in-from-top-4 duration-500">
                             <label className="block text-sm font-black text-babs-brown uppercase tracking-wider italic">Quelle race de poulet ?</label>
                             <div className="grid grid-cols-2 gap-3">
-                                {['goliath', 'brahma', 'cochin', 'pondeuse'].map((r) => (
+                                {['fermier', 'ornement', 'pondeuse', 'chair'].map((r) => (
                                     <button
                                         key={r}
                                         onClick={() => setBreed(r as PoultryBreed)}
@@ -156,41 +156,11 @@ export function SelectionPage() {
                                             breed === r ? 'bg-babs-orange text-white border-babs-orange shadow-lg' : 'bg-gray-50 text-gray-500 border-transparent hover:bg-orange-50'
                                         }`}
                                     >
-                                        {r}
+                                        {r === 'chair' ? 'Poulet de Chair' : r === 'fermier' ? 'Poulet Fermier' : r === 'ornement' ? "Poule d'Ornement" : r}
                                     </button>
                                 ))}
                             </div>
                         </div>
-
-                        {/* Comparison Card for Brahma/Cochin */}
-                        {(breed === 'brahma' || breed === 'cochin') && (
-                            <div className="bg-orange-50/50 backdrop-blur-sm p-6 rounded-[2rem] border border-orange-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Info className="w-5 h-5 text-babs-orange" />
-                                    <h3 className="font-black text-babs-brown uppercase text-xs tracking-widest">Le Saviez-vous ? (Brahma vs Cochin)</h3>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className={`p-4 rounded-2xl border transition-all ${breed === 'brahma' ? 'bg-white border-orange-200 shadow-sm' : 'border-transparent opacity-60'}`}>
-                                        <p className="font-black text-babs-orange text-sm mb-2 flex items-center gap-1"><Star className="w-3 h-3" /> Brahma</p>
-                                        <ul className="text-[10px] space-y-1.5 text-gray-500 font-bold uppercase tracking-tighter">
-                                            <li>👑 "Le Roi" des Volailles</li>
-                                            <li>🔥 Crête à Pois (Pea Comb)</li>
-                                            <li>📏 Allure Haute & Majestueuse</li>
-                                            <li>💪 Très Rustique / Chair & Œufs</li>
-                                        </ul>
-                                    </div>
-                                    <div className={`p-4 rounded-2xl border transition-all ${breed === 'cochin' ? 'bg-white border-orange-200 shadow-sm' : 'border-transparent opacity-60'}`}>
-                                        <p className="font-black text-babs-orange text-sm mb-2 flex items-center gap-1"><Star className="w-3 h-3" /> Cochin</p>
-                                        <ul className="text-[10px] space-y-1.5 text-gray-500 font-bold uppercase tracking-tighter">
-                                            <li>🧸 "La Boule de Plumes"</li>
-                                            <li>🔥 Crête Simple</li>
-                                            <li>🍩 Forme Ronde & Très Fluffy</li>
-                                            <li>🥚 Mère Exceptionnelle / Couveuse</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
 
