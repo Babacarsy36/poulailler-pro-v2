@@ -157,6 +157,16 @@ export function Layout() {
                 {/* Breed Sub-switcher for Chicken */}
                 {poultryType === 'poulet' && (
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
+                        <button
+                            onClick={() => handleBreedSelect(null as any)}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+                                !poultryBreed 
+                                    ? 'bg-orange-100 border-orange-200 text-orange-600' 
+                                    : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
+                            }`}
+                        >
+                            Tous
+                        </button>
                         {breedList.poulet.map((b) => {
                             const isCurrentBreed = poultryBreed === b.id;
                             return (
