@@ -42,7 +42,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
     { day: 10, type: "Prévention", title: "Cure de Moringa", description: "Mélanger 15g de poudre (1 c.à.s) pour 1 kg d'aliment pour doper les vitamines, pdt 3j." },
     { day: 14, type: "Vaccin", title: "Gumboro", description: "Dans l'eau de boisson (soif préalable de 2h)." },
     { day: 15, type: "Prévention", title: "Ail (Démarrage)", description: "Écraser 1 grosse gousse (5g) dans 1L d'eau, laisser macérer 12h. Donner pdt 3j (Antibiotique naturel)." },
-    { day: 21, type: "Vaccin", title: "Rappel Newcastle", description: "Rappel vaccin anti-maladie de Newcastle." },
+    { day: 21, type: "Vaccin", title: "Rappel Newcastle (LaSota)", description: "Rappel vaccin anti-maladie de Newcastle dans l'eau." },
     { day: 24, type: "Prévention", title: "Feuilles de Papayer", description: "Broyer 2 grandes feuilles dans 1L d'eau (Anti-coccidien/Vermifuge naturel) et filtrer." }
   ];
 
@@ -72,44 +72,58 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
     ]
   }
 
+  if(breed === 'Poulet de chair') {
+    return [
+      ...commonEarly,
+      { day: 28, type: "Vaccin", title: "Rappel Gumboro (Intermédiaire)", description: "2ème dose Gumboro pour protéger en fin de cycle." },
+      { day: 35, type: "Prévention", title: "Vitamines de Finition", description: "Booster pour optimiser le poids avant la vente." },
+      { day: 42, type: "Prévention", title: "Anti-stress pré-vente", description: "Préparation au transport et à la vente." }
+    ]
+  }
+
   if(breed === 'Pondeuse') {
     return [
       ...commonEarly,
       { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "2ème dose Gumboro." },
       { day: 35, type: "Vaccin", title: "Variole aviaire", description: "Transfixion alaire (aile)." },
-      { day: 42, type: "Vaccin", title: "Coryza", description: "Vaccination sous-cutanée." },
-      { day: 60, type: "Prévention", title: "Ail + Papaye (Rappel)", description: "Vermifuge naturel avant l'entrée en ponte." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire (Bréchet). Protection contre Coryza, Newcastle, Bronchite et EDS." }
+      { day: 42, type: "Vaccin", title: "Coryza Aviaire", description: "Vaccination sous-cutanée (1ère dose)." },
+      { day: 49, type: "Vaccin", title: "Typhose Aviaire", description: "Vaccination sous-cutanée pour prévenir la typhose." },
+      { day: 60, type: "Prévention", title: "Vermifuge (Leva 200)", description: "Déparasitage complet avant l'entrée en pré-ponte." },
+      { day: 70, type: "Vaccin", title: "Rappel Newcastle (Lasota)", description: "Dernier rappel avant l'entrée en ponte." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Protection lourde (ND+IB+G+Coryza) pour toute la durée de la ponte." }
+    ]
+  }
+
+  if(breed === 'Poulet Fermier' || breed === 'Reproducteur' || breed === 'Goliath') {
+    return [
+      ...commonEarly,
+      { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
+      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) essentiel pour les parcours extérieurs." },
+      { day: 42, type: "Prévention", title: "Vitamines & Croissance", description: "Programme de minéraux pour solidifier l'ossature." },
+      { day: 60, type: "Prévention", title: "Rappel Vermifuge", description: "Entretien régulier pour maintenir la santé en milieu fermier." },
+      { day: 90, type: "Vaccin", title: "Rappel Newcastle", description: "Rappel de sécurité pour les sujets à cycle long." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Protection complète pour les géniteurs ou sujets d'élevage long." }
     ]
   }
 
   if(breed === 'Poule d\'Ornement' || breed === 'Brahma' || breed === 'Cochin') {
     return [
       ...commonEarly,
-      { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
-      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) pour éliminer les vers." },
-      { day: 42, type: "Prévention", title: "Soin Plumage & Vitamines", description: "Complément spécifique pour la beauté du plumage (acides aminés)." },
-      { day: 60, type: "Prévention", title: "Rappel Vermifuge + Anticocc", description: "Entretien régulier pour maintenir la santé des sujets d'exposition." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire pour une protection complète (ND+IB+G+Coryza) indispensable en exposition." }
+      { day: 28, type: "Prévention", title: "Anticocc (Amprolium)", description: "Prévention contre la coccidiose pour protéger les sujets fragiles." },
+      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne pour éliminer les vers." },
+      { day: 42, type: "Prévention", title: "Soin Plumage & Beauté", description: "Acides aminés et vitamines spécifiques pour la qualité des plumes." },
+      { day: 60, type: "Prévention", title: "Rappel Vermifuge Bio", description: "Ail et Papaye pour garder les sujets sains." },
+      { day: 90, type: "Vaccin", title: "Rappel Newcastle", description: "Rappel pour protéger vos sujets de valeur." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire indispensable pour les sujets d'exposition." }
     ]
   }
 
-  if(breed === 'Poulet Fermier' || breed === 'Reproducteur') {
-    return [
-      ...commonEarly,
-      { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
-      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) pour éliminer les vers." },
-      { day: 42, type: "Prévention", title: "Vitamines Régulières (Leva 200)", description: "Programme régulier de vitamines et minéraux pour optimiser la ponte et la fécondité." },
-      { day: 60, type: "Prévention", title: "Rappel Vermifuge + Anticocc", description: "Entretien régulier pour maintenir la santé des reproducteurs." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire (Bréchet). Protection complète (ND+IB+G+Coryza)." }
-    ]
-  }
 
   return [
-      ...commonEarly,
-      { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "Pression virale, 2ème dose." },
-      { day: 35, type: "Prévention", title: "Déparasitage naturel", description: "Feuilles de papayer ou Aloe Vera dans l'eau." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K (Optionnel)", description: "Uniquement pour les lots gardés pour la ponte." }
+    ...commonEarly,
+    { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "2ème dose Gumboro selon pression virale." },
+    { day: 35, type: "Prévention", title: "Déparasitage naturel", description: "Feuilles de papayer ou Aloe Vera dans l'eau." },
+    { day: 112, type: "Vaccin", title: "Corymune 7K (Optionnel)", description: "Uniquement pour les sujets conservés longtemps." }
   ]
 }
 
@@ -288,7 +302,6 @@ export function HealthTracking() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date d'arrivée</label>
                 <input 
                   type="date"
-                  className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none`}
                   value={arrivalDate}
                   onChange={e => setArrivalDate(e.target.value)}
                 />
@@ -304,6 +317,7 @@ export function HealthTracking() {
                     const stepDateStr = stepDateObj.toISOString().split("T")[0];
                     const isPast = new Date() > stepDateObj;
                     const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
+                    const isCommonBase = step.day <= 24;
 
                     return (
                       <div key={idx} className="relative flex items-start gap-6 group">
@@ -313,7 +327,14 @@ export function HealthTracking() {
                          <div className={`flex-1 p-5 rounded-3xl border-2 transition-all ${isDone ? 'bg-emerald-50/30 border-emerald-100 opacity-60' : 'bg-white border-gray-50 hover:border-gray-200 shadow-sm hover:shadow-md'}`}>
                             <div className="flex justify-between items-start mb-2">
                                <div>
-                                  <p className="font-black text-babs-brown leading-tight">{step.title}</p>
+                                  <p className="font-black text-babs-brown leading-tight flex items-center gap-2">
+                                    {step.title}
+                                    {isCommonBase ? (
+                                      <span className="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Socle Commun</span>
+                                    ) : (
+                                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${customColors.bgLight} ${customColors.textDark}`}>Spécifique {selectedBreed}</span>
+                                    )}
+                                  </p>
                                   <p className="text-[10px] font-black uppercase text-gray-400 mt-1 flex items-center gap-2">
                                      {stepDateObj.toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
                                      <span className={`px-2 py-0.5 rounded-full ${step.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>{step.type}</span>

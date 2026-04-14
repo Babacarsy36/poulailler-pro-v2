@@ -475,38 +475,42 @@ export function ChickenInventory() {
                 </>
               )}
 
-              <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année Naissance</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                    placeholder="Ex: 2023"
-                    {...register("birthYear")}
-                  />
+              {poultryBreed !== 'fermier' && (
+                <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année Naissance</label>
+                    <input 
+                      type="number"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                      placeholder="Ex: 2023"
+                      {...register("birthYear")}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Association</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
+                      placeholder="Ex: BCF..."
+                      {...register("club")}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Association</label>
-                  <input 
-                    type="text"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
-                    placeholder="Ex: BCF..."
-                    {...register("club")}
-                  />
-                </div>
-              </div>
+              )}
 
-              <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
-                  Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
-                </label>
-                <input 
-                  className="w-full bg-orange-50/30 border border-orange-100 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-orange-300 transition-all"
-                  placeholder="Ex: FR-2023-XYZ..."
-                  {...register("ringNumber")}
-                />
-                <p className="text-[9px] text-gray-400 italic">Identifiant unique pour les sujets de valeur.</p>
-              </div>
+              {poultryBreed !== 'fermier' && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
+                    Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
+                  </label>
+                  <input 
+                    className="w-full bg-orange-50/30 border border-orange-100 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-orange-300 transition-all"
+                    placeholder="Ex: FR-2023-XYZ..."
+                    {...register("ringNumber")}
+                  />
+                  <p className="text-[9px] text-gray-400 italic">Identifiant unique pour les sujets de valeur.</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">

@@ -13,6 +13,7 @@ interface FeedEntry {
   type: "achat" | "utilisation";
   quantity: number;
   feedType: string;
+  temperature?: number;
   notes: string;
   poultryType?: string;
   poultryBreed?: string;
@@ -25,6 +26,7 @@ interface FeedFormData {
   type: "achat" | "utilisation";
   quantity: string;
   feedType: string;
+  temperature: string;
   notes: string;
 }
 
@@ -91,6 +93,7 @@ export function FeedManagement() {
       type: "achat",
       quantity: "",
       feedType: "",
+      temperature: "28",
       notes: "",
     }
   });
@@ -258,6 +261,7 @@ export function FeedManagement() {
       id: now.toString(),
       ...data,
       quantity: Number(data.quantity),
+      temperature: data.temperature ? Number(data.temperature) : undefined,
       poultryType: poultryType || "poulet",
       poultryBreed: poultryBreed || undefined,
       updatedAt: now
@@ -268,6 +272,7 @@ export function FeedManagement() {
       type: "achat",
       quantity: "",
       feedType: "",
+      temperature: "28",
       notes: "",
     });
     setIsAddOpen(false);
@@ -731,10 +736,16 @@ export function FeedManagement() {
                         <p className="font-black text-babs-brown text-sm">
                           {entry.type === 'achat' ? 'Achat/Entrée' : 'Ration/Sortie'} • <span className="text-gray-500">{entry.feedType}</span>
                         </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 mr-2 inline">
                           {new Date(entry.date).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
-                          {entry.notes && <span className="ml-2 bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full normal-case tracking-normal">{entry.notes}</span>}
                         </p>
+                        {entry.temperature && (
+                          <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-lg font-bold mr-2">
+                             <iconify-icon icon="solar:thermometer-linear" class="text-[10px] inline-block mr-0.5"></iconify-icon>
+                             {entry.temperature}°C
+                          </span>
+                        )}
+                        {entry.notes && <span className="bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full text-[9px] font-medium">{entry.notes}</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -824,6 +835,20 @@ export function FeedManagement() {
                   />
                   {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
                 </div>
+              </div>
+              <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Température Ambiante (°C)</label>
+                 <div className="flex bg-gray-50 border-none rounded-2xl p-1 items-stretch focus-within:ring-2 focus-within:ring-orange-100 transition-all">
+                    <input 
+                      type="number"
+                      className="flex-1 bg-transparent border-none p-4 font-bold text-babs-brown outline-none text-center"
+                      placeholder="Ex: 28"
+                      {...register("temperature")}
+                    />
+                    <div className="w-12 flex items-center justify-center bg-orange-100 text-orange-600 rounded-xl mr-1 my-1">
+                       <Thermometer className="w-5 h-5" />
+                    </div>
+                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>

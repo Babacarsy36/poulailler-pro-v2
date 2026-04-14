@@ -196,7 +196,13 @@ export function Layout() {
         {/* Bottom Navigation - Mobile Only */}
         <nav className={`md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-md border-t pb-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]' : 'bg-white/90 border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]'}`}>
             <div className="flex justify-around items-center h-20 px-2 pb-2">
-                {navItems.slice(0, 5).map((item) => {
+                {[
+                  { id: 'dashboard', label: 'Dashboard', icon: 'solar:widget-linear', path: '/' },
+                  { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
+                  { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
+                  { id: 'production', label: 'Production', icon: 'ph:egg-bold', path: '/eggs' },
+                  { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
+                ].map((item) => {
                     const isActive = location.pathname === item.path;
                     return (
                         <button 
@@ -215,6 +221,15 @@ export function Layout() {
                         </button>
                     )
                 })}
+                {/* Menu Plus for others */}
+                <button 
+                    onClick={() => navigate('/finances')}
+                    className={`flex flex-col items-center gap-1 w-14 p-2 rounded-xl transition-all relative ${location.pathname === '/finances' ? 'text-orange-500' : 'text-gray-400'}`}
+                >
+                    <iconify-icon icon="solar:menu-dots-bold" className="text-2xl"></iconify-icon>
+                    <span className="text-[10px] font-bold">Plus</span>
+                    {['/finances', '/incubator', '/team'].includes(location.pathname) && <div className={`absolute -top-1 w-6 h-1 rounded-b-full bg-${accentColorClass}-500`}></div>}
+                </button>
             </div>
         </nav>
       </div>
