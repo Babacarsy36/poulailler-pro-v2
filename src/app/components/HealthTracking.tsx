@@ -269,124 +269,127 @@ export function HealthTracking() {
         </button>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Prophylaxis Generator Engine */}
-        <div className="clean-card rounded-3xl p-5">
-           <div className="flex items-center gap-3 mb-6">
-             <div className={`p-3 rounded-xl ${customColors.bgLight} ${customColors.textDark}`}>
-                <Calendar className="w-6 h-6" />
-             </div>
-             <div>
-               <h3 className="text-xl font-black text-babs-brown uppercase tracking-wider">Programme Automatisé</h3>
-               <p className="text-[10px] uppercase font-bold text-gray-400">Gérez votre lot étape par étape</p>
-             </div>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
-                <select 
-                  className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none`}
-                  value={selectedBreed}
-                  onChange={(e) => setSelectedBreed(e.target.value)}
-                >
-                  <option value="Poulet de chair">Poulet de chair</option>
-                  <option value="Pondeuse">Pondeuse</option>
-                  <option value="Poulet Fermier">Poulet Fermier</option>
-                  <option value="Poule d'Ornement">Poule d'Ornement</option>
-                  <option value="Reproducteur">Reproducteur</option>
-                  <option value="Caille">Caille</option>
-                </select>
+        <div className="lg:col-span-7 space-y-6">
+          <div className="clean-card rounded-3xl p-4 md:p-5">
+            <div className="flex items-center gap-3 mb-6">
+              <div className={`p-3 rounded-xl ${customColors.bgLight} ${customColors.textDark}`}>
+                  <Calendar className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date d'arrivée</label>
-                <input 
-                  type="date"
-                  value={arrivalDate}
-                  onChange={e => setArrivalDate(e.target.value)}
-                />
+                <h3 className="text-lg md:text-xl font-black text-babs-brown uppercase tracking-wider">Programme Automatisé</h3>
+                <p className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400">Gérez votre lot étape par étape</p>
               </div>
-           </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
+                  <select 
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none text-sm`}
+                    value={selectedBreed}
+                    onChange={(e) => setSelectedBreed(e.target.value)}
+                  >
+                    <option value="Poulet de chair">Poulet de chair</option>
+                    <option value="Pondeuse">Pondeuse</option>
+                    <option value="Poulet Fermier">Poulet Fermier</option>
+                    <option value="Poule d'Ornement">Poule d'Ornement</option>
+                    <option value="Reproducteur">Reproducteur</option>
+                    <option value="Caille">Caille</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date d'arrivée</label>
+                  <input 
+                    type="date"
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
+                    value={arrivalDate}
+                    onChange={e => setArrivalDate(e.target.value)}
+                  />
+                </div>
+            </div>
 
-           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar relative border-t border-gray-100 pt-6">
-              <div className="absolute left-6 top-6 bottom-0 w-0.5 bg-gray-100"></div>
-              <div className="space-y-6 relative z-10">
-                 {currentProphylaxis.map((step, idx) => {
-                    const stepDateObj = new Date(arrivalDate);
-                    stepDateObj.setDate(stepDateObj.getDate() + (step.day - 1));
-                    const stepDateStr = stepDateObj.toISOString().split("T")[0];
-                    const isPast = new Date() > stepDateObj;
-                    const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
-                    const isCommonBase = step.day <= 24;
+            <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar relative border-t border-gray-100 pt-6">
+                <div className="absolute left-5 md:left-6 top-6 bottom-0 w-0.5 bg-gray-100"></div>
+                <div className="space-y-6 relative z-10">
+                  {currentProphylaxis.map((step, idx) => {
+                      const stepDateObj = new Date(arrivalDate);
+                      stepDateObj.setDate(stepDateObj.getDate() + (step.day - 1));
+                      const stepDateStr = stepDateObj.toISOString().split("T")[0];
+                      const isPast = new Date() > stepDateObj;
+                      const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
+                      const isCommonBase = step.day <= 24;
 
-                    return (
-                      <div key={idx} className="relative flex items-start gap-6 group">
-                         <div className={`w-12 h-12 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 z-10 transition-colors ${isDone ? 'bg-emerald-400 text-white' : (isPast ? 'bg-red-400 text-white shadow-md' : 'bg-gray-200 text-gray-500')}`}>
-                            <span className="text-xs font-black">J{step.day}</span>
-                         </div>
-                         <div className={`flex-1 p-5 rounded-3xl border-2 transition-all ${isDone ? 'bg-emerald-50/30 border-emerald-100 opacity-60' : 'bg-white border-gray-50 hover:border-gray-200 shadow-sm hover:shadow-md'}`}>
-                            <div className="flex justify-between items-start mb-2">
-                               <div>
-                                  <p className="font-black text-babs-brown leading-tight flex items-center gap-2">
-                                    {step.title}
-                                    {isCommonBase ? (
-                                      <span className="text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Socle Commun</span>
-                                    ) : (
-                                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${customColors.bgLight} ${customColors.textDark}`}>Spécifique {selectedBreed}</span>
-                                    )}
-                                  </p>
-                                  <p className="text-[10px] font-black uppercase text-gray-400 mt-1 flex items-center gap-2">
-                                     {stepDateObj.toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
-                                     <span className={`px-2 py-0.5 rounded-full ${step.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>{step.type}</span>
-                                  </p>
-                               </div>
-                               {!isDone ? (
-                                   <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
-                                     <CheckCircle className="w-6 h-6" />
-                                   </button>
-                                 ) : (
-                                   <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
-                                     <CheckCircle className="w-6 h-6" />
-                                   </button>
-                                 )}
-                            </div>
-                            <p className="text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
-                         </div>
-                      </div>
-                    )
-                 })}
-              </div>
-           </div>
+                      return (
+                        <div key={idx} className="relative flex items-start gap-4 md:gap-6 group">
+                          <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 z-10 transition-colors ${isDone ? 'bg-emerald-400 text-white' : (isPast ? 'bg-red-400 text-white shadow-md' : 'bg-gray-200 text-gray-500')}`}>
+                              <span className="text-[10px] md:text-xs font-black">J{step.day}</span>
+                          </div>
+                          <div className={`flex-1 p-4 md:p-5 rounded-3xl border-2 transition-all ${isDone ? 'bg-emerald-50/30 border-emerald-100 opacity-60' : 'bg-white border-gray-50 hover:border-gray-200 shadow-sm hover:shadow-md'}`}>
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <p className="font-black text-babs-brown text-sm md:text-base leading-tight flex flex-wrap items-center gap-2">
+                                      {step.title}
+                                      {isCommonBase ? (
+                                        <span className="text-[7px] md:text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Socle Commun</span>
+                                      ) : (
+                                        <span className={`text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${customColors.bgLight} ${customColors.textDark}`}>Spécifique {selectedBreed}</span>
+                                      )}
+                                    </p>
+                                    <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 mt-1 flex items-center gap-2">
+                                      {stepDateObj.toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
+                                      <span className={`px-2 py-0.5 rounded-full ${step.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>{step.type}</span>
+                                    </p>
+                                </div>
+                                {!isDone ? (
+                                    <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
+                                      <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
+                                    </button>
+                                  ) : (
+                                    <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
+                                      <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
+                                    </button>
+                                  )}
+                              </div>
+                              <p className="text-[11px] md:text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
+                          </div>
+                        </div>
+                      )
+                  })}
+                </div>
+            </div>
+          </div>
         </div>
 
         {/* History & Remedies */}
-        <div className="space-y-6">
-           {/* History List */}
-           <div className="clean-card rounded-3xl p-5 flex-1 overflow-hidden flex flex-col">
-             <div className="flex items-center gap-2 mb-4">
-               <iconify-icon icon="solar:history-linear" class="text-xl text-gray-400"></iconify-icon>
-               <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Historique des Soins</h3>
-             </div>
-             
-             <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+        <div className="lg:col-span-5 space-y-6">
+          {/* History List */}
+          <div className="clean-card rounded-3xl p-4 md:p-5 flex flex-col h-[400px] md:h-[500px]">
+            <div className="flex items-center gap-2 mb-4">
+              <iconify-icon icon="solar:history-linear" class="text-xl text-gray-400"></iconify-icon>
+              <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Historique des Soins</h3>
+            </div>
+            
+            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
                 {filteredRecords.length === 0 ? (
-                   <p className="text-center text-gray-400 font-bold italic py-8">Aucun soin enregistré.</p>
+                  <p className="text-center text-gray-400 font-bold italic py-8">Aucun soin enregistré.</p>
                 ) : (
                   filteredRecords.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => (
-                    <div key={record.id} className="flex items-center justify-between p-4 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 group">
-                      <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-xl ${
+                    <div key={record.id} className="flex items-center justify-between p-3 md:p-4 rounded-3xl bg-gray-50/50 hover:bg-white transition-colors border border-transparent hover:border-gray-100 group">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className={`p-2 md:p-3 rounded-xl ${
                           record.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 
                           record.type === 'Traitement' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
                         }`}>
-                          <Heart className="w-5 h-5" />
+                          <Heart className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
-                        <div>
-                          <p className="font-black text-babs-brown text-sm">{record.title}</p>
-                          <p className="text-[10px] font-bold text-gray-400">{record.target} • {new Date(record.date).toLocaleDateString('fr-FR')}</p>
+                        <div className="min-w-0">
+                          <p className="font-black text-babs-brown text-xs md:text-sm truncate">{record.title}</p>
+                          <p className="text-[9px] md:text-[10px] font-bold text-gray-400 truncate">{record.target} • {new Date(record.date).toLocaleDateString('fr-FR')}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center">
                         <button 
                           onClick={() => saveRecords(records.filter(r => r.id !== record.id))}
                           className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
@@ -397,26 +400,26 @@ export function HealthTracking() {
                     </div>
                   ))
                 )}
-             </div>
-           </div>
+            </div>
+          </div>
 
-           {/* Natural Remedies Section */}
-           <div className="clean-card rounded-3xl p-5">
-             <div className="flex items-center gap-2 mb-3">
-               <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" class="text-xl text-emerald-500"></iconify-icon>
-               <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Bibliothèque Bio</h3>
-             </div>
-             
-             <div className="overflow-x-auto pb-4 custom-scrollbar flex gap-4">
-               {remediesProtocols.map((p, i) => (
-                 <div key={i} className="min-w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-emerald-50">
-                    <p className="font-black text-emerald-700 text-sm mb-1">{p.title}</p>
-                    <p className="text-[10px] text-gray-500 font-medium mb-2">{p.desc}</p>
-                    <p className="bg-emerald-50 text-emerald-800 text-[10px] p-2 rounded-xl font-bold">{p.usage}</p>
-                 </div>
-               ))}
-             </div>
-           </div>
+          {/* Natural Remedies Section */}
+          <div className="clean-card rounded-3xl p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" class="text-xl text-emerald-500"></iconify-icon>
+              <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Bibliothèque Bio</h3>
+            </div>
+            
+            <div className="overflow-x-auto pb-4 custom-scrollbar flex gap-4">
+              {remediesProtocols.map((p, i) => (
+                <div key={i} className="min-w-[180px] md:min-w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-emerald-50">
+                  <p className="font-black text-emerald-700 text-xs md:text-sm mb-1">{p.title}</p>
+                  <p className="text-[9px] md:text-[10px] text-gray-500 font-medium mb-2">{p.desc}</p>
+                  <p className="bg-emerald-50 text-emerald-800 text-[9px] md:text-[10px] p-2 rounded-xl font-bold">{p.usage}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
