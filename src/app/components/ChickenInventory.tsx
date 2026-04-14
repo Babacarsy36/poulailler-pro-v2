@@ -437,12 +437,13 @@ export function ChickenInventory() {
                       <option value="Ornement">Autre ornement</option>
                       <option value="Brahma">Brahma</option>
                       <option value="Cochin">Cochin</option>
-                      <option value="Pékin">Pékin</option>
+                      <option value="Cochin Nain (Pékin)">Cochin Nain (Pékin)</option>
+                      <option value="Orpington">Orpington</option>
                       <option value="Poule-Soie">Poule-Soie</option>
                     </select>
                   </div>
 
-                  {(formData.breed === 'Brahma' || formData.breed === 'Cochin') && (
+                  {['Brahma', 'Cochin', 'Cochin Nain (Pékin)', 'Orpington', 'Pékin'].includes(formData.breed || '') && (
                     <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
                       
