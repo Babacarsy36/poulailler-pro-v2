@@ -36,94 +36,89 @@ type ProphylaxisStep = {
 
 const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
   const commonEarly: ProphylaxisStep[] = [
-    { day: 1, type: "Prévention", title: "Eau Sucrée + Vinaigre cidre", description: "Diluer 50g de sucre par litre d'eau (énergie) + 1 c.à.s (15ml) de Vinaigre de cidre pour nettoyer l'intestin." },
-    { day: 3, type: "Prévention", title: "Vitamines", description: "Complexe vitaminé dans l'eau de boisson (Anti-stress)." },
-    { day: 7, type: "Vaccin", title: "Newcastle (HB1) + Bronchite", description: "Dans l'eau de boisson or goutte œil." },
-    { day: 10, type: "Prévention", title: "Cure de Moringa", description: "Mélanger 15g de poudre (1 c.à.s) pour 1 kg d'aliment pour doper les vitamines, pdt 3j." },
-    { day: 14, type: "Vaccin", title: "Gumboro", description: "Dans l'eau de boisson (soif préalable de 2h)." },
-    { day: 15, type: "Prévention", title: "Ail (Démarrage)", description: "Écraser 1 grosse gousse (5g) dans 1L d'eau, laisser macérer 12h. Donner pdt 3j (Antibiotique naturel)." },
-    { day: 21, type: "Vaccin", title: "Rappel Newcastle (LaSota)", description: "Rappel vaccin anti-maladie de Newcastle dans l'eau." },
-    { day: 24, type: "Prévention", title: "Feuilles de Papayer", description: "Broyer 2 grandes feuilles dans 1L d'eau (Anti-coccidien/Vermifuge naturel) et filtrer." }
+    { day: 1, type: "Prévention", title: "Eau Sucrée + Vinaigre cidre", description: "Posologie: 50g de sucre/Litre (énergie) + 15ml (1 c.à.s) de Vinaigre de cidre pour nettoyer l'intestin." },
+    { day: 3, type: "Prévention", title: "Complexe Vitaminé", description: "Posologie: 1g ou 1ml par Litre d'eau de boisson (Anti-stress) pendant 3 jours." },
+    { day: 6, type: "Vaccin", title: "Newcastle (HB1)", description: "Posologie: 1 dose/sujet dans l'eau non chlorée. Soif préalable de 2h requise." },
+    { day: 10, type: "Prévention", title: "Cure de Moringa", description: "Posologie: 15g de poudre (1 c.à.s) pour 1 kg d'aliment pour doper les vitamines, pdt 3j." },
+    { day: 12, type: "Vaccin", title: "Gumboro (1ère dose)", description: "Posologie: 1 dose/sujet dans l'eau de boisson (soif préalable de 2h)." },
+    { day: 15, type: "Prévention", title: "Ail (Démarrage)", description: "Posologie: 1 grosse gousse (5g) écrasée dans 1L d'eau, macérer 12h. Donner pdt 3j (Antibiotique naturel)." },
+    { day: 22, type: "Vaccin", title: "Gumboro (Rappel)", description: "Posologie: 1 dose/sujet. Rappel essentiel pour la protection immunitaire." },
+    { day: 26, type: "Vaccin", title: "Newcastle (LaSota)", description: "Posologie: 1 dose/sujet. Rappel vaccin anti-maladie de Newcastle dans l'eau." },
   ];
 
   if(breed === 'Caille') {
     return [
-       { day: 1, type: "Prévention", title: "Anti-stress + Vinaigre cidre", description: "Maintien température + 1c/L de vinaigre." },
-       { day: 7, type: "Vaccin", title: "Newcastle / Bronchite", description: "Optionnel selon l'élevage, conseillé si mixité." },
-       { day: 15, type: "Prévention", title: "Vitamines + Ail", description: "Renforcement immunitaire naturel." }
+       { day: 1, type: "Prévention", title: "Anti-stress + Vinaigre cidre", description: "Posologie: 1c/L de vinaigre + vitamines énergisantes." },
+       { day: 7, type: "Vaccin", title: "Newcastle / Bronchite", description: "Posologie: 1 dose/sujet. Optionnel si environnement sécurisé." },
+       { day: 15, type: "Prévention", title: "Vitamines + Ail", description: "Posologie: 1 gousse/L pdt 3 jours pour booster l'immunité." }
     ]
   }
 
   if(breed === 'Lapin') {
     return [
-       { day: 15, type: "Prévention", title: "Anti-coccidiose", description: "Dans l'eau de boisson pour éviter les diarrhées (ex: Sulfaquinoxaline)." },
-       { day: 35, type: "Vaccin", title: "VHD (Maladie Hémorragique)", description: "Vaccination vétérinaire sous-cutanée." },
-       { day: 42, type: "Vaccin", title: "Myxomatose", description: "Vaccin contre la myxomatose (ou vaccin combiné VHD-Myxo à 5 semaines)." },
-       { day: 60, type: "Prévention", title: "Vermifuge pur", description: "Déparasitage interne essentiel." }
+       { day: 15, type: "Prévention", title: "Anti-coccidiose (Amprolium)", description: "Posologie: 1g/L pdt 5j pour éviter les diarrhées." },
+       { day: 35, type: "Vaccin", title: "VHD (Maladie Hémorragique)", description: "Posologie: 0.5ml en sous-cutanée (Sujet de > 500g)." },
+       { day: 42, type: "Vaccin", title: "Myxomatose", description: "Posologie: 1 dose par sujet (ou combiné VHD-Myxo)." },
+       { day: 60, type: "Prévention", title: "Vermifuge (Leva 200)", description: "Posologie: 1g pour 2 litres d'eau pendant 24h." }
     ]
   }
 
   if(breed === 'Pigeon') {
     return [
-       { day: 14, type: "Vaccin", title: "Paramyxovirose", description: "Même virus que Newcastle, gouttes ou sous-cutané." },
-       { day: 21, type: "Vaccin", title: "Variole colombaire", description: "Transfixion ou arrachage d'une plume (cuisse)." },
-       { day: 35, type: "Prévention", title: "Trichomonose (Muguet)", description: "Traitement préventif régulier." },
-       { day: 60, type: "Prévention", title: "Vermifuge complet", description: "Dans l'eau ou goutte individuelle avant l'accouplement." }
+       { day: 14, type: "Vaccin", title: "Paramyxovirose", description: "Posologie: 0.2ml par sujet en sous-cutané (nuque)." },
+       { day: 21, type: "Vaccin", title: "Variole colombaire", description: "Posologie: Méthode par transfixion alaire (aile)." },
+       { day: 35, type: "Prévention", title: "Trichomonose (Muguet)", description: "Posologie: 1g/L d'eau de boisson (Dimétridazole/Ronidazole)." },
+       { day: 60, type: "Prévention", title: "Vermifuge complet", description: "Posologie: 1 goutte individuelle sur le bec ou dans l'eau." }
     ]
   }
 
   if(breed === 'Poulet de chair') {
     return [
       ...commonEarly,
-      { day: 28, type: "Vaccin", title: "Rappel Gumboro (Intermédiaire)", description: "2ème dose Gumboro pour protéger en fin de cycle." },
-      { day: 35, type: "Prévention", title: "Vitamines de Finition", description: "Booster pour optimiser le poids avant la vente." },
-      { day: 42, type: "Prévention", title: "Anti-stress pré-vente", description: "Préparation au transport et à la vente." }
+      { day: 35, type: "Prévention", title: "Vitamines de Finition", description: "Posologie: 1g/L d'eau. Booster pour optimiser le poids." },
+      { day: 42, type: "Prévention", title: "Anti-stress pré-vente", description: "Posologie: Vitamine C (1g/L) 2j avant le transport." }
     ]
   }
 
   if(breed === 'Pondeuse') {
     return [
       ...commonEarly,
-      { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "2ème dose Gumboro." },
-      { day: 35, type: "Vaccin", title: "Variole aviaire", description: "Transfixion alaire (aile)." },
-      { day: 42, type: "Vaccin", title: "Coryza Aviaire", description: "Vaccination sous-cutanée (1ère dose)." },
-      { day: 49, type: "Vaccin", title: "Typhose Aviaire", description: "Vaccination sous-cutanée pour prévenir la typhose." },
-      { day: 60, type: "Prévention", title: "Vermifuge (Leva 200)", description: "Déparasitage complet avant l'entrée en pré-ponte." },
-      { day: 70, type: "Vaccin", title: "Rappel Newcastle (Lasota)", description: "Dernier rappel avant l'entrée en ponte." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Protection lourde (ND+IB+G+Coryza) pour toute la durée de la ponte." }
+      { day: 35, type: "Vaccin", title: "Variole aviaire", description: "Posologie: Application par transfixion alaire (transpercer l'aile)." },
+      { day: 42, type: "Vaccin", title: "Coryza Aviaire", description: "Posologie: 0.5ml en injection sous-cutanée (1ère dose)." },
+      { day: 49, type: "Vaccin", title: "Typhose Aviaire", description: "Posologie: Injection sous-cutanée selon dosage labo." },
+      { day: 60, type: "Prévention", title: "Vermifuge (Leva 200)", description: "Posologie: 1.5g/L d'eau pendant un jour complet." },
+      { day: 70, type: "Vaccin", title: "Rappel Newcastle (Lasota)", description: "Posologie: 1 dose/sujet dans l'eau de boisson." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Posologie: Injection intramusculaire (0.5ml). Protection ponte longue." }
     ]
   }
 
   if(breed === 'Poulet Fermier' || breed === 'Reproducteur' || breed === 'Goliath') {
     return [
       ...commonEarly,
-      { day: 28, type: "Prévention", title: "Anticocc (Amprolium/COCCIDOT)", description: "Prévention contre la coccidiose dans l'eau pendant 3-5 jours." },
-      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne (Vermifuge) essentiel pour les parcours extérieurs." },
-      { day: 42, type: "Prévention", title: "Vitamines & Croissance", description: "Programme de minéraux pour solidifier l'ossature." },
-      { day: 60, type: "Prévention", title: "Rappel Vermifuge", description: "Entretien régulier pour maintenir la santé en milieu fermier." },
-      { day: 90, type: "Vaccin", title: "Rappel Newcastle", description: "Rappel de sécurité pour les sujets à cycle long." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Protection complète pour les géniteurs ou sujets d'élevage long." }
+      { day: 30, type: "Prévention", title: "Anti-Coccidien", description: "Posologie: 1g Amprolium/Litre pendant 5 jours consécutifs." },
+      { day: 45, type: "Prévention", title: "Vermifuge (Decaris/Leva)", description: "Posologie: 1g pour 2 Litres d'eau (A jeun le matin)." },
+      { day: 60, type: "Prévention", title: "Vitamines de Croissance", description: "Posologie: Booster minéraux/calcium dans l'aliment." },
+      { day: 90, type: "Vaccin", title: "Rappel Newcastle", description: "Posologie: 1 dose/sujet pour sujets à cycle long." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Posologie: Injection 0.5ml pour protection géniteurs." }
     ]
   }
 
   if(breed === 'Poule d\'Ornement' || breed === 'Brahma' || breed === 'Cochin') {
     return [
       ...commonEarly,
-      { day: 28, type: "Prévention", title: "Anticocc (Amprolium)", description: "Prévention contre la coccidiose pour protéger les sujets fragiles." },
-      { day: 35, type: "Prévention", title: "Leva 200 WS (Levamisole)", description: "Déparasitage interne pour éliminer les vers." },
-      { day: 42, type: "Prévention", title: "Soin Plumage & Beauté", description: "Acides aminés et vitamines spécifiques pour la qualité des plumes." },
-      { day: 60, type: "Prévention", title: "Rappel Vermifuge Bio", description: "Ail et Papaye pour garder les sujets sains." },
-      { day: 90, type: "Vaccin", title: "Rappel Newcastle", description: "Rappel pour protéger vos sujets de valeur." },
-      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Injection intramusculaire indispensable pour les sujets d'exposition." }
+      { day: 30, type: "Prévention", title: "Anti-Coccidien", description: "Posologie: 1g par Litre d'eau pdt 5j (Sujets fragiles)." },
+      { day: 45, type: "Prévention", title: "Leva 200 WS (Vermifuge)", description: "Posologie: 1g pour 2L d'eau. Vital pour la beauté." },
+      { day: 60, type: "Prévention", title: "Soin Plumage (Acides Aminés)", description: "Posologie: 2ml/Litre d'eau pendant 5 jours." },
+      { day: 90, type: "Vaccin", title: "Rappel Newcastle", description: "Posologie: Rappel obligatoire pour sujets d'exposition." },
+      { day: 112, type: "Vaccin", title: "Corymune 7K", description: "Posologie: Injection intramusculaire (0.5ml). Indispensable." }
     ]
   }
 
 
   return [
     ...commonEarly,
-    { day: 28, type: "Vaccin", title: "Rappel Gumboro", description: "2ème dose Gumboro selon pression virale." },
-    { day: 35, type: "Prévention", title: "Déparasitage naturel", description: "Feuilles de papayer ou Aloe Vera dans l'eau." },
-    { day: 112, type: "Vaccin", title: "Corymune 7K (Optionnel)", description: "Uniquement pour les sujets conservés longtemps." }
+    { day: 35, type: "Prévention", title: "Déparasitage naturel", description: "Posologie: Macération de 2 feuilles de papayer/Litre." },
+    { day: 112, type: "Vaccin", title: "Corymune 7K (Optionnel)", description: "Posologie: 0.5ml en injection unique." }
   ]
 }
 
@@ -242,12 +237,12 @@ export function HealthTracking() {
   });
 
   const remediesProtocols = [
-    { title: "Gombo", desc: "Favorise une excellente digestion et plein de vitamines.", usage: "Hacher 3 fruits de gombo frais dans 1L d'eau. Laisser macérer une demi-journée pour libérer le mucilage." },
-    { title: "Poudre de Moringa", desc: "Super-aliment, booster de croissance (Fer, Calcium).", usage: "Saupoudrer 1 cuillère à soupe rase (15g) par kilo d'aliment." },
-    { title: "Ail", desc: "Antibiotique et antiviral naturel très puissant.", usage: "Écraser 1 grosse gousse par litre d'eau, laisser macérer 12h. Cure conseillée : 3 jours consécutifs." },
-    { title: "Aloe Vera", desc: "Boisson (Immunité/Coryza) & Gel Externe (Soin des plaies).", usage: "Boisson: Mixer 1 c.à.s de gel pur pour 2L d'eau. Externe: Appliquer le gel pur sur les plaies de picage (très amer, éloigne les autres)." },
-    { title: "Papayer (Feuilles)", desc: "Vermifuge naturel et puissant anti-coccidiose.", usage: "Piler 2 grandes feuilles, macérer dans 1 Litre d'eau pdt 2h. Filtrer le jus pour le service." },
-    { title: "Khassou Xay (Caïlcédrat)", desc: "Écorce amère, puissant antibiotique et anti-parasitaire.", usage: "Faire bouillir un morceau d'écorce dans 1L d'eau (décoction). Ajouter 2 c.à.s de ce liquide par litre d'eau de boisson pdt 3j." }
+    { title: "Gombo", desc: "Digestion & Vitamines.", usage: "Posologie: 3 gombos hachés dans 1L d'eau. Macérer 6h pour libérer le mucilage." },
+    { title: "Poudre de Moringa", desc: "Super-aliment & Booster.", usage: "Posologie: 15g (1 c.à.s) par kg d'aliment. Cure de 7 jours conseillée." },
+    { title: "Ail", desc: "Antibiotique Naturel.", usage: "Posologie: 1 grosse gousse écrasée par Litre d'eau. Macérer 12h. Cure de 3j." },
+    { title: "Aloe Vera", desc: "Immunité & Coryza.", usage: "Posologie: 1 c.à.s de gel pur pour 2L d'eau. Très efficace contre le rhume." },
+    { title: "Papayer (Feuilles)", desc: "Anti-Coccidien & Vermifuge.", usage: "Posologie: Piler 2 feuilles dans 1L d'eau. Filtrer et donner immédiatement." },
+    { title: "Khassou Xay", desc: "Antibiotique Puissant.", usage: "Posologie: Décoction d'écorce. Ajouter 2 c.à.s par Litre d'eau de boisson." }
   ];
 
   const currentProphylaxis = getProtocolsForBreed(selectedBreed);
@@ -267,6 +262,40 @@ export function HealthTracking() {
           <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
           <span className="font-medium text-sm hidden sm:inline">Nouveau Soin</span>
         </button>
+      </div>
+
+      {/* Importants Alerts based on ScreenShot */}
+      <div className="bg-zinc-900 rounded-3xl p-5 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
+         <div className="flex items-center gap-2 mb-3">
+            <iconify-icon icon="solar:danger-bold" class="text-xl text-amber-400"></iconify-icon>
+            <h4 className="text-sm font-black uppercase tracking-widest text-amber-400">Conseils de Vaccination</h4>
+         </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+               <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-500 flex-shrink-0">
+                  <iconify-icon icon="solar:heart-break-bold"></iconify-icon>
+               </div>
+               <p className="text-[11px] font-medium leading-relaxed">Ne jamais vacciner un sujet malade ou affaibli.</p>
+            </div>
+            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+               <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0">
+                  <iconify-icon icon="solar:water-drop-bold"></iconify-icon>
+               </div>
+               <p className="text-[11px] font-medium leading-relaxed">Arrêter l'eau 2-3h avant pour garantir la soif.</p>
+            </div>
+            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
+                  <iconify-icon icon="solar:filter-bold"></iconify-icon>
+               </div>
+               <p className="text-[11px] font-medium leading-relaxed">Utiliser uniquement de l'eau propre, non chlorée (eau de puits/source).</p>
+            </div>
+            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+               <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-500 flex-shrink-0">
+                  <iconify-icon icon="solar:leaf-bold"></iconify-icon>
+               </div>
+               <p className="text-[11px] font-medium leading-relaxed">Donner des vitamines (Anti-stress) 2-3 jours après le vaccin.</p>
+            </div>
+         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
