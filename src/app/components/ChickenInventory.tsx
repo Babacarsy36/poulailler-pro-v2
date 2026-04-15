@@ -41,7 +41,7 @@ interface ChickenFormData {
 }
 
 export function ChickenInventory() {
-  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
+  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
@@ -49,7 +49,7 @@ export function ChickenInventory() {
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ChickenFormData>({
     defaultValues: {
       name: "",
-      breed: poultryBreed || "",
+      breed: selectedBreeds[0] || "",
       age: "",
       ageUnit: "months",
       count: "1",
@@ -77,7 +77,7 @@ export function ChickenInventory() {
   const filteredChickens = chickens.filter((c) => {
     // If poultryType is null, we are in "Vue Globale", so show everything
     const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-    const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
     return typeMatch && breedMatch;
   });
 
@@ -158,7 +158,7 @@ export function ChickenInventory() {
           ...c, 
           ...data, 
           poultryType: poultryType || c.poultryType || "poulet",
-          breed: data.breed || poultryBreed || "",
+          breed: data.breed || selectedBreeds[0] || "",
           ringNumber: data.ringNumber || undefined,
           variety: data.variety || undefined,
           birthYear: data.birthYear ? Number(data.birthYear) : undefined,
@@ -177,7 +177,7 @@ export function ChickenInventory() {
         id: now.toString(),
         ...data,
         poultryType: (poultryType || "poulet").toLowerCase() as "poulet" | "caille",
-        breed: data.breed || poultryBreed || "",
+        breed: data.breed || selectedBreeds[0] || "",
         ringNumber: data.ringNumber || undefined,
         variety: data.variety || undefined,
         birthYear: data.birthYear ? Number(data.birthYear) : undefined,
@@ -190,7 +190,7 @@ export function ChickenInventory() {
       };
       saveChickens([...chickens, newChicken]);
     }
-    reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
+    reset({ name: "", breed: selectedBreeds[0] || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
     setIsAddOpen(false);
   };
 
@@ -199,7 +199,7 @@ export function ChickenInventory() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">
-            Inventaire {isCaille ? "Cailles" : (poultryBreed ? (poultryBreed === 'chair' ? 'Poulet de Chair' : poultryBreed.toUpperCase()) : "Poulets")}
+            Inventaire {isCaille ? "Cailles" : (selectedBreeds.length > 0 ? selectedBreeds.join(' & ').toUpperCase() : "Poulets")}
           </h1>
           <p className="text-xs font-light text-gray-500 mt-1">Gestion par lots & sujets</p>
         </div>
@@ -411,14 +411,27 @@ export function ChickenInventory() {
                 {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
               </div>
 
-              {poultryBreed === 'fermier' && (
+              <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie de race</label>
+                <select 
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                  {...register("breed")}
+                >
+                  {selectedBreeds.map(b => (
+                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                  ))}
+                </select>
+              </div>
+
+              {formData.breed === 'fermier' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Sous-race / Souche</label>
                   <select 
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                    {...register("breed")}
+                    defaultValue="Goliath"
+                    onChange={(e) => setValue('name', `${e.target.value} ${new Date().getFullYear()}`)}
                   >
-                    <option value="fermier">Standard (Local / Métissé)</option>
+                    <option value="Standard">Standard (Local / Métissé)</option>
                     <option value="Goliath">Goliath</option>
                     <option value="Rainbow">Rainbow</option>
                     <option value="Bleu d'Hollande">Bleu d'Hollande</option>
@@ -426,13 +439,13 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {poultryBreed === 'ornement' && (
+              {formData.breed === 'ornement' && (
                 <>
                   <div className="space-y-1.5 animate-in slide-in-from-top-2">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
                     <select 
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                      {...register("breed")}
+                      onChange={(e) => setValue('name', `${e.target.value} ${new Date().getFullYear()}`)}
                     >
                       <option value="Ornement">Autre ornement</option>
                       <option value="Brahma">Brahma</option>
@@ -443,7 +456,7 @@ export function ChickenInventory() {
                     </select>
                   </div>
 
-                  {['Brahma', 'Cochin', 'Cochin Nain (Pékin)', 'Orpington', 'Pékin'].includes(formData.breed || '') && (
+                  {['Brahma', 'Cochin', 'Cochin Nain (Pékin)', 'Orpington'].some(r => formData.name?.includes(r)) && (
                     <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
                       
@@ -471,7 +484,6 @@ export function ChickenInventory() {
                       ))}
                     </div>
                   )}
-
                 </>
               )}
 

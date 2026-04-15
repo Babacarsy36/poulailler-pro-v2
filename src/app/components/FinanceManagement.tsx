@@ -32,7 +32,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { poultryType, syncTrigger, hasAccess, role, saveData } = useAuth();
+  const { poultryType, selectedBreeds, syncTrigger, hasAccess, role, saveData } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -41,7 +41,7 @@ export function FinanceManagement() {
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
   const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FinanceFormData>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FinanceFormData & { breed: string }>({
     defaultValues: {
       type: 'expense',
       amount: '',
@@ -49,6 +49,7 @@ export function FinanceManagement() {
       description: '',
       date: new Date().toISOString().split('T')[0],
       selectedBatchId: 'none',
+      breed: selectedBreeds[0] || "",
     }
   });
 
@@ -65,19 +66,25 @@ export function FinanceManagement() {
     const data = StorageService.getItem<Transaction[]>("finances") || [];
     setTransactions(data);
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
-    const activeLots = chickens.filter((c: Chicken) => c.status === 'active' || Number(c.count) > 0).map((c: Chicken) => ({
-      id: c.id,
-      name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
-    }));
+    const activeLots = chickens
+      .filter((c: Chicken) => {
+          const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+          const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
+          return (c.status === 'active' || Number(c.count) > 0) && typeMatch && breedMatch;
+      })
+      .map((c: Chicken) => ({
+        id: c.id,
+        name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
+      }));
     setBatches(activeLots);
-  }, [syncTrigger]);
+  }, [syncTrigger, poultryType, selectedBreeds]);
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
     setTransactions(newTransactions);
     await saveData("finances", newTransactions);
   };
 
-  const onFormSubmit = async (data: FinanceFormData) => {
+  const onFormSubmit = async (data: FinanceFormData & { breed: string }) => {
     const now = Date.now();
     const finalCategory = data.category || currentCategories[0];
     const newTransaction: Transaction = {
@@ -89,11 +96,13 @@ export function FinanceManagement() {
       date: data.date,
       batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
       batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
+      poultryType: poultryType || "poulet",
+      poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
     const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     await saveTransactions(newTransactions);
-    reset({ type: data.type, amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none' });
+    reset({ type: data.type, amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" });
     setIsAddOpen(false);
     toast.success("Transaction enregistrée !");
   };
@@ -105,23 +114,28 @@ export function FinanceManagement() {
     }
   };
 
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const filteredTransactions = transactions.filter(t => {
+      const typeMatch = !poultryType || t.poultryType === poultryType || (poultryType === 'poulet' && !t.poultryType);
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => t.poultryBreed?.toLowerCase() === sb.toLowerCase());
+      const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
+      return typeMatch && breedMatch && typeFilterMatch;
+  });
+
+  const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalExpense = filteredTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
   const chartDataMap: Record<string, any> = {};
-  transactions.forEach(t => {
+  filteredTransactions.forEach(t => {
     if (!chartDataMap[t.date]) chartDataMap[t.date] = { date: t.date, income: 0, expense: 0 };
     if (t.type === 'income') chartDataMap[t.date].income += t.amount;
     else chartDataMap[t.date].expense += t.amount;
   });
   const chartData = Object.values(chartDataMap).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-14);
 
-  const filteredTransactions = transactions.filter(t => activeFilter === 'all' || t.type === activeFilter);
-
   // Lot profitability analysis
   const lotStats = batches.map(batch => {
-    const batchTransactions = transactions.filter(t => t.batchId === batch.id);
+    const batchTransactions = filteredTransactions.filter(t => t.batchId === batch.id);
     const income = batchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const expense = batchTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const profit = income - expense;
@@ -446,6 +460,18 @@ export function FinanceManagement() {
                     {...register("date", { required: true })}
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
+                  <select 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none"
+                    {...register("breed", { required: true })}
+                  >
+                    {selectedBreeds.map(b => (
+                      <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label>
                   <select

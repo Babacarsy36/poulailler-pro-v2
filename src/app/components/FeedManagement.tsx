@@ -82,12 +82,12 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
+  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FeedFormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FeedFormData & { breed: string }>({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       type: "achat",
@@ -95,6 +95,7 @@ export function FeedManagement() {
       feedType: "",
       temperature: "28",
       notes: "",
+      breed: selectedBreeds[0] || "",
     }
   });
 
@@ -189,16 +190,16 @@ export function FeedManagement() {
   useEffect(() => {
     if (poultryType === 'caille') {
       setSelectedBreed('Caille');
-    } else if (poultryBreed) {
+    } else if (selectedBreeds.length > 0) {
       const breedMap: Record<string, string> = {
         fermier: 'Poulet Fermier',
         ornement: 'Poule d\'Ornement',
         pondeuse: 'Pondeuse',
         chair: 'Poulet de chair'
       };
-      setSelectedBreed(breedMap[poultryBreed] || 'Poulet de chair');
+      setSelectedBreed(breedMap[selectedBreeds[0]] || 'Poulet de chair');
     }
-  }, [poultryType, poultryBreed]);
+  }, [poultryType, selectedBreeds]);
 
   const adjustConsumption = (text: string, currentWeather: "normal" | "hot" | "cold") => {
     if (currentWeather === "normal") return text;
@@ -255,7 +256,7 @@ export function FeedManagement() {
     setIngredients(ingredients.map(ing => ing.id === id ? { ...ing, [field]: value } : ing));
   };
 
-  const onEntrySubmit = (data: FeedFormData) => {
+  const onEntrySubmit = (data: FeedFormData & { breed: string }) => {
     const now = Date.now();
     const newEntry: FeedEntry = {
       id: now.toString(),
@@ -263,7 +264,7 @@ export function FeedManagement() {
       quantity: Number(data.quantity),
       temperature: data.temperature ? Number(data.temperature) : undefined,
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined,
+      poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -274,13 +275,14 @@ export function FeedManagement() {
       feedType: "",
       temperature: "28",
       notes: "",
+      breed: selectedBreeds[0] || "",
     });
     setIsAddOpen(false);
   };
 
   const filteredEntries = entries.filter(e => {
     const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
-    const breedMatch = !poultryBreed || e.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb.toLowerCase());
     return typeMatch && breedMatch;
   });
 
@@ -292,23 +294,28 @@ export function FeedManagement() {
   const calculateDailyConsumption = () => {
     let dailyTotalKg = 0;
     allChickens.filter(c => c.status === 'active').forEach(c => {
-      const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
-      const phases = getPhasesForBreed(breed);
+      const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
       
-      const arrDate = new Date(c.arrivalDate || c.startDate || c.date || Date.now());
-      const ageDays = Math.ceil(Math.abs(Date.now() - arrDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      
-      let phase = phases.find(p => ageDays >= p.duration[0] && ageDays <= p.duration[1]);
-      if(!phase) phase = phases[phases.length - 1];
+      if (typeMatch && breedMatch) {
+          const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
+          const phases = getPhasesForBreed(breed);
+          
+          const arrDate = new Date(c.arrivalDate || c.startDate || c.date || Date.now());
+          const ageDays = Math.ceil(Math.abs(Date.now() - arrDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          
+          let phase = phases.find(p => ageDays >= p.duration[0] && ageDays <= p.duration[1]);
+          if(!phase) phase = phases[phases.length - 1];
 
-      const matches = phase.consumption.match(/\d+/g);
-      if (matches) {
-        const avgGrams = matches.length === 2 
-          ? (parseInt(matches[0]) + parseInt(matches[1])) / 2 
-          : parseInt(matches[0]);
-        const weatherFactor = weather === 'hot' ? 0.85 : weather === 'cold' ? 1.15 : 1.0;
-        const count = Number(c.count) || 1;
-        dailyTotalKg += (avgGrams * count * weatherFactor) / 1000;
+          const matches = phase.consumption.match(/\d+/g);
+          if (matches) {
+            const avgGrams = matches.length === 2 
+              ? (parseInt(matches[0]) + parseInt(matches[1])) / 2 
+              : parseInt(matches[0]);
+            const weatherFactor = weather === 'hot' ? 0.85 : weather === 'cold' ? 1.15 : 1.0;
+            const count = Number(c.count) || 1;
+            dailyTotalKg += (avgGrams * count * weatherFactor) / 1000;
+          }
       }
     });
 
@@ -850,6 +857,18 @@ export function FeedManagement() {
                     </div>
                  </div>
               </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de la récolte</label>
+                <select 
+                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
+                  {...register("breed", { required: true })}
+                >
+                  {selectedBreeds.map(b => (
+                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>
                 <input 

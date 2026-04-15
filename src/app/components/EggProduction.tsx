@@ -22,18 +22,21 @@ interface EggFormData {
 }
 
 export function EggProduction() {
-  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
+  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [totalFemales, setTotalFemales] = useState(0);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<EggFormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<EggFormData & { breed: string }>({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       quantity: "",
       notes: "",
+      breed: selectedBreeds[0] || "",
     }
   });
+
+  const formData = watch();
 
   const isCaille = poultryType === 'caille';
   const accentColorClass = isCaille ? 'emerald' : 'orange';
@@ -53,19 +56,19 @@ export function EggProduction() {
     const females = chickens
       .filter((c: Chicken) => {
         const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-        const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
         return typeMatch && breedMatch;
       })
       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
     setTotalFemales(females);
-  }, [syncTrigger, poultryType, poultryBreed]);
+  }, [syncTrigger, poultryType, selectedBreeds]);
 
   const saveRecords = (newRecords: EggRecord[]) => {
     setRecords(newRecords);
     saveData("eggs", newRecords);
   };
 
-  const onFormSubmit = (data: EggFormData) => {
+  const onFormSubmit = (data: EggFormData & { breed: string }) => {
     const now = Date.now();
     const newRecord: EggRecord = {
       id: now.toString(),
@@ -73,17 +76,17 @@ export function EggProduction() {
       quantity: Number(data.quantity),
       notes: data.notes,
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined,
+      poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
     saveRecords([newRecord, ...records]);
-    reset({ date: new Date().toISOString().split("T")[0], quantity: "", notes: "" });
+    reset({ date: new Date().toISOString().split("T")[0], quantity: "", notes: "", breed: selectedBreeds[0] || "" });
     setIsAddOpen(false);
   };
 
   const filteredRecords = records.filter(r => {
     const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && !r.poultryType);
-    const breedMatch = !poultryBreed || r.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb.toLowerCase());
     return typeMatch && breedMatch;
   });
 
@@ -193,7 +196,7 @@ export function EggProduction() {
                 <p className="text-xs font-light text-gray-500 truncate">
                   {new Date(record.date).toLocaleDateString("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' })}
                   {record.notes && <span className="ml-2 italic">{record.notes}</span>}
-                  {record.poultryBreed && <span className="ml-2 px-1.5 py-0.5 bg-gray-100 rounded-md text-[9px] text-gray-500">{record.poultryBreed}</span>}
+                  {record.poultryBreed && <span className="ml-4 px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-bold text-gray-600 uppercase tracking-wider">{record.poultryBreed}</span>}
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
@@ -238,6 +241,18 @@ export function EggProduction() {
               Nouvelle Récolte
             </h3>
             <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
+                <select 
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
+                  {...register("breed", { required: true })}
+                >
+                  {selectedBreeds.map(b => (
+                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date de collecte</label>
                 <input

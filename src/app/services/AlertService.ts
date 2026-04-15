@@ -14,14 +14,23 @@ export interface Alert {
 }
 
 export const AlertService = {
-    getAlerts(poultryType?: string, poultryBreed?: string): Alert[] {
+    getAlerts(poultryType?: string, selectedBreeds?: string[]): Alert[] {
         const alerts: Alert[] = [];
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
+        const checkBreedMatch = (itemBreed?: string) => {
+            if (!selectedBreeds || selectedBreeds.length === 0) return true;
+            return selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb.toLowerCase());
+        };
+
         // 1. Egg Drop Detection (>15% drop vs 7d average)
         const eggs = StorageService.getItem<EggRecord[]>("eggs") || [];
-        const filteredEggs = eggs.filter((e) => !poultryType || e.poultryType === poultryType);
+        const filteredEggs = eggs.filter((e) => {
+            const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
+            const breedMatch = checkBreedMatch(e.poultryBreed);
+            return typeMatch && breedMatch;
+        });
         
         const last7Days = Array.from({ length: 7 }).map((_, i) => {
             const d = new Date();
@@ -48,9 +57,17 @@ export const AlertService = {
         // 2. Low Feed Detection (<3 days autonomy)
         const feed = StorageService.getItem<FeedEntry[]>("feed") || [];
         const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
-        const activeLots = chickens.filter((c) => c.status === 'active' && (!poultryType || c.poultryType === poultryType));
+        const activeLots = chickens.filter((c) => {
+            const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+            const breedMatch = checkBreedMatch(c.breed);
+            return c.status === 'active' && typeMatch && breedMatch;
+        });
         
-        const totalKg = feed.filter((f) => !poultryType || f.poultryType === poultryType).reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
+        const totalKg = feed.filter((f) => {
+            const typeMatch = !poultryType || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
+            const breedMatch = checkBreedMatch(f.poultryBreed);
+            return typeMatch && breedMatch;
+        }).reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
         
         const dailyCons = activeLots.reduce((acc: number, c) => {
             const breedCons = c.poultryType === 'caille' ? 0.03 : 0.12; 
@@ -65,7 +82,7 @@ export const AlertService = {
                     type: 'low-feed',
                     severity: autonomy < 1 ? 'critical' : 'warning',
                     title: autonomy < 1 ? 'Rupture d\'aliment ! ⚠️' : 'Stock d\'aliment bas 🛒',
-                    message: `Il vous reste environ ${Math.max(0, Math.floor(autonomy))} jours d'autonomy alimentaire (${Math.round(totalKg)}kg restants).`,
+                    message: `Il vous reste environ ${Math.max(0, Math.floor(autonomy))} jours d'autonomie alimentaire (${Math.round(totalKg)}kg restants).`,
                     link: '/feed',
                     createdAt: Date.now()
                 });

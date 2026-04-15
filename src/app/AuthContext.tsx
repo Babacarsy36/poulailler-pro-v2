@@ -15,13 +15,13 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     poultryType: PoultryType | null;
-    poultryBreed: PoultryBreed;
+    selectedBreeds: string[];
     role: UserRole;
     farmId: string | null;
     syncTrigger: number;
     isDarkMode: boolean;
     toggleDarkMode: () => void;
-    updatePoultrySelection: (type: PoultryType | null, breed: PoultryBreed) => void;
+    updatePoultrySelection: (type: PoultryType | null, breeds: string[]) => void;
     clearSelection: () => void;
     isSyncing: boolean;
     tier: SubscriptionTier;
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [poultryType, setPoultryType] = useState<PoultryType | null>(null);
-    const [poultryBreed, setPoultryBreed] = useState<PoultryBreed>(null);
+    const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
     const [tier, setTier] = useState<SubscriptionTier>('FREE');
@@ -75,46 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setSyncTrigger(prev => prev + 1);
                 });
 
-                // Pull user preferences (critical but fast)
-                getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences')).then(prefsDoc => {
-                    if (prefsDoc.exists()) {
-                        const data = prefsDoc.data();
-                        if (data.poultryType) {
-                            setPoultryType(data.poultryType as PoultryType);
-                            localStorage.setItem('poultry_type', data.poultryType);
-                        }
-                        if (data.poultryBreed) {
-                            setPoultryBreed(data.poultryBreed as PoultryBreed);
-                            localStorage.setItem('poultry_breed', data.poultryBreed);
-                        }
-                    }
-                }).catch(err => console.error("Pref fetch failed:", err));
-
-                // Pull subscription tier from multiple possible locations for reliability
-                const checkTier = async (): Promise<SubscriptionTier> => {
-                    if (currentUser.email === 'test@poulailler.pro') {
-                        return 'PRO';
-                    }
-                    const rootDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                    if (rootDoc.exists() && rootDoc.data()?.tier) {
-                        return rootDoc.data()?.tier as SubscriptionTier;
-                    }
-                    // Legacy isPro migration
-                    if (rootDoc.exists() && rootDoc.data()?.isPro === true) {
-                        return 'PRO';
-                    }
-                    const profileDoc = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'));
-                    if (profileDoc.exists() && profileDoc.data()?.tier) {
-                        return profileDoc.data()?.tier as SubscriptionTier;
-                    }
-                    if (profileDoc.exists() && profileDoc.data()?.isPro === true) {
-                        return 'PRO';
-                    }
-                    return 'FREE';
-                };
-                checkTier().then(t => setTier(t)).catch(() => {});
-
-                // Check for pending invitations before finalizing profile
+                // Check for pending invitations
                 const checkInvitations = async () => {
                     if (!currentUser.email) return;
                     const invQ = query(collection(db, "invitations"), 
@@ -127,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const invitation = invSnap.docs[0].data();
                         const invId = invSnap.docs[0].id;
                         
-                        // Accept invitation: link user to farm
                         await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'), {
                             role: invitation.role,
                             farmId: invitation.farmId,
@@ -135,58 +95,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             updatedAt: Date.now()
                         });
                         
-                        // Mark invitation as accepted
                         await updateDoc(doc(db, "invitations", invId), {
                             status: 'accepted',
                             acceptedAt: Date.now(),
                             acceptedBy: currentUser.uid
                         });
                         
-                        return { role: invitation.role as UserRole, farmId: invitation.farmId as string };
+                        toast.success(`Invitation acceptée ! Vous avez rejoint la ferme de ${invitation.senderName}`);
                     }
-                    return null;
                 };
 
-                // Pull or Initialize Profile & FarmId
+                checkInvitations();
+
+                // Initial load of profile if exists (onSnapshot will take over for updates)
                 getDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile')).then(async (profDoc) => {
-                    let userRole: UserRole = 'owner';
-                    let userFarmId = currentUser.uid;
-
-                    if (profDoc.exists()) {
-                        const data = profDoc.data();
-                        userRole = (data.role as UserRole) || 'owner';
-                        userFarmId = data.farmId || currentUser.uid;
-                    } else {
-                        // Potential new invited user?
-                        const acceptedInvite = await checkInvitations();
-                        if (acceptedInvite) {
-                            userRole = acceptedInvite.role;
-                            userFarmId = acceptedInvite.farmId;
-                        } else {
-                            // Initialize new user as owner of their own farm
-                            await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'), {
-                                role: 'owner',
-                                farmId: currentUser.uid,
-                                displayName: currentUser.displayName || currentUser.email?.split('@')[0],
-                                updatedAt: Date.now()
-                            });
-                        }
+                    if (!profDoc.exists()) {
+                        // Initialize new user as owner of their own farm if no profile exists
+                        await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'profile'), {
+                            role: 'owner',
+                            farmId: currentUser.uid,
+                            displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+                            updatedAt: Date.now()
+                        });
                     }
-
-                    setRole(userRole);
-                    setFarmId(userFarmId);
-                    
-                    setIsSyncing(true);
-                    SyncService.pullCloudToLocal(userFarmId, userFarmId !== currentUser.uid).finally(() => {
-                        setIsSyncing(false);
-                        setSyncTrigger(prev => prev + 1);
-                    });
-                }).catch(() => {});
+                });
             }
             setLoading(false);
         });
         return () => unsubscribe();
     }, []);
+
+    // Realtime sync of user settings/preferences
+    useEffect(() => {
+        if (!user) return;
+        
+        const unsubPrefs = onSnapshot(doc(db, 'users', user.uid, 'settings', 'preferences'), (prefsDoc) => {
+            if (prefsDoc.exists()) {
+                const data = prefsDoc.data();
+                if (data.selectedBreeds) {
+                    setSelectedBreeds(data.selectedBreeds);
+                    localStorage.setItem('selected_breeds', JSON.stringify(data.selectedBreeds));
+                }
+                if (data.poultryType) {
+                    setPoultryType(data.poultryType as PoultryType);
+                    localStorage.setItem('poultry_type', data.poultryType);
+                }
+            }
+        });
+
+        const unsubProfile = onSnapshot(doc(db, 'users', user.uid, 'settings', 'profile'), (profileDoc) => {
+            if (profileDoc.exists()) {
+                const data = profileDoc.data();
+                if (data.role) setRole(data.role as UserRole);
+                if (data.farmId) setFarmId(data.farmId);
+                if (data.tier) setTier(data.tier as SubscriptionTier);
+                else if (data.isPro) setTier('PRO');
+            }
+        });
+
+        return () => {
+            unsubPrefs();
+            unsubProfile();
+        };
+    }, [user]);
 
     useEffect(() => {
         if (user && farmId) {
@@ -200,28 +171,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Load selection from localStorage on mount
     useEffect(() => {
         const savedType = localStorage.getItem('poultry_type') as PoultryType;
-        const savedBreed = localStorage.getItem('poultry_breed') as PoultryBreed;
+        const savedBreeds = localStorage.getItem('selected_breeds');
         if (savedType) setPoultryType(savedType);
-        if (savedBreed) setPoultryBreed(savedBreed);
+        if (savedBreeds) {
+            try {
+                setSelectedBreeds(JSON.parse(savedBreeds));
+            } catch (e) {
+                setSelectedBreeds([]);
+            }
+        }
     }, []);
 
-    const updatePoultrySelection = async (type: PoultryType | null, breed: PoultryBreed) => {
+    const updatePoultrySelection = async (type: PoultryType | null, breeds: string[]) => {
         setPoultryType(type);
-        setPoultryBreed(breed);
+        setSelectedBreeds(breeds);
         
         localStorage.setItem('has_selected_species', 'true');
         
         if (type) localStorage.setItem('poultry_type', type);
         else localStorage.removeItem('poultry_type');
         
-        if (breed) localStorage.setItem('poultry_breed', breed);
-        else localStorage.removeItem('poultry_breed');
+        localStorage.setItem('selected_breeds', JSON.stringify(breeds));
+        localStorage.removeItem('poultry_breed'); // Clean legacy
 
         // Fire-and-forget: don't block navigation
         if (user) {
             setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
                 poultryType: type,
-                poultryBreed: breed,
+                selectedBreeds: breeds,
                 lastUpdated: Date.now()
             }).catch(() => {});
         }
@@ -229,16 +206,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const clearSelection = () => {
         setPoultryType(null);
-        setPoultryBreed(null);
+        setSelectedBreeds([]);
     };
 
     // Recalculate alerts when data Changes
     useEffect(() => {
         if (user) {
-            const newAlerts = AlertService.getAlerts(poultryType || undefined, poultryBreed || undefined);
+            // Updated AlertService to take the first breed or generic if multiple (needs fix in AlertService later)
+            const newAlerts = AlertService.getAlerts(poultryType || undefined, selectedBreeds[0] || undefined);
             setAlerts(newAlerts);
         }
-    }, [syncTrigger, poultryType, poultryBreed, user]);
+    }, [syncTrigger, poultryType, selectedBreeds, user]);
 
     const saveData = async <T extends SyncItem>(key: string, data: T[]) => {
         const isFarm = !!farmId && farmId !== user?.uid;
@@ -291,7 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user,
             loading,
             poultryType, 
-            poultryBreed, 
+            selectedBreeds, 
             syncTrigger,
             isDarkMode,
             toggleDarkMode,

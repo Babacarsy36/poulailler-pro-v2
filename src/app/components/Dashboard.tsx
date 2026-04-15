@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { poultryType, poultryBreed, syncTrigger, hasAccess, alerts } = useAuth();
+  const { poultryType, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -54,19 +54,19 @@ export function Dashboard() {
 
     const filteredChickens = chickens.filter((c) => {
       const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-      const breedMatch = !poultryBreed || c.breed?.toLowerCase() === poultryBreed.toLowerCase();
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
       return typeMatch && breedMatch;
     });
 
     const filteredEggs = eggs.filter((e) => {
       const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
-      const breedMatch = !poultryBreed || e.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb.toLowerCase());
       return typeMatch && breedMatch;
     });
 
     const filteredFeed = feed.filter((f) => {
       const typeMatch = !poultryType || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
-      const breedMatch = !poultryBreed || f.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => f.poultryBreed?.toLowerCase() === sb.toLowerCase());
       return typeMatch && breedMatch;
     });
 
@@ -74,12 +74,12 @@ export function Dashboard() {
     const cailleCount = filteredChickens.filter((c) => c.poultryType === 'caille').reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
     const pouletCount = filteredChickens.filter((c) => c.poultryType === 'poulet' || !c.poultryType).reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
 
-    const breeds = filteredChickens.map((c) => c.breed || poultryBreed).filter(Boolean);
-    const breakdown = [...new Set(breeds)].slice(0, 3).join(" • ");
+    const breedsList = filteredChickens.map((c) => c.breed).filter(Boolean);
+    const breakdown = [...new Set(breedsList)].slice(0, 3).join(" • ");
 
     const sortedEggs = [...filteredEggs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let eggsOnLastDate = 0;
-    if (!poultryType && !poultryBreed) {
+    if (!poultryType && (!selectedBreeds || selectedBreeds.length === 0)) {
       const groups = [...new Set(filteredEggs.map(e => `${e.poultryType || 'poulet'}-${e.poultryBreed || ''}`))];
       groups.forEach(g => {
         const t = g.split('-')[0];
@@ -143,13 +143,13 @@ export function Dashboard() {
       layingRateHint: hasDetailedFemaleCounts ? `${totalActiveLayers} femelles actives` : `${totalActiveLayers} sujets actifs`,
       feedRemaining: totalFeedKg,
       feedAutonomy: dailyFeedCons > 0 ? Math.floor(totalFeedKg / dailyFeedCons) : Infinity,
-      breakdown: breakdown || (poultryBreed ? poultryBreed.toUpperCase() : "Toutes races"),
+      breakdown: breakdown || (selectedBreeds.length > 0 ? selectedBreeds.join(" • ").toUpperCase() : "Toutes races"),
       breakdownLabel: "",
       lastEggText,
       lastFeedText,
       globalBreakdown
     });
-  }, [selectedDate, poultryType, poultryBreed, syncTrigger]);
+  }, [selectedDate, poultryType, selectedBreeds, syncTrigger]);
 
   const [chartData, setChartData] = useState<{name: string, production: number}[]>([]);
   useEffect(() => {
@@ -158,14 +158,18 @@ export function Dashboard() {
       const d = new Date();
       d.setDate(d.getDate() - (14 - i));
       const dateStr = d.toISOString().split('T')[0];
-      const dayEggs = eggs.filter((e) => e.date === dateStr && (!poultryType || e.poultryType === poultryType)).reduce((acc: number, e) => acc + (e.quantity || 0), 0);
+      const dayEggs = eggs.filter((e) => {
+        const typeMatch = !poultryType || e.poultryType === poultryType;
+        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb.toLowerCase());
+        return e.date === dateStr && typeMatch && breedMatch;
+      }).reduce((acc: number, e) => acc + (e.quantity || 0), 0);
       return {
         name: d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
         production: dayEggs
       };
     });
     setChartData(last15Days);
-  }, [syncTrigger, poultryType, poultryBreed]); // Ensure breed also triggers reload if relevant
+  }, [syncTrigger, poultryType, selectedBreeds]);
 
   const handleRecover = async () => {
     setIsRecovering(true);

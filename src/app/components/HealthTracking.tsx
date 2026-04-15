@@ -123,22 +123,25 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
 }
 
 export function HealthTracking() {
-  const { poultryType, poultryBreed, syncTrigger, saveData } = useAuth();
+  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<HealthFormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<HealthFormData & { breed: string }>({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       type: "Vaccin",
       title: "",
       target: "",
       status: "Complété",
+      breed: selectedBreeds[0] || "",
     }
   });
+
+  const formData = watch();
 
   const isCaille = poultryType === 'caille';
   const customColors = {
@@ -166,7 +169,7 @@ export function HealthTracking() {
       setSelectedBreed("Lapin"); return;
     }
 
-    if (poultryBreed) {
+    if (selectedBreeds.length > 0) {
       const breedLabelMap: Record<string, string> = {
         fermier: "Poulet Fermier",
         ornement: "Poule d'Ornement",
@@ -174,25 +177,25 @@ export function HealthTracking() {
         chair: "Poulet de chair",
         reproducteur: "Reproducteur",
       };
-      setSelectedBreed(breedLabelMap[poultryBreed.toLowerCase()] || "Poulet de chair");
+      setSelectedBreed(breedLabelMap[selectedBreeds[0].toLowerCase()] || "Poulet de chair");
       return;
     }
 
     setSelectedBreed("Poulet de chair");
-  }, [poultryType, poultryBreed]);
+  }, [poultryType, selectedBreeds]);
 
   const saveRecords = (newRecords: HealthRecord[]) => {
     setRecords(newRecords);
     saveData("health", newRecords);
   };
 
-  const onFormSubmit = (data: HealthFormData) => {
+  const onFormSubmit = (data: HealthFormData & { breed: string }) => {
     const now = Date.now();
     const newRecord: HealthRecord = {
       id: now.toString(),
       ...data,
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined,
+      poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
     saveRecords([newRecord, ...records]);
@@ -202,6 +205,7 @@ export function HealthTracking() {
       title: "",
       target: "",
       status: "Complété",
+      breed: selectedBreeds[0] || "",
     });
     setShowAdd(false);
     toast.success("Soin enregistré avec succès !");
@@ -217,7 +221,16 @@ export function HealthTracking() {
       target: selectedBreed,
       status: "Complété",
       poultryType: poultryType || "poulet",
-      poultryBreed: poultryBreed || undefined,
+      poultryBreed: selectedBreeds.find(sb => {
+          const breedLabelMap: Record<string, string> = {
+            fermier: "Poulet Fermier",
+            ornement: "Poule d'Ornement",
+            pondeuse: "Pondeuse",
+            chair: "Poulet de chair",
+            reproducteur: "Reproducteur",
+          };
+          return breedLabelMap[sb.toLowerCase()] === selectedBreed;
+      }) || selectedBreeds[0] || undefined,
       updatedAt: now
     };
     saveRecords([newRecord, ...records]);
@@ -232,7 +245,7 @@ export function HealthTracking() {
 
   const filteredRecords = records.filter(r => {
     const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && (!r.poultryType || r.poultryType === 'poulet'));
-    const breedMatch = !poultryBreed || r.poultryBreed?.toLowerCase() === poultryBreed.toLowerCase();
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb.toLowerCase());
     return typeMatch && breedMatch;
   });
 
@@ -478,6 +491,18 @@ export function HealthTracking() {
                   </select>
                 </div>
               </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race concernée</label>
+                <select 
+                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
+                  {...register("breed", { required: true })}
+                >
+                  {selectedBreeds.map(b => (
+                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Libellé du soin</label>
                 <input 
