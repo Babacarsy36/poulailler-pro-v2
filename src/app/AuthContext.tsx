@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { doc, setDoc, getDoc, query, collection, where, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, query, collection, where, getDocs, updateDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 import { SyncService, SyncItem } from './SyncService';
 import { StorageService } from './services/StorageService';
 import { Alert, AlertService } from './services/AlertService';
 import { toast } from 'sonner';
-import { UserRole, PoultryType } from './types';
+import { UserRole, PoultryType, SubscriptionTier } from './types';
 export type { PoultryType };
 
 export type PoultryBreed = 'fermier' | 'ornement' | 'pondeuse' | 'chair' | null;
