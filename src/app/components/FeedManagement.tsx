@@ -282,7 +282,7 @@ export function FeedManagement() {
 
   const filteredEntries = entries.filter(e => {
     const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb.toLowerCase());
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb?.toLowerCase());
     return typeMatch && breedMatch;
   });
 
@@ -295,7 +295,7 @@ export function FeedManagement() {
     let dailyTotalKg = 0;
     allChickens.filter(c => c.status === 'active').forEach(c => {
       const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
       
       if (typeMatch && breedMatch) {
           const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');

@@ -54,19 +54,19 @@ export function Dashboard() {
 
     const filteredChickens = chickens.filter((c) => {
       const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
       return typeMatch && breedMatch;
     });
 
     const filteredEggs = eggs.filter((e) => {
       const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb.toLowerCase());
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb?.toLowerCase());
       return typeMatch && breedMatch;
     });
 
     const filteredFeed = feed.filter((f) => {
       const typeMatch = !poultryType || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => f.poultryBreed?.toLowerCase() === sb.toLowerCase());
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => f.poultryBreed?.toLowerCase() === sb?.toLowerCase());
       return typeMatch && breedMatch;
     });
 
@@ -160,7 +160,7 @@ export function Dashboard() {
       const dateStr = d.toISOString().split('T')[0];
       const dayEggs = eggs.filter((e) => {
         const typeMatch = !poultryType || e.poultryType === poultryType;
-        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb.toLowerCase());
+        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb?.toLowerCase());
         return e.date === dateStr && typeMatch && breedMatch;
       }).reduce((acc: number, e) => acc + (e.quantity || 0), 0);
       return {

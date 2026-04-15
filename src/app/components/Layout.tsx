@@ -6,14 +6,14 @@ import { NotificationCenter } from "./ui/NotificationCenter";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, poultryBreed, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
+  const { poultryType, selectedBreeds, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
   
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
     { id: 'caille' as PoultryType, abbr: 'CL', label: 'Caille' },
   ];
 
-  const breedList: Record<string, { id: PoultryBreed, label: string }[]> = {
+  const breedList: Record<string, { id: string, label: string }[]> = {
     poulet: [
       { id: 'fermier', label: 'Poulet Fermier' },
       { id: 'ornement', label: 'Poule d\'Ornement' },
@@ -22,17 +22,19 @@ export function Layout() {
     ]
   };
 
+  const currentSingleBreed = selectedBreeds && selectedBreeds.length > 0 ? selectedBreeds[0] : null;
+
   const handleSpeciesSelect = async (type: PoultryType) => {
     if (type === 'caille') {
-        await updatePoultrySelection(type, null);
+        await updatePoultrySelection(type, []);
         navigate("/");
     } else {
-        await updatePoultrySelection(type, poultryBreed);
+        await updatePoultrySelection(type, selectedBreeds);
     }
   };
 
-  const handleBreedSelect = async (breed: PoultryBreed) => {
-    await updatePoultrySelection('poulet', breed);
+  const handleBreedSelect = async (breed: string | null) => {
+    await updatePoultrySelection('poulet', breed ? [breed] : []);
     navigate("/");
   };
 
@@ -158,9 +160,9 @@ export function Layout() {
                 {poultryType === 'poulet' && (
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
                         <button
-                            onClick={() => handleBreedSelect(null as any)}
+                            onClick={() => handleBreedSelect(null)}
                             className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
-                                !poultryBreed 
+                                !currentSingleBreed 
                                     ? 'bg-orange-100 border-orange-200 text-orange-600' 
                                     : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
                             }`}
@@ -168,7 +170,7 @@ export function Layout() {
                             Tous
                         </button>
                         {breedList.poulet.map((b) => {
-                            const isCurrentBreed = poultryBreed === b.id;
+                            const isCurrentBreed = currentSingleBreed === b.id;
                             return (
                                 <button
                                     key={b.id}

@@ -133,8 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (prefsDoc.exists()) {
                 const data = prefsDoc.data();
                 if (data.selectedBreeds) {
-                    setSelectedBreeds(data.selectedBreeds);
-                    localStorage.setItem('selected_breeds', JSON.stringify(data.selectedBreeds));
+                    const validBreeds = Array.isArray(data.selectedBreeds) ? data.selectedBreeds.filter(Boolean) : [];
+                    setSelectedBreeds(validBreeds);
+                    localStorage.setItem('selected_breeds', JSON.stringify(validBreeds));
                 }
                 if (data.poultryType) {
                     setPoultryType(data.poultryType as PoultryType);
@@ -175,7 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (savedType) setPoultryType(savedType);
         if (savedBreeds) {
             try {
-                setSelectedBreeds(JSON.parse(savedBreeds));
+                const parsed = JSON.parse(savedBreeds);
+                setSelectedBreeds(Array.isArray(parsed) ? parsed.filter(Boolean) : []);
             } catch (e) {
                 setSelectedBreeds([]);
             }

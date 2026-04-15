@@ -229,7 +229,7 @@ export function HealthTracking() {
             chair: "Poulet de chair",
             reproducteur: "Reproducteur",
           };
-          return breedLabelMap[sb.toLowerCase()] === selectedBreed;
+          return breedLabelMap[sb?.toLowerCase()] === selectedBreed;
       }) || selectedBreeds[0] || undefined,
       updatedAt: now
     };
@@ -245,7 +245,7 @@ export function HealthTracking() {
 
   const filteredRecords = records.filter(r => {
     const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && (!r.poultryType || r.poultryType === 'poulet'));
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb.toLowerCase());
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb?.toLowerCase());
     return typeMatch && breedMatch;
   });
 

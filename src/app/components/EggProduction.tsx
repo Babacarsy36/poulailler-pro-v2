@@ -56,7 +56,7 @@ export function EggProduction() {
     const females = chickens
       .filter((c: Chicken) => {
         const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
+        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
         return typeMatch && breedMatch;
       })
       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
@@ -86,7 +86,7 @@ export function EggProduction() {
 
   const filteredRecords = records.filter(r => {
     const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && !r.poultryType);
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb.toLowerCase());
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb?.toLowerCase());
     return typeMatch && breedMatch;
   });
 

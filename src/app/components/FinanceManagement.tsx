@@ -69,7 +69,7 @@ export function FinanceManagement() {
     const activeLots = chickens
       .filter((c: Chicken) => {
           const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-          const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
+          const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
           return (c.status === 'active' || Number(c.count) > 0) && typeMatch && breedMatch;
       })
       .map((c: Chicken) => ({
@@ -116,7 +116,7 @@ export function FinanceManagement() {
 
   const filteredTransactions = transactions.filter(t => {
       const typeMatch = !poultryType || t.poultryType === poultryType || (poultryType === 'poulet' && !t.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => t.poultryBreed?.toLowerCase() === sb.toLowerCase());
+      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => t.poultryBreed?.toLowerCase() === sb?.toLowerCase());
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
       return typeMatch && breedMatch && typeFilterMatch;
   });

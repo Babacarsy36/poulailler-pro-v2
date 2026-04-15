@@ -21,7 +21,7 @@ export const AlertService = {
 
         const checkBreedMatch = (itemBreed?: string) => {
             if (!selectedBreeds || selectedBreeds.length === 0) return true;
-            return selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb.toLowerCase());
+            return selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb?.toLowerCase());
         };
 
         // 1. Egg Drop Detection (>15% drop vs 7d average)

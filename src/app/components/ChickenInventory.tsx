@@ -77,7 +77,7 @@ export function ChickenInventory() {
   const filteredChickens = chickens.filter((c) => {
     // If poultryType is null, we are in "Vue Globale", so show everything
     const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb.toLowerCase());
+    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
     return typeMatch && breedMatch;
   });
 
