@@ -212,8 +212,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Recalculate alerts when data Changes
     useEffect(() => {
         if (user) {
-            // Updated AlertService to take the first breed or generic if multiple (needs fix in AlertService later)
-            const newAlerts = AlertService.getAlerts(poultryType || undefined, selectedBreeds[0] || undefined);
+            // Updated AlertService to take the full selectedBreeds array
+            const newAlerts = AlertService.getAlerts(poultryType || undefined, selectedBreeds);
             setAlerts(newAlerts);
         }
     }, [syncTrigger, poultryType, selectedBreeds, user]);
