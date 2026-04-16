@@ -509,9 +509,11 @@ export function HealthTracking() {
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
                   {...register("breed", { required: true })}
                 >
-                  {selectedBreeds.map(b => (
-                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                  ))}
+                  {selectedBreeds.length > 0 ? selectedBreeds.map(b => (
+                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b === 'caille' ? 'Caille' : b}</option>
+                  )) : (
+                    <option value="">Toutes espèces</option>
+                  )}
                 </select>
               </div>
 
@@ -543,7 +545,7 @@ export function HealthTracking() {
                 </button>
                 <button 
                   type="submit"
-                  className={`flex-1 text-white p-4 rounded-2xl font-black shadow-lg ${customColors.bgBtn}`}
+                  className={`flex-1 text-white p-4 rounded-2xl font-black shadow-lg ${btnBg}`}
                 >
                   Enregistrer
                 </button>

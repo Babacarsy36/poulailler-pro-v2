@@ -504,7 +504,7 @@ export function ChickenInventory() {
                 </>
               )}
 
-              {poultryBreed !== 'fermier' && (
+              {(formData.breed === 'ornement' || formData.breed === 'pondeuse') && (
                 <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année Naissance</label>
@@ -527,7 +527,7 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {poultryBreed !== 'fermier' && (
+              {(formData.breed === 'ornement' || formData.breed === 'pondeuse') && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
                     Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
