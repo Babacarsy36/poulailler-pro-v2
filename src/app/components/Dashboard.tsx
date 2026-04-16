@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isItemActive, poultryType, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -34,10 +34,11 @@ export function Dashboard() {
   });
   const [isRecovering, setIsRecovering] = useState(false);
 
-  const isCaille = poultryType === 'caille';
-  const accentColorClass = isCaille ? 'emerald' : 'orange';
-  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
-  const iconBg = isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
+  const isCaille = activeSpeciesFilter === 'caille';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
+  const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
 
   const getDailyRateForBreed = (breed: string) => {
     if (breed.toLowerCase().includes('caille')) return 0.03;

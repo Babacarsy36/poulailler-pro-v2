@@ -123,7 +123,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
 }
 
 export function HealthTracking() {
-  const { isItemActive, poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   
@@ -143,13 +143,13 @@ export function HealthTracking() {
 
   const formData = watch();
 
-  const isCaille = poultryType === 'caille';
-  const customColors = {
-     bgLight: isCaille ? 'bg-emerald-50' : 'bg-orange-50',
-     textDark: isCaille ? 'text-emerald-700' : 'text-orange-700',
-     border: isCaille ? 'border-emerald-100' : 'border-orange-100',
-     bgBtn: isCaille ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
-  }
+  const isCaille = activeSpeciesFilter === 'caille';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
+  const accentColor = isMixed ? "text-indigo-600" : isCaille ? "text-emerald-600" : "text-orange-600";
+  const bgLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
+  const btnBg = isMixed ? "bg-indigo-600 hover:bg-indigo-700" : isCaille ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-600 hover:bg-orange-700";
+  const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
 
   useEffect(() => {
     const saved = StorageService.getItem<HealthRecord[]>("health");
@@ -159,13 +159,13 @@ export function HealthTracking() {
   }, [syncTrigger]);
 
   useEffect(() => {
-    if (poultryType === "caille") {
+    if (activeSpeciesFilter === "caille") {
       setSelectedBreed("Caille"); return;
     }
-    if (poultryType === "pigeon") {
+    if (activeSpeciesFilter === "pigeon") {
       setSelectedBreed("Pigeon"); return;
     }
-    if (poultryType === "lapin") {
+    if (activeSpeciesFilter === "lapin") {
       setSelectedBreed("Lapin"); return;
     }
 
@@ -182,7 +182,7 @@ export function HealthTracking() {
     }
 
     setSelectedBreed("Poulet de chair");
-  }, [poultryType, selectedBreeds]);
+  }, [activeSpeciesFilter, selectedBreeds]);
 
   const saveRecords = (newRecords: HealthRecord[]) => {
     setRecords(newRecords);
@@ -194,7 +194,7 @@ export function HealthTracking() {
     const newRecord: HealthRecord = {
       id: now.toString(),
       ...data,
-      poultryType: poultryType || "poulet",
+      poultryType: activeSpeciesFilter || "poulet",
       poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
@@ -220,7 +220,7 @@ export function HealthTracking() {
       title: step.title,
       target: selectedBreed,
       status: "Complété",
-      poultryType: poultryType || "poulet",
+      poultryType: activeSpeciesFilter || "poulet",
       poultryBreed: selectedBreeds.find(sb => {
           const breedLabelMap: Record<string, string> = {
             fermier: "Poulet Fermier",
@@ -266,14 +266,14 @@ export function HealthTracking() {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className={`h-10 px-3 rounded-xl ${customColors.bgBtn} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
+          className={`h-10 px-3 rounded-xl ${btnBg} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
         >
           <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
           <span className="font-medium text-sm hidden sm:inline">Nouveau Soin</span>
         </button>
       </div>
 
-      {/* Importants Alerts based on ScreenShot */}
+      {/* Important Alerts */}
       <div className="bg-zinc-900 rounded-3xl p-5 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
          <div className="flex items-center gap-2 mb-3">
             <iconify-icon icon="solar:danger-bold" class="text-xl text-amber-400"></iconify-icon>
@@ -312,7 +312,7 @@ export function HealthTracking() {
         <div className="lg:col-span-7 space-y-6">
           <div className="clean-card rounded-3xl p-4 md:p-5">
             <div className="flex items-center gap-3 mb-6">
-              <div className={`p-3 rounded-xl ${customColors.bgLight} ${customColors.textDark}`}>
+              <div className={`p-3 rounded-xl ${bgLight} ${accentColor}`}>
                   <Calendar className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <div>
@@ -325,7 +325,7 @@ export function HealthTracking() {
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
                   <select 
-                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none text-sm`}
+                    className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none text-sm`}
                     value={selectedBreed}
                     onChange={(e) => setSelectedBreed(e.target.value)}
                   >
@@ -341,7 +341,7 @@ export function HealthTracking() {
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date d'arrivée</label>
                   <input 
                     type="date"
-                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
+                    className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
                     value={arrivalDate}
                     onChange={e => setArrivalDate(e.target.value)}
                   />
@@ -372,7 +372,7 @@ export function HealthTracking() {
                                       {isCommonBase ? (
                                         <span className="text-[7px] md:text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Socle Commun</span>
                                       ) : (
-                                        <span className={`text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${customColors.bgLight} ${customColors.textDark}`}>Spécifique {selectedBreed}</span>
+                                        <span className={`text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${bgLight} ${accentColor}`}>{selectedBreed}</span>
                                       )}
                                     </p>
                                     <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 mt-1 flex items-center gap-2">

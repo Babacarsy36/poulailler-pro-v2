@@ -7,8 +7,17 @@ import { Logo } from './Logo';
 export function SelectionPage() {
     const { updatePoultrySelection, user, logout } = useAuth();
     const navigate = useNavigate();
-    const [type, setType] = useState<PoultryType>(null);
+    const [selectedTypes, setSelectedTypes] = useState<PoultryType[]>([]);
     const [breeds, setBreeds] = useState<string[]>([]);
+
+    const toggleType = (type: PoultryType) => {
+        if (!type) return;
+        setSelectedTypes(prev => 
+            prev.includes(type) 
+                ? prev.filter(t => t !== type) 
+                : [...prev, type]
+        );
+    };
 
     const toggleBreed = (breed: string) => {
         setBreeds(prev => 
@@ -19,9 +28,12 @@ export function SelectionPage() {
     };
 
     const handleConfirm = async () => {
-        if (type) {
-            // Seules les cailles n'ont pas de race spécifique dans cette UI simplifiée
-            await updatePoultrySelection(type, type === 'caille' ? ['caille'] : breeds);
+        if (selectedTypes.length > 0) {
+            let allBreeds = [...breeds];
+            if (selectedTypes.includes('caille')) {
+                allBreeds.push('caille');
+            }
+            await updatePoultrySelection(selectedTypes, allBreeds);
             navigate('/');
         }
     };
@@ -62,20 +74,20 @@ export function SelectionPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto">
                     {/* Poulet Card */}
                     <div 
-                        onClick={() => setType('poulet')}
+                        onClick={() => toggleType('poulet')}
                         className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
-                            type === 'poulet' ? 'border-babs-orange shadow-premium ring-4 ring-orange-50' : 'border-transparent shadow-sm hover:shadow-premium'
+                            selectedTypes.includes('poulet') ? 'border-babs-orange shadow-premium ring-4 ring-orange-50' : 'border-transparent shadow-sm hover:shadow-premium'
                         }`}
                     >
                         <div className={`w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center mb-4 lg:mb-6 transition-all overflow-hidden border-2 ${
-                            type === 'poulet' ? 'border-babs-orange shadow-lg scale-110' : 'border-transparent bg-orange-50/50'
+                            selectedTypes.includes('poulet') ? 'border-babs-orange shadow-lg scale-110' : 'border-transparent bg-orange-50/50'
                         }`}>
-                            <img src="/assets/icons/poulet.png" alt="Poulet" className={`w-full h-full object-cover scale-110 ${type !== 'poulet' ? 'mix-blend-multiply opacity-80' : ''}`} />
+                            <img src="/assets/icons/poulet.png" alt="Poulet" className={`w-full h-full object-cover scale-110 ${!selectedTypes.includes('poulet') ? 'mix-blend-multiply opacity-80' : ''}`} />
                         </div>
                         <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Poulets</h2>
                         <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Poulet Fermier, Ornement, Pondeuse...</p>
                         
-                        {type === 'poulet' && (
+                        {selectedTypes.includes('poulet') && (
                             <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-babs-orange text-white flex items-center justify-center animate-in zoom-in">
                                 <Check className="w-4 h-4 lg:w-5 lg:h-5" />
                             </div>
@@ -84,20 +96,20 @@ export function SelectionPage() {
 
                     {/* Caille Card */}
                     <div 
-                        onClick={() => { setType('caille'); setBreeds([]); }}
+                        onClick={() => toggleType('caille')}
                         className={`group relative bg-white rounded-[2.5rem] p-6 lg:p-8 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
-                            type === 'caille' ? 'border-babs-emerald shadow-premium ring-4 ring-emerald-50' : 'border-transparent shadow-sm hover:shadow-premium'
+                            selectedTypes.includes('caille') ? 'border-babs-emerald shadow-premium ring-4 ring-emerald-50' : 'border-transparent shadow-sm hover:shadow-premium'
                         }`}
                     >
                         <div className={`w-20 h-20 lg:w-24 lg:h-24 rounded-3xl flex items-center justify-center mb-4 lg:mb-6 transition-all overflow-hidden border-2 ${
-                            type === 'caille' ? 'border-babs-emerald shadow-lg scale-110' : 'border-transparent bg-emerald-50/50'
+                            selectedTypes.includes('caille') ? 'border-babs-emerald shadow-lg scale-110' : 'border-transparent bg-emerald-50/50'
                         }`}>
-                            <img src="/assets/icons/caille.png" alt="Caille" className={`w-full h-full object-cover scale-110 ${type !== 'caille' ? 'mix-blend-multiply opacity-80' : ''}`} />
+                            <img src="/assets/icons/caille.png" alt="Caille" className={`w-full h-full object-cover scale-110 ${!selectedTypes.includes('caille') ? 'mix-blend-multiply opacity-80' : ''}`} />
                         </div>
                         <h2 className="text-xl lg:text-2xl font-black text-babs-brown mb-2">Cailles</h2>
                         <p className="text-[10px] lg:text-xs text-gray-400 font-bold">Production d'œufs et chair</p>
                         
-                        {type === 'caille' && (
+                        {selectedTypes.includes('caille') && (
                             <div className="absolute top-6 right-6 w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-babs-emerald text-white flex items-center justify-center animate-in zoom-in">
                                 <Check className="w-4 h-4 lg:w-5 lg:h-5" />
                             </div>
@@ -105,7 +117,7 @@ export function SelectionPage() {
                     </div>
                 </div>
 
-                {type === 'poulet' && (
+                {selectedTypes.includes('poulet') && (
                     <div className="space-y-6">
                         <div className="bg-white p-8 rounded-[2rem] shadow-premium border border-orange-50 space-y-6 animate-in slide-in-from-top-4 duration-500">
                             <label className="block text-sm font-black text-babs-brown uppercase tracking-wider italic">Quelle(s) race(s) de poulet ? (Choix multiples)</label>
@@ -128,14 +140,10 @@ export function SelectionPage() {
                 )}
 
                 <button 
-                    disabled={!type || (type === 'poulet' && breeds.length === 0)}
+                    disabled={selectedTypes.length === 0 || (selectedTypes.includes('poulet') && breeds.length === 0)}
                     onClick={handleConfirm}
                     className={`w-full py-6 text-xl font-black rounded-3xl transition-all duration-500 shadow-xl flex items-center justify-center gap-3 disabled:opacity-30 disabled:grayscale ${
-                        type === 'caille' 
-                            ? 'bg-babs-emerald hover:bg-emerald-700 text-white shadow-emerald-200'
-                            : type === 'pigeon' ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-purple-200'
-                            : type === 'lapin' ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200'
-                            : 'bg-babs-orange hover:bg-orange-700 text-white shadow-orange-200'
+                        selectedTypes.includes('poulet') ? 'bg-babs-orange hover:bg-orange-700 text-white shadow-orange-200' : 'bg-babs-emerald hover:bg-emerald-700 text-white shadow-emerald-200'
                     }`}
                 >
                     Continuer

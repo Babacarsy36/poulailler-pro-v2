@@ -41,7 +41,7 @@ interface ChickenFormData {
 }
 
 export function ChickenInventory() {
-  const { isItemActive, poultryType, selectedBreeds, syncTrigger, hasAccess, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, hasAccess, saveData } = useAuth();
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
@@ -139,20 +139,24 @@ export function ChickenInventory() {
     saveData("chickens", newChickens);
   };
 
-  const onFormSubmit = (data: ChickenFormData) => {
-    const countVal = Number(data.count);
-    const femVal = Number(data.femaleCount);
-    const maleVal = Number(data.maleCount);
-
-    const actualCount = (femVal > 0 || maleVal > 0) ? femVal + maleVal : countVal;
+  const onFormSubmit = (data: any) => {
     const now = Date.now();
+    const actualCount = Number(data.count) || 1;
+    const femVal = Number(data.femaleCount) || 0;
+    const maleVal = Number(data.maleCount) || 0;
+
+    // Determine poultryType for the record
+    let recordType = data.poultryType;
+    if (!recordType) {
+        recordType = activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet';
+    }
 
     if (editingChicken) {
       const updated = chickens.map((c) =>
         c.id === editingChicken.id ? { 
           ...c, 
           ...data, 
-          poultryType: poultryType || c.poultryType || "poulet",
+          poultryType: recordType,
           breed: data.breed || selectedBreeds[0] || "",
           ringNumber: data.ringNumber || undefined,
           variety: data.variety || undefined,
@@ -171,7 +175,7 @@ export function ChickenInventory() {
       const newChicken: Chicken = {
         id: now.toString(),
         ...data,
-        poultryType: (poultryType || "poulet").toLowerCase() as "poulet" | "caille",
+        poultryType: recordType,
         breed: data.breed || selectedBreeds[0] || "",
         ringNumber: data.ringNumber || undefined,
         variety: data.variety || undefined,
@@ -185,7 +189,7 @@ export function ChickenInventory() {
       };
       saveChickens([...chickens, newChicken]);
     }
-    reset({ name: "", breed: selectedBreeds[0] || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
+    reset({ name: "", poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet', breed: selectedBreeds[0] || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
     setIsAddOpen(false);
   };
 
@@ -207,7 +211,7 @@ export function ChickenInventory() {
           </button>
           <button 
             onClick={() => {
-              reset({ name: "", breed: poultryBreed || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
+              reset({ name: "", breed: selectedBreeds[0] || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
               setIsAddOpen(true);
             }}
             className={`h-10 px-3 rounded-xl ${btnBg} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
@@ -406,17 +410,33 @@ export function ChickenInventory() {
                 {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
               </div>
 
-              <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie de race</label>
-                <select 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                  {...register("breed")}
-                >
-                  {selectedBreeds.map(b => (
-                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                  ))}
-                </select>
-              </div>
+              {isMixed && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
+                    <select 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                    {...register("poultryType")}
+                    >
+                    {poultryTypes.map(t => (
+                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
+                    ))}
+                    </select>
+                </div>
+              )}
+
+              {(!formData.poultryType || formData.poultryType === 'poulet') && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie de race</label>
+                    <select 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                    {...register("breed")}
+                    >
+                    {selectedBreeds.filter(b => b !== 'caille').map(b => (
+                        <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                    ))}
+                    </select>
+                </div>
+              )}
 
               {formData.breed === 'fermier' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">

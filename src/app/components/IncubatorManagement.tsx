@@ -16,7 +16,7 @@ import { getDaysElapsed, getDayTip } from './incubator/types';
 type TabId = 'batches' | 'summary' | 'finances' | 'faq';
 
 export function IncubatorManagement() {
-  const { syncTrigger, saveData, poultryType, isDarkMode } = useAuth();
+  const { syncTrigger, saveData, poultryTypes, activeSpeciesFilter, isDarkMode } = useAuth();
   const [batches, setBatches] = useState<IncubationBatch[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>('batches');
   const [speciesFilter, setSpeciesFilter] = useState<SpeciesKey | 'all'>('all');
@@ -25,11 +25,13 @@ export function IncubatorManagement() {
   const [selectedBatch, setSelectedBatch] = useState<IncubationBatch | null>(null);
   const [detailBatch, setDetailBatch] = useState<IncubationBatch | null>(null);
 
-  const isCaille = poultryType === 'caille';
-  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
-  const accentBg = isCaille ? "bg-emerald-500" : "bg-orange-500";
-  const accentLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
-  const accentBorder = isCaille ? "border-emerald-100" : "border-orange-100";
+  const isCaille = activeSpeciesFilter === 'caille';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
+  const accentBg = isMixed ? "bg-indigo-600 hover:bg-indigo-700" : isCaille ? "bg-emerald-500" : "bg-orange-500";
+  const accentLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
+  const accentBorder = isMixed ? "border-indigo-100" : isCaille ? "border-emerald-100" : "border-orange-100";
 
   const filtered = batches.filter(b => speciesFilter === 'all' || b.species === speciesFilter);
   const ongoing = filtered.filter(b => b.status === 'ongoing');

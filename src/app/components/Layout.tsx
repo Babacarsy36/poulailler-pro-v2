@@ -6,12 +6,23 @@ import { NotificationCenter } from "./ui/NotificationCenter";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, selectedBreeds, activeBreedFilter, setActiveBreedFilter, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
+  const { 
+    poultryTypes, 
+    selectedBreeds, 
+    activeSpeciesFilter, 
+    setActiveSpeciesFilter,
+    activeBreedFilter, 
+    setActiveBreedFilter, 
+    isDarkMode, 
+    toggleDarkMode 
+  } = useAuth();
   
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
     { id: 'caille' as PoultryType, abbr: 'CL', label: 'Caille' },
-  ];
+  ].filter(s => poultryTypes.includes(s.id));
+
+  const showAllOption = poultryTypes.length > 1;
 
   const breedList: Record<string, { id: string, label: string }[]> = {
     poulet: [
@@ -21,13 +32,9 @@ export function Layout() {
       { id: 'chair', label: 'Poulet de Chair' },
     ]
   };
-  const handleSpeciesSelect = async (type: PoultryType) => {
-    if (type === 'caille') {
-        await updatePoultrySelection(type, []);
-        navigate("/");
-    } else {
-        await updatePoultrySelection(type, selectedBreeds);
-    }
+  const handleSpeciesSelect = (type: PoultryType | 'all') => {
+    setActiveSpeciesFilter(type);
+    if (type !== 'poulet') setActiveBreedFilter(null);
   };
 
   const handleBreedSelect = (breed: string | null) => {
@@ -45,8 +52,9 @@ export function Layout() {
     { id: 'settings', label: 'Équipe', icon: 'solar:settings-linear', path: '/team' },
   ];
 
-  const accentColorClass = poultryType === 'caille' ? 'emerald' : 'orange';
-  const accentHex = poultryType === 'caille' ? '#10B981' : '#F59E0B';
+  const primaryType = activeSpeciesFilter === 'all' ? poultryTypes[0] : activeSpeciesFilter;
+  const accentColorClass = primaryType === 'caille' ? 'emerald' : 'orange';
+  const accentHex = primaryType === 'caille' ? '#10B981' : '#F59E0B';
 
   const { logout } = useAuth();
 
@@ -112,15 +120,30 @@ export function Layout() {
                     {/* Species Switcher */}
                     <div className="flex-1 overflow-x-auto no-scrollbar mx-3 select-none">
                         <div className="flex gap-2 w-max mx-auto">
+                            {showAllOption && (
+                                <button 
+                                    onClick={() => handleSpeciesSelect('all')} 
+                                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
+                                        activeSpeciesFilter === 'all'
+                                            ? `bg-zinc-800 border-zinc-700 text-white shadow-lg scale-105 font-bold`
+                                            : isDarkMode 
+                                                ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    🌍 Tous
+                                </button>
+                            )}
                             {speciesList.map((s) => {
-                                const isActive = (!poultryType && s.id === 'poulet') || s.id === poultryType;
+                                const isActive = s.id === activeSpeciesFilter;
+                                const sAccent = s.id === 'caille' ? 'emerald' : 'orange';
                                 return (
                                     <button 
                                         key={s.id}
                                         onClick={() => handleSpeciesSelect(s.id)} 
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
                                             isActive 
-                                                ? `bg-${accentColorClass}-500 border-${accentColorClass}-500 text-white shadow-lg shadow-${accentColorClass}-500/20 scale-105`
+                                                ? `bg-${sAccent}-500 border-${sAccent}-500 text-white shadow-lg shadow-${sAccent}-500/20 scale-105`
                                                 : isDarkMode 
                                                     ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
                                                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
@@ -152,8 +175,8 @@ export function Layout() {
                     </div>
                 </div>
 
-                {/* Breed Sub-switcher for Chicken */}
-                {poultryType === 'poulet' && (
+                {/* Breed Sub-switcher for Chicken (only if chicken is selected or in mixed view) */}
+                {(activeSpeciesFilter === 'poulet' || (activeSpeciesFilter === 'all' && poultryTypes.includes('poulet'))) && (
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
                         <button
                             onClick={() => handleBreedSelect(null)}
@@ -189,7 +212,7 @@ export function Layout() {
         </header>
 
         {/* Main Content */}
-        <main className={`flex-1 w-full max-w-5xl mx-auto ${poultryType === 'poulet' ? 'pt-28' : 'pt-20'} pb-28 md:pb-8 px-4 scroll-smooth min-h-screen`}>
+        <main className={`flex-1 w-full max-w-5xl mx-auto ${ (activeSpeciesFilter === 'poulet' || (activeSpeciesFilter === 'all' && poultryTypes.includes('poulet'))) ? 'pt-28' : 'pt-20'} pb-28 md:pb-8 px-4 scroll-smooth min-h-screen`}>
             <Outlet />
         </main>
 

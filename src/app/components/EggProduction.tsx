@@ -22,12 +22,12 @@ interface EggFormData {
 }
 
 export function EggProduction() {
-  const { isItemActive, poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [totalFemales, setTotalFemales] = useState(0);
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<EggFormData & { breed: string }>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<EggFormData & { breed: string; poultryType?: string }>({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       quantity: "",
@@ -38,13 +38,14 @@ export function EggProduction() {
 
   const formData = watch();
 
-  const isCaille = poultryType === 'caille';
-  const accentColorClass = isCaille ? 'emerald' : 'orange';
+  const isCaille = activeSpeciesFilter === 'caille';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
   const accentIcon = isCaille ? "solar:egg-bold-duotone" : "solar:record-circle-bold-duotone";
-  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
-  const accentBg = `bg-${accentColorClass}-500 hover:bg-${accentColorClass}-600`;
-  const accentBgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
-  const accentBorderLeft = isCaille ? "border-l-emerald-500" : "border-l-orange-500";
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
+  const accentBg = isMixed ? "bg-indigo-600 hover:bg-indigo-700" : isCaille ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-600 hover:bg-orange-700";
+  const accentBgLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
+  const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
 
   useEffect(() => {
     const saved = StorageService.getItem<EggRecord[]>("eggs");
@@ -57,22 +58,22 @@ export function EggProduction() {
       .filter((c: Chicken) => isItemActive(c.poultryType, c.breed))
       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
     setTotalFemales(females);
-  }, [syncTrigger, poultryType, selectedBreeds]);
+  }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
 
   const saveRecords = (newRecords: EggRecord[]) => {
     setRecords(newRecords);
     saveData("eggs", newRecords);
   };
 
-  const onFormSubmit = (data: EggFormData & { breed: string }) => {
+  const onFormSubmit = (data: EggFormData & { breed: string; poultryType?: string }) => {
     const now = Date.now();
     const newRecord: EggRecord = {
       id: now.toString(),
       date: data.date,
       quantity: Number(data.quantity),
       notes: data.notes,
-      poultryType: poultryType || "poulet",
-      poultryBreed: data.breed || selectedBreeds[0] || undefined,
+      poultryType: data.poultryType || (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet'),
+      poultryBreed: data.breed || selectedBreeds[0] || "",
       updatedAt: now
     };
     saveRecords([newRecord, ...records]);
@@ -107,7 +108,6 @@ export function EggProduction() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 select-none">
-        {/* Total */}
         <div className={`clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 ${accentBorderLeft} hover:scale-105 transition-transform`}>
           <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
             <iconify-icon icon={accentIcon} stroke-width="1.5" class={`text-xl ${accentColor}`}></iconify-icon>
@@ -121,7 +121,6 @@ export function EggProduction() {
           </div>
         </div>
 
-        {/* Dernière Récolte */}
         <div className="clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform">
           <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
             <iconify-icon icon="solar:calendar-linear" stroke-width="1.5" class="text-xl text-indigo-500"></iconify-icon>
@@ -135,7 +134,6 @@ export function EggProduction() {
           </div>
         </div>
 
-        {/* Taux de Ponte */}
         {totalFemales > 0 && layingRate !== null && (
           <div className={`clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 col-span-2 lg:col-span-1 ${layingRate >= 70 ? 'border-l-emerald-500' : layingRate >= 50 ? 'border-l-amber-500' : 'border-l-red-500'} hover:scale-105 transition-transform`}>
             <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
@@ -233,36 +231,42 @@ export function EggProduction() {
               Nouvelle Récolte
             </h3>
             <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
-                <select 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                  {...register("breed", { required: true })}
-                >
-                  {selectedBreeds.map(b => (
-                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
+                  <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("date", { required: true })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Quantité</label>
+                  <input type="number" step="1" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" placeholder="0" {...register("quantity", { required: true })} />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date de collecte</label>
-                <input
-                  type="date"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                  {...register("date", { required: true })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Nombre d'œufs</label>
-                <input
-                  type="number"
-                  className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors ${errors.quantity ? 'border-red-300' : 'border-gray-200'}`}
-                  placeholder="Ex: 48"
-                  {...register("quantity", { required: "Quantité requise", min: 1 })}
-                />
-                {errors.quantity && <p className="text-red-500 text-[10px] font-medium">{errors.quantity.message}</p>}
-              </div>
+              {isMixed && (
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
+                    <select 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                    {...register("poultryType")}
+                    >
+                    {poultryTypes.map(t => (
+                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
+                    ))}
+                    </select>
+                </div>
+              )}
+
+              {(!formData.poultryType || (formData.poultryType === 'poulet')) && (
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
+                    <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("breed")}>
+                        {selectedBreeds.filter(b => b !== 'caille').map(b => (
+                            <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                        ))}
+                    </select>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Notes particulières</label>
                 <input
@@ -271,13 +275,15 @@ export function EggProduction() {
                   {...register("notes")}
                 />
               </div>
+
               <div className="flex gap-3 pt-4 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsAddOpen(false)}
                   className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
-                  Annuler </button>
+                  Annuler
+                </button>
                 <button
                   type="submit"
                   className={`flex-1 py-3 ${accentBg} text-white rounded-xl text-sm font-medium shadow-md transition-colors`}

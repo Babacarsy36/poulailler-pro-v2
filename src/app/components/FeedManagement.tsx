@@ -82,7 +82,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { isItemActive, poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -209,8 +209,9 @@ export function FeedManagement() {
     });
   };
 
-  const isCaille = poultryType === 'caille';
-  const accentColorClass = isCaille ? 'emerald' : 'orange';
+  const isCaille = activeSpeciesFilter === 'caille';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
   const customColors = {
      bgLight: isCaille ? 'bg-emerald-50' : 'bg-orange-50',
      textDark: isCaille ? 'text-emerald-700' : 'text-orange-700',
@@ -263,8 +264,8 @@ export function FeedManagement() {
       ...data,
       quantity: Number(data.quantity),
       temperature: data.temperature ? Number(data.temperature) : undefined,
-      poultryType: poultryType || "poulet",
-      poultryBreed: data.breed || selectedBreeds[0] || undefined,
+      poultryType: (data as any).poultryType || (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet'),
+      poultryBreed: (data as any).breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -796,25 +797,44 @@ export function FeedManagement() {
             <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">Nouvelle Opération</h3>
             <form onSubmit={handleSubmit(onEntrySubmit)} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
-                  <input 
-                    type="date"
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
-                    {...register("date", { required: true })}
-                  />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
+                  <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("date", { required: true })} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type</label>
-                  <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
-                    {...register("type", { required: true })}
-                  >
-                    <option value="achat">Achat / Stock</option>
-                    <option value="utilisation">Utilisation / Ration</option>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Action</label>
+                  <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("type")}>
+                    <option value="achat">📦 Achat de stock</option>
+                    <option value="utilisation">🍴 Utilisation / Service</option>
                   </select>
                 </div>
               </div>
+
+              {isMixed && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce concernée</label>
+                    <select 
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
+                    {...register("poultryType" as any)}
+                    >
+                    {poultryTypes.map(t => (
+                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
+                    ))}
+                    </select>
+                </div>
+              )}
+
+              {(!watch("poultryType" as any) || (watch("poultryType" as any) === 'poulet')) && (
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
+                    <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("breed" as any)}>
+                        {selectedBreeds.filter(b => b !== 'caille').map(b => (
+                            <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                        ))}
+                    </select>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quantité (kg)</label>

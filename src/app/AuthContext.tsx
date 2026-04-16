@@ -14,15 +14,17 @@ export type PoultryBreed = 'fermier' | 'ornement' | 'pondeuse' | 'chair' | null;
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    poultryType: PoultryType | null;
+    poultryTypes: PoultryType[];
     selectedBreeds: string[];
+    activeSpeciesFilter: PoultryType | 'all';
     activeBreedFilter: string | null;
     role: UserRole;
     farmId: string | null;
     syncTrigger: number;
     isDarkMode: boolean;
     toggleDarkMode: () => void;
-    updatePoultrySelection: (type: PoultryType | null, breeds: string[]) => void;
+    updatePoultrySelection: (types: PoultryType[], breeds: string[]) => void;
+    setActiveSpeciesFilter: (type: PoultryType | 'all') => void;
     setActiveBreedFilter: (breed: string | null) => void;
     clearSelection: () => void;
     isItemActive: (itemType?: PoultryType | string | null, itemBreed?: string) => boolean;
@@ -40,8 +42,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [poultryType, setPoultryType] = useState<PoultryType | null>(null);
+    const [poultryTypes, setPoultryTypes] = useState<PoultryType[]>([]);
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
+    const [activeSpeciesFilter, setActiveSpeciesFilter] = useState<PoultryType | 'all'>('all');
     const [activeBreedFilter, setActiveBreedFilter] = useState<string | null>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -142,8 +145,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     localStorage.setItem('selected_breeds', JSON.stringify(validBreeds));
                 }
                 if (data.poultryType) {
-                    setPoultryType(data.poultryType as PoultryType);
-                    localStorage.setItem('poultry_type', data.poultryType);
+                    const types = Array.isArray(data.poultryType) ? data.poultryType : [data.poultryType];
+                    setPoultryTypes(types);
+                    localStorage.setItem('poultry_types', JSON.stringify(types));
                 }
             }
         });
@@ -175,9 +179,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Load selection from localStorage on mount
     useEffect(() => {
-        const savedType = localStorage.getItem('poultry_type') as PoultryType;
+        const savedTypes = localStorage.getItem('poultry_types');
         const savedBreeds = localStorage.getItem('selected_breeds');
-        if (savedType) setPoultryType(savedType);
+        if (savedTypes) {
+            try {
+                setPoultryTypes(JSON.parse(savedTypes));
+            } catch (e) { setPoultryTypes([]); }
+        }
         if (savedBreeds) {
             try {
                 const parsed = JSON.parse(savedBreeds);
@@ -188,14 +196,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const updatePoultrySelection = async (type: PoultryType | null, breeds: string[]) => {
-        setPoultryType(type);
+    const updatePoultrySelection = async (types: PoultryType[], breeds: string[]) => {
+        setPoultryTypes(types);
         setSelectedBreeds(breeds);
         
         localStorage.setItem('has_selected_species', 'true');
         
-        if (type) localStorage.setItem('poultry_type', type);
-        else localStorage.removeItem('poultry_type');
+        if (types.length > 0) localStorage.setItem('poultry_types', JSON.stringify(types));
+        else localStorage.removeItem('poultry_types');
         
         localStorage.setItem('selected_breeds', JSON.stringify(breeds));
         localStorage.removeItem('poultry_breed'); // Clean legacy
@@ -203,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fire-and-forget: don't block navigation
         if (user) {
             setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
-                poultryType: type,
+                poultryType: types,
                 selectedBreeds: breeds,
                 lastUpdated: Date.now()
             }).catch(() => {});
@@ -211,18 +219,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const clearSelection = () => {
-        setPoultryType(null);
+        setPoultryTypes([]);
         setSelectedBreeds([]);
+        setActiveSpeciesFilter('all');
         setActiveBreedFilter(null);
     };
 
     const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string) => {
-        const typeMatch = !poultryType || itemType === poultryType || (poultryType === 'poulet' && !itemType);
-        if (!typeMatch) return false;
+        // 1. Species Match
+        const effectiveType = (itemType || 'poulet') as PoultryType;
+        const isSpeciesSelected = poultryTypes.includes(effectiveType);
+        if (!isSpeciesSelected) return false;
 
-        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb?.toLowerCase());
-        if (!breedMatch) return false;
+        // 2. Species Filter Match (UI top switcher)
+        if (activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter) return false;
 
+        // 3. Breed Match (Persistent Configuration)
+        const isBreedSelected = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb?.toLowerCase());
+        if (!isBreedSelected) return false;
+
+        // 4. Breed Filter Match (UI top switcher)
         if (activeBreedFilter) {
             return itemBreed?.toLowerCase() === activeBreedFilter.toLowerCase();
         }
@@ -233,11 +249,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Recalculate alerts when data Changes
     useEffect(() => {
         if (user) {
-            // Updated AlertService to take the full selectedBreeds array
-            const newAlerts = AlertService.getAlerts(poultryType || undefined, selectedBreeds);
+            // Use the first type for legacy alert support if needed, or pass full list
+            const newAlerts = AlertService.getAlerts(poultryTypes[0] || undefined, selectedBreeds);
             setAlerts(newAlerts);
         }
-    }, [syncTrigger, poultryType, selectedBreeds, user]);
+    }, [syncTrigger, poultryTypes, selectedBreeds, user]);
 
     const saveData = async <T extends SyncItem>(key: string, data: T[]) => {
         const isFarm = !!farmId && farmId !== user?.uid;
@@ -289,13 +305,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider value={{ 
             user,
             loading,
-            poultryType, 
+            poultryTypes, 
             selectedBreeds, 
+            activeSpeciesFilter,
             activeBreedFilter,
             syncTrigger,
             isDarkMode,
             toggleDarkMode,
             updatePoultrySelection,
+            setActiveSpeciesFilter,
             setActiveBreedFilter,
             clearSelection,
             isItemActive,

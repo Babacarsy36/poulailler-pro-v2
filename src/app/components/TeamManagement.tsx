@@ -132,7 +132,28 @@ export function TeamManagement() {
     }
   };
 
-  if (!hasAccess('BUSINESS')) return null;
+  if (!hasAccess('BUSINESS')) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center space-y-8 animate-in fade-in zoom-in duration-700">
+        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-blue-200 rotate-12">
+          <Shield className="w-12 h-12 text-white" />
+        </div>
+        <div className="max-w-md space-y-4">
+          <h2 className="text-3xl font-black text-babs-brown tracking-tight">Gestion d'Équipe</h2>
+          <p className="text-babs-brown/60 font-medium leading-relaxed">
+            Collaborez avec vos employés et managers en temps réel. Cette fonctionnalité nécessite un abonnement <span className="text-blue-600 font-black">BUSINESS</span>.
+          </p>
+        </div>
+        <button 
+          onClick={() => (window.location.href = '/?upgrade=true')}
+          className="bg-blue-600 text-white px-10 py-5 rounded-3xl font-black shadow-xl shadow-blue-100 hover:scale-105 transition-all flex items-center gap-3"
+        >
+          <BadgeCheck className="w-6 h-6" />
+          Passer au niveau Business
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">

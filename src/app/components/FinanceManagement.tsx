@@ -32,7 +32,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { isItemActive, poultryType, selectedBreeds, syncTrigger, hasAccess, role, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -56,10 +56,13 @@ export function FinanceManagement() {
   const formType = watch('type');
   const currentCategories = formType === 'expense' ? expenseCategories : incomeCategories;
 
-  const isCaille = poultryType === 'caille';
-  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
-  const accentBg = isCaille ? "bg-emerald-500" : "bg-orange-500";
-  const accentBorderLeft = isCaille ? "border-l-emerald-500" : "border-l-orange-500";
+  const isCaille = activeSpeciesFilter === 'caille';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
+  const bgLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
+  const btnBg = isMixed ? "bg-indigo-600 hover:bg-indigo-700" : isCaille ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-600 hover:bg-orange-700";
+  const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
   const accentBgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
 
   useEffect(() => {
