@@ -123,7 +123,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
 }
 
 export function HealthTracking() {
-  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   
@@ -243,11 +243,7 @@ export function HealthTracking() {
     toast.info(`${step.title} décoché !`);
   };
 
-  const filteredRecords = records.filter(r => {
-    const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && (!r.poultryType || r.poultryType === 'poulet'));
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb?.toLowerCase());
-    return typeMatch && breedMatch;
-  });
+  const filteredRecords = records.filter(r => isItemActive(r.poultryType, r.poultryBreed));
 
   const remediesProtocols = [
     { title: "Gombo", desc: "Digestion & Vitamines.", usage: "Posologie: 3 gombos hachés dans 1L d'eau. Macérer 6h pour libérer le mucilage." },

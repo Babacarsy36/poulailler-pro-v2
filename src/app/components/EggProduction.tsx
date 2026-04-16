@@ -22,7 +22,7 @@ interface EggFormData {
 }
 
 export function EggProduction() {
-  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [totalFemales, setTotalFemales] = useState(0);
@@ -54,11 +54,7 @@ export function EggProduction() {
   useEffect(() => {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
     const females = chickens
-      .filter((c: Chicken) => {
-        const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
-        return typeMatch && breedMatch;
-      })
+      .filter((c: Chicken) => isItemActive(c.poultryType, c.breed))
       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
     setTotalFemales(females);
   }, [syncTrigger, poultryType, selectedBreeds]);
@@ -84,11 +80,7 @@ export function EggProduction() {
     setIsAddOpen(false);
   };
 
-  const filteredRecords = records.filter(r => {
-    const typeMatch = !poultryType || r.poultryType === poultryType || (poultryType === 'poulet' && !r.poultryType);
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => r.poultryBreed?.toLowerCase() === sb?.toLowerCase());
-    return typeMatch && breedMatch;
-  });
+  const filteredRecords = records.filter(r => isItemActive(r.poultryType, r.poultryBreed));
 
   const totalEggs = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
   const lastRecord = filteredRecords[0];

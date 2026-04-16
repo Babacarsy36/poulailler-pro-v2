@@ -32,7 +32,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { poultryType, selectedBreeds, syncTrigger, hasAccess, role, saveData } = useAuth();
+  const { isItemActive, poultryType, selectedBreeds, syncTrigger, hasAccess, role, saveData } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -68,9 +68,7 @@ export function FinanceManagement() {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
     const activeLots = chickens
       .filter((c: Chicken) => {
-          const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-          const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
-          return (c.status === 'active' || Number(c.count) > 0) && typeMatch && breedMatch;
+          return (c.status === 'active' || Number(c.count) > 0) && isItemActive(c.poultryType, c.breed);
       })
       .map((c: Chicken) => ({
         id: c.id,
@@ -115,10 +113,8 @@ export function FinanceManagement() {
   };
 
   const filteredTransactions = transactions.filter(t => {
-      const typeMatch = !poultryType || t.poultryType === poultryType || (poultryType === 'poulet' && !t.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => t.poultryBreed?.toLowerCase() === sb?.toLowerCase());
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
-      return typeMatch && breedMatch && typeFilterMatch;
+      return isItemActive(t.poultryType, t.poultryBreed) && typeFilterMatch;
   });
 
   const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);

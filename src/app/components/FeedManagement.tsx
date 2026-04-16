@@ -82,7 +82,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -280,11 +280,7 @@ export function FeedManagement() {
     setIsAddOpen(false);
   };
 
-  const filteredEntries = entries.filter(e => {
-    const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb?.toLowerCase());
-    return typeMatch && breedMatch;
-  });
+  const filteredEntries = entries.filter(e => isItemActive(e.poultryType, e.poultryBreed));
 
   const totalFeed = filteredEntries.reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
@@ -294,10 +290,7 @@ export function FeedManagement() {
   const calculateDailyConsumption = () => {
     let dailyTotalKg = 0;
     allChickens.filter(c => c.status === 'active').forEach(c => {
-      const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
-      
-      if (typeMatch && breedMatch) {
+      if (isItemActive(c.poultryType, c.breed)) {
           const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
           const phases = getPhasesForBreed(breed);
           

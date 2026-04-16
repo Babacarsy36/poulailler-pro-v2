@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { poultryType, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
+  const { isItemActive, poultryType, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -52,23 +52,9 @@ export function Dashboard() {
     const feed = StorageService.getItem<FeedEntry[]>("feed") || [];
     // const health = StorageService.getItem<HealthRecord[]>("health") || [];
 
-    const filteredChickens = chickens.filter((c) => {
-      const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
-      return typeMatch && breedMatch;
-    });
-
-    const filteredEggs = eggs.filter((e) => {
-      const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb?.toLowerCase());
-      return typeMatch && breedMatch;
-    });
-
-    const filteredFeed = feed.filter((f) => {
-      const typeMatch = !poultryType || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
-      const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => f.poultryBreed?.toLowerCase() === sb?.toLowerCase());
-      return typeMatch && breedMatch;
-    });
+    const filteredChickens = chickens.filter((c) => isItemActive(c.poultryType, c.breed));
+    const filteredEggs = eggs.filter((e) => isItemActive(e.poultryType, e.poultryBreed));
+    const filteredFeed = feed.filter((f) => isItemActive(f.poultryType, f.poultryBreed));
 
     let total = filteredChickens.reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
     const cailleCount = filteredChickens.filter((c) => c.poultryType === 'caille').reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
@@ -158,11 +144,7 @@ export function Dashboard() {
       const d = new Date();
       d.setDate(d.getDate() - (14 - i));
       const dateStr = d.toISOString().split('T')[0];
-      const dayEggs = eggs.filter((e) => {
-        const typeMatch = !poultryType || e.poultryType === poultryType;
-        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => e.poultryBreed?.toLowerCase() === sb?.toLowerCase());
-        return e.date === dateStr && typeMatch && breedMatch;
-      }).reduce((acc: number, e) => acc + (e.quantity || 0), 0);
+      const dayEggs = eggs.filter((e) => e.date === dateStr && isItemActive(e.poultryType, e.poultryBreed)).reduce((acc: number, e) => acc + (e.quantity || 0), 0);
       return {
         name: d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
         production: dayEggs

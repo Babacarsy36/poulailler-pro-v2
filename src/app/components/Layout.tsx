@@ -6,7 +6,7 @@ import { NotificationCenter } from "./ui/NotificationCenter";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { poultryType, selectedBreeds, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
+  const { poultryType, selectedBreeds, activeBreedFilter, setActiveBreedFilter, updatePoultrySelection, isDarkMode, toggleDarkMode } = useAuth();
   
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
@@ -21,9 +21,6 @@ export function Layout() {
       { id: 'chair', label: 'Poulet de Chair' },
     ]
   };
-
-  const currentSingleBreed = selectedBreeds && selectedBreeds.length > 0 ? selectedBreeds[0] : null;
-
   const handleSpeciesSelect = async (type: PoultryType) => {
     if (type === 'caille') {
         await updatePoultrySelection(type, []);
@@ -33,9 +30,8 @@ export function Layout() {
     }
   };
 
-  const handleBreedSelect = async (breed: string | null) => {
-    await updatePoultrySelection('poulet', breed ? [breed] : []);
-    navigate("/");
+  const handleBreedSelect = (breed: string | null) => {
+    setActiveBreedFilter(breed);
   };
 
   const navItems = [
@@ -162,26 +158,28 @@ export function Layout() {
                         <button
                             onClick={() => handleBreedSelect(null)}
                             className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
-                                !currentSingleBreed 
+                                !activeBreedFilter 
                                     ? 'bg-orange-100 border-orange-200 text-orange-600' 
                                     : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
                             }`}
                         >
                             Tous
                         </button>
-                        {breedList.poulet.map((b) => {
-                            const isCurrentBreed = currentSingleBreed === b.id;
+                        {selectedBreeds.map((b) => {
+                            const breedInfo = breedList.poulet.find(bl => bl.id === b);
+                            const label = breedInfo ? breedInfo.label : b;
+                            const isCurrentBreed = activeBreedFilter === b;
                             return (
                                 <button
-                                    key={b.id}
-                                    onClick={() => handleBreedSelect(b.id)}
+                                    key={b}
+                                    onClick={() => handleBreedSelect(b)}
                                     className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
                                         isCurrentBreed 
                                             ? 'bg-orange-100 border-orange-200 text-orange-600' 
                                             : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
                                     }`}
                                 >
-                                    {b.label}
+                                    {label}
                                 </button>
                             );
                         })}

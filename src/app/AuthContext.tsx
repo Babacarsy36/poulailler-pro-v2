@@ -16,13 +16,16 @@ interface AuthContextType {
     loading: boolean;
     poultryType: PoultryType | null;
     selectedBreeds: string[];
+    activeBreedFilter: string | null;
     role: UserRole;
     farmId: string | null;
     syncTrigger: number;
     isDarkMode: boolean;
     toggleDarkMode: () => void;
     updatePoultrySelection: (type: PoultryType | null, breeds: string[]) => void;
+    setActiveBreedFilter: (breed: string | null) => void;
     clearSelection: () => void;
+    isItemActive: (itemType?: PoultryType | string | null, itemBreed?: string) => boolean;
     isSyncing: boolean;
     tier: SubscriptionTier;
     hasAccess: (requiredTier: SubscriptionTier) => boolean;
@@ -39,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [poultryType, setPoultryType] = useState<PoultryType | null>(null);
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
+    const [activeBreedFilter, setActiveBreedFilter] = useState<string | null>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
     const [tier, setTier] = useState<SubscriptionTier>('FREE');
@@ -209,6 +213,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clearSelection = () => {
         setPoultryType(null);
         setSelectedBreeds([]);
+        setActiveBreedFilter(null);
+    };
+
+    const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string) => {
+        const typeMatch = !poultryType || itemType === poultryType || (poultryType === 'poulet' && !itemType);
+        if (!typeMatch) return false;
+
+        const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb?.toLowerCase());
+        if (!breedMatch) return false;
+
+        if (activeBreedFilter) {
+            return itemBreed?.toLowerCase() === activeBreedFilter.toLowerCase();
+        }
+
+        return true;
     };
 
     // Recalculate alerts when data Changes
@@ -272,11 +291,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading,
             poultryType, 
             selectedBreeds, 
+            activeBreedFilter,
             syncTrigger,
             isDarkMode,
             toggleDarkMode,
             updatePoultrySelection,
+            setActiveBreedFilter,
             clearSelection,
+            isItemActive,
             isSyncing,
             tier,
             hasAccess,

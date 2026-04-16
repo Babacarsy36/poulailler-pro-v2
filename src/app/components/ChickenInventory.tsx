@@ -41,7 +41,7 @@ interface ChickenFormData {
 }
 
 export function ChickenInventory() {
-  const { poultryType, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryType, selectedBreeds, syncTrigger, hasAccess, saveData } = useAuth();
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
@@ -74,12 +74,7 @@ export function ChickenInventory() {
   const iconBg = isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
   const btnBg = `bg-${accentColorClass}-500 hover:bg-${accentColorClass}-600`;
 
-  const filteredChickens = chickens.filter((c) => {
-    // If poultryType is null, we are in "Vue Globale", so show everything
-    const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
-    const breedMatch = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => c.breed?.toLowerCase() === sb?.toLowerCase());
-    return typeMatch && breedMatch;
-  });
+  const filteredChickens = chickens.filter((c) => isItemActive(c.poultryType, c.breed));
 
   // Mating ratio calculation
   const matingRatio = 1/4; // 1 coq pour 4 poules (Goliath et Cailles)
