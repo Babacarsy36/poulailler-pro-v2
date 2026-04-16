@@ -1,7 +1,8 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
-/** Version: 1.0.1 (Force Build Trigger) */
+/** Version: 1.0.2 */
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
+import { useEffect } from "react";
 
 export function Layout() {
   const location = useLocation();
@@ -32,6 +33,18 @@ export function Layout() {
       { id: 'chair', label: 'Poulet de Chair' },
     ]
   };
+  // Auto-ajustement du filtre quand les espèces chargent depuis Firebase
+  useEffect(() => {
+    if (poultryTypes.length === 0) return;
+    if (poultryTypes.length === 1) {
+      // Un seul type : on le sélectionne directement
+      setActiveSpeciesFilter(poultryTypes[0]);
+    } else if (activeSpeciesFilter !== 'all' && !poultryTypes.includes(activeSpeciesFilter as PoultryType)) {
+      // Le filtre actif n'est plus dans la liste, on revient sur 'all'
+      setActiveSpeciesFilter('all');
+    }
+  }, [poultryTypes]);
+
   const handleSpeciesSelect = (type: PoultryType | 'all') => {
     setActiveSpeciesFilter(type);
     if (type !== 'poulet') setActiveBreedFilter(null);

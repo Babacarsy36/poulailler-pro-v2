@@ -69,11 +69,12 @@ export function ChickenInventory() {
   const [simFemales, setSimFemales] = useState("10");
 
   const isCaille = activeSpeciesFilter === 'caille';
-  const accentColorClass = isCaille ? 'emerald' : 'orange';
-  const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
-  const bgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
-  const iconBg = isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
-  const btnBg = `bg-${accentColorClass}-500 hover:bg-${accentColorClass}-600`;
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
+  const bgLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
+  const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
+  const btnBg = isMixed ? "bg-indigo-500 hover:bg-indigo-600" : isCaille ? "bg-emerald-500 hover:bg-emerald-600" : "bg-orange-500 hover:bg-orange-600";
 
   const filteredChickens = chickens.filter((c) => isItemActive(c.poultryType, c.breed));
 
