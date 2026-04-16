@@ -138,6 +138,7 @@ export function HealthTracking() {
       target: "",
       status: "Complété",
       breed: selectedBreeds[0] || "",
+      poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet',
     }
   });
 
@@ -194,7 +195,7 @@ export function HealthTracking() {
     const newRecord: HealthRecord = {
       id: now.toString(),
       ...data,
-      poultryType: activeSpeciesFilter || "poulet",
+      poultryType: data.poultryType || (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet'),
       poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };
@@ -220,7 +221,7 @@ export function HealthTracking() {
       title: step.title,
       target: selectedBreed,
       status: "Complété",
-      poultryType: activeSpeciesFilter || "poulet",
+      poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (selectedBreed === 'Caille' ? 'caille' : 'poulet'),
       poultryBreed: selectedBreeds.find(sb => {
           const breedLabelMap: Record<string, string> = {
             fermier: "Poulet Fermier",
@@ -487,6 +488,21 @@ export function HealthTracking() {
                   </select>
                 </div>
               </div>
+              
+              {isMixed && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Espèce concernée</label>
+                  <select 
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none"
+                    {...register("poultryType" as any)}
+                  >
+                    {poultryTypes.map(t => (
+                      <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race concernée</label>
                 <select 

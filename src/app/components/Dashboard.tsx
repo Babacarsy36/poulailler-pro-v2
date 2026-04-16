@@ -66,7 +66,7 @@ export function Dashboard() {
 
     const sortedEggs = [...filteredEggs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let eggsOnLastDate = 0;
-    if (!poultryType && (!selectedBreeds || selectedBreeds.length === 0)) {
+    if (activeSpeciesFilter === 'all' && (!selectedBreeds || selectedBreeds.length === 0)) {
       const groups = [...new Set(filteredEggs.map(e => `${e.poultryType || 'poulet'}-${e.poultryBreed || ''}`))];
       groups.forEach(g => {
         const t = g.split('-')[0];
@@ -90,7 +90,7 @@ export function Dashboard() {
     const layingRate = totalActiveLayers > 0 ? ((eggsOnLastDate / totalActiveLayers) * 100).toFixed(1) : "0";
 
     const globalBreakdown: { type: string, count: number, eggs: number }[] = [];
-    if (!poultryType) {
+    if (activeSpeciesFilter === 'all') {
       ['poulet', 'caille'].forEach(type => {
         const tCount = filteredChickens.filter(c => (c.poultryType || 'poulet') === type && c.status === 'active').reduce((acc, c) => acc + (Number(c.count) || 1), 0);
         let tEggs = 0;
@@ -136,7 +136,7 @@ export function Dashboard() {
       lastFeedText,
       globalBreakdown
     });
-  }, [selectedDate, poultryType, selectedBreeds, syncTrigger]);
+  }, [selectedDate, activeSpeciesFilter, selectedBreeds, syncTrigger]);
 
   const [chartData, setChartData] = useState<{name: string, production: number}[]>([]);
   useEffect(() => {
@@ -152,7 +152,7 @@ export function Dashboard() {
       };
     });
     setChartData(last15Days);
-  }, [syncTrigger, poultryType, selectedBreeds]);
+  }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
 
   const handleRecover = async () => {
     setIsRecovering(true);
@@ -212,7 +212,7 @@ export function Dashboard() {
           <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/inventory')}>
               <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
                   <iconify-icon icon="solar:users-group-rounded-linear" stroke-width="1.5" className="text-xl text-indigo-500"></iconify-icon>
-                  <span className="truncate font-medium">{poultryType ? "Effectif" : "Effectif Total"}</span>
+                  <span className="truncate font-medium">{activeSpeciesFilter !== 'all' ? "Effectif" : "Effectif Total"}</span>
               </div>
               <div>
                   <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{stats.totalChickens}</div>
@@ -223,16 +223,16 @@ export function Dashboard() {
           </div>
 
           {/* KPI 2 : Ponte / Récolte */}
-          {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
+          {activeSpeciesFilter !== 'lapin' && activeSpeciesFilter !== 'pigeon' && (
             <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-emerald-500 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/eggs')}>
                 <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
                     <iconify-icon icon="solar:record-circle-linear" stroke-width="1.5" className="text-xl text-emerald-500"></iconify-icon>
                     <span className="truncate font-medium">Production</span>
                 </div>
                 <div>
-                    <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{poultryType ? `${stats.layingRate}%` : `${stats.eggsToday}`}</div>
+                    <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{activeSpeciesFilter !== 'all' ? `${stats.layingRate}%` : `${stats.eggsToday}`}</div>
                     <div className="text-xs text-emerald-700 font-medium tracking-tight bg-emerald-50 inline-block px-1.5 py-0.5 rounded truncate max-w-full">
-                      {poultryType ? stats.layingRateLabel : "œufs récoltés"}
+                      {activeSpeciesFilter !== 'all' ? stats.layingRateLabel : "œufs récoltés"}
                     </div>
                 </div>
             </div>
@@ -254,7 +254,7 @@ export function Dashboard() {
       </div>
 
       {/* Global Breakdown (Only if no specific poultryType selected) */}
-      {!poultryType && stats.globalBreakdown && stats.globalBreakdown.length > 0 && (
+      {activeSpeciesFilter === 'all' && stats.globalBreakdown && stats.globalBreakdown.length > 0 && (
         <div className="clean-card rounded-3xl p-5 select-none">
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Répartition Globale</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -282,7 +282,7 @@ export function Dashboard() {
       )}
 
       {/* Chart */}
-      {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
+      {activeSpeciesFilter !== 'lapin' && activeSpeciesFilter !== 'pigeon' && (
         <div className="clean-card rounded-3xl p-5 select-none relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Tendance Ponte</h2>
@@ -325,7 +325,7 @@ export function Dashboard() {
       <div>
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Raccourcis</h2>
           <div className="space-y-3">
-              {poultryType !== 'lapin' && poultryType !== 'pigeon' && (
+              {activeSpeciesFilter !== 'lapin' && activeSpeciesFilter !== 'pigeon' && (
                 <button onClick={() => navigate("/eggs")} className="w-full clean-card rounded-2xl p-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                     <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100">
                         <iconify-icon icon="solar:egg-bold-duotone" stroke-width="1.5" className="text-xl text-emerald-500"></iconify-icon>

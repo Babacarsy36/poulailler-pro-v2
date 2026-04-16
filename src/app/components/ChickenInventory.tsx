@@ -42,6 +42,7 @@ interface ChickenFormData {
 
 export function ChickenInventory() {
   const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, hasAccess, saveData } = useAuth();
+  const poultryBreed = selectedBreeds[0] || "";
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
@@ -67,7 +68,7 @@ export function ChickenInventory() {
   const formData = watch();
   const [simFemales, setSimFemales] = useState("10");
 
-  const isCaille = poultryType === 'caille';
+  const isCaille = activeSpeciesFilter === 'caille';
   const accentColorClass = isCaille ? 'emerald' : 'orange';
   const accentColor = isCaille ? "text-emerald-500" : "text-orange-500";
   const bgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
@@ -132,7 +133,7 @@ export function ChickenInventory() {
       }));
       setChickens(migrated);
     }
-  }, [syncTrigger, poultryType]);
+  }, [syncTrigger, activeSpeciesFilter]);
 
   const saveChickens = (newChickens: Chicken[]) => {
     setChickens(newChickens);

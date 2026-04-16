@@ -78,7 +78,7 @@ export function FinanceManagement() {
         name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
       }));
     setBatches(activeLots);
-  }, [syncTrigger, poultryType, selectedBreeds]);
+  }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
     setTransactions(newTransactions);
@@ -97,7 +97,7 @@ export function FinanceManagement() {
       date: data.date,
       batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
       batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
-      poultryType: poultryType || "poulet",
+      poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : "poulet",
       poultryBreed: data.breed || selectedBreeds[0] || undefined,
       updatedAt: now
     };

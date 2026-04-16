@@ -188,7 +188,7 @@ export function FeedManagement() {
   };
 
   useEffect(() => {
-    if (poultryType === 'caille') {
+    if (activeSpeciesFilter === 'caille') {
       setSelectedBreed('Caille');
     } else if (selectedBreeds.length > 0) {
       const breedMap: Record<string, string> = {
@@ -199,7 +199,7 @@ export function FeedManagement() {
       };
       setSelectedBreed(breedMap[selectedBreeds[0]] || 'Poulet de chair');
     }
-  }, [poultryType, selectedBreeds]);
+  }, [activeSpeciesFilter, selectedBreeds]);
 
   const adjustConsumption = (text: string, currentWeather: "normal" | "hot" | "cold") => {
     if (currentWeather === "normal") return text;
