@@ -128,7 +128,7 @@ export function ChickenInventory() {
       // Ensure old entries have a count and type
       const migrated = saved.map((c: any) => ({
         ...c,
-        poultryType: c.poultryType || (c.breed?.toLowerCase().includes("caille") ? "caille" : (poultryType || "poulet")),
+        poultryType: c.poultryType || (c.breed?.toLowerCase().includes("caille") ? "caille" : (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : "poulet")),
         count: c.count ? parseInt(c.count) : 1,
         ageUnit: c.ageUnit || "months"
       }));
@@ -213,7 +213,14 @@ export function ChickenInventory() {
           </button>
           <button 
             onClick={() => {
-              reset({ name: "", breed: selectedBreeds[0] || "", age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0", status: "active", startDate: new Date().toISOString().split('T')[0], ringNumber: "", variety: [], birthYear: "", club: "" });
+              reset({
+                name: "",
+                breed: isCaille ? 'caille' : (selectedBreeds.filter(b => b !== 'caille')[0] || ""),
+                poultryType: isCaille ? 'caille' : (isMixed ? '' : 'poulet'),
+                age: "", ageUnit: "months", count: "1", femaleCount: "0", maleCount: "0",
+                status: "active", startDate: new Date().toISOString().split('T')[0],
+                ringNumber: "", variety: [], birthYear: "", club: ""
+              });
               setIsAddOpen(true);
             }}
             className={`h-10 px-3 rounded-xl ${btnBg} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}
@@ -308,7 +315,22 @@ export function ChickenInventory() {
               <div>
                 <h3 className="font-['Syne'] text-lg font-medium text-gray-900 truncate leading-tight mb-1">{chicken.name}</h3>
                 <p className={`text-[10px] font-medium uppercase tracking-widest text-gray-500`}>
-                  RACE: <span className={accentColor}>{chicken.breed === 'chair' ? 'Poulet de chair' : (chicken.breed || poultryBreed || "Non définie")}</span>
+                  {chicken.poultryType === 'caille' ? (
+                    <span className={accentColor}>🥚 CAILLE</span>
+                  ) : (
+                    <>
+                      RACE: <span className={accentColor}>
+                        {chicken.breed === 'chair' ? 'Poulet de chair' :
+                         chicken.breed === 'fermier' ? 'Poulet Fermier' :
+                         chicken.breed === 'ornement' ? (
+                           // Extraire le nom de la race exacte depuis le nom du lot (ex: "Brahma 2026" → "Brahma")
+                           chicken.name?.split(' ')[0] !== chicken.name ? `${chicken.name?.split(' ')[0]} (Ornement)` : "Poule d'Ornement"
+                         ) :
+                         chicken.breed === 'pondeuse' ? 'Pondeuse' :
+                         (chicken.breed || "Non définie")}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
 
@@ -412,6 +434,7 @@ export function ChickenInventory() {
                 {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
               </div>
 
+              {/* Espèce sélecteur - en mode mixte OU en mode caille pour pré-renseigner */}
               {isMixed && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
@@ -426,7 +449,19 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {(!formData.poultryType || formData.poultryType === 'poulet') && (
+              {/* Bloc Caille - quand le filtre actif est Caille */}
+              {isCaille && (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3">
+                  <span className="text-3xl">🥚</span>
+                  <div>
+                    <p className="text-xs font-bold text-emerald-700">Lot de Cailles</p>
+                    <p className="text-[10px] text-emerald-600">Ce lot sera enregistré comme caille automatiquement.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Catégorie de race - seulement pour les poulets */}
+              {(!formData.poultryType || formData.poultryType === 'poulet') && !isCaille && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie de race</label>
                     <select 
@@ -434,7 +469,7 @@ export function ChickenInventory() {
                     {...register("breed")}
                     >
                     {selectedBreeds.filter(b => b !== 'caille').map(b => (
-                        <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                        <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b}</option>
                     ))}
                     </select>
                 </div>

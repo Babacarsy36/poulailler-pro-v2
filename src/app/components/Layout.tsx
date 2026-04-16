@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 /** Version: 1.0.2 */
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function Layout() {
   const location = useLocation();
@@ -33,16 +33,24 @@ export function Layout() {
       { id: 'chair', label: 'Poulet de Chair' },
     ]
   };
+  // Ref pour détecter la transition 1 → plusieurs espèces
+  const prevTypesLengthRef = useRef(0);
+
   // Auto-ajustement du filtre quand les espèces chargent depuis Firebase
   useEffect(() => {
     if (poultryTypes.length === 0) return;
+    const prevLen = prevTypesLengthRef.current;
+    prevTypesLengthRef.current = poultryTypes.length;
+
     if (poultryTypes.length === 1) {
       // Un seul type : on le sélectionne directement
       setActiveSpeciesFilter(poultryTypes[0]);
-    } else if (activeSpeciesFilter !== 'all' && !poultryTypes.includes(activeSpeciesFilter as PoultryType)) {
-      // Le filtre actif n'est plus dans la liste, on revient sur 'all'
+    } else if (poultryTypes.length > 1 && prevLen <= 1) {
+      // Transition de 1 vers plusieurs types (Firebase vient de charger tout)
+      // On force 'all' pour que toutes les espèces soient visibles
       setActiveSpeciesFilter('all');
     }
+    // Si l'utilisateur a manuellement changé, on ne touche pas
   }, [poultryTypes]);
 
   const handleSpeciesSelect = (type: PoultryType | 'all') => {
