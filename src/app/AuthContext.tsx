@@ -148,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const types = Array.isArray(data.poultryType) ? data.poultryType : [data.poultryType];
                     setPoultryTypes(types);
                     localStorage.setItem('poultry_types', JSON.stringify(types));
+                    localStorage.setItem('has_selected_species', 'true');
                 }
             }
         });

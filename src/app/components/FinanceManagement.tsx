@@ -36,6 +36,7 @@ export function FinanceManagement() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
@@ -88,24 +89,60 @@ export function FinanceManagement() {
   const onFormSubmit = async (data: FinanceFormData & { breed: string }) => {
     const now = Date.now();
     const finalCategory = data.category || currentCategories[0];
-    const newTransaction: Transaction = {
-      id: now.toString(),
-      type: data.type,
-      amount: Number(data.amount),
-      category: finalCategory,
-      description: data.description,
-      date: data.date,
-      batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
-      batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
-      poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : "poulet",
-      poultryBreed: data.breed || selectedBreeds[0] || undefined,
-      updatedAt: now
-    };
-    const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    await saveTransactions(newTransactions);
+    
+    if (editingTransaction) {
+      const updatedTransaction: Transaction = {
+        ...editingTransaction,
+        type: data.type,
+        amount: Number(data.amount),
+        category: finalCategory,
+        description: data.description,
+        date: data.date,
+        batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
+        batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
+        poultryBreed: data.breed || selectedBreeds[0] || undefined,
+        updatedAt: now
+      };
+      
+      const updatedTransactions = transactions.map(t => t.id === editingTransaction.id ? updatedTransaction : t);
+      await saveTransactions(updatedTransactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setEditingTransaction(null);
+      toast.success("Transaction mise à jour !");
+    } else {
+      const newTransaction: Transaction = {
+        id: now.toString(),
+        type: data.type,
+        amount: Number(data.amount),
+        category: finalCategory,
+        description: data.description,
+        date: data.date,
+        batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
+        batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
+        poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : "poulet",
+        poultryBreed: data.breed || selectedBreeds[0] || undefined,
+        updatedAt: now
+      };
+      const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      await saveTransactions(newTransactions);
+      toast.success("Transaction enregistrée !");
+    }
+    
     reset({ type: data.type, amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" });
     setIsAddOpen(false);
-    toast.success("Transaction enregistrée !");
+  };
+
+  const handleEdit = (t: Transaction) => {
+    setEditingTransaction(t);
+    reset({
+      type: t.type,
+      amount: t.amount.toString(),
+      category: t.category,
+      description: t.description || "",
+      date: t.date,
+      selectedBatchId: t.batchId || 'none',
+      breed: t.poultryBreed || selectedBreeds[0] || ""
+    });
+    setIsAddOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -177,7 +214,11 @@ export function FinanceManagement() {
             <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
           </button>
           <button
-            onClick={() => setIsAddOpen(true)}
+            onClick={() => {
+              setEditingTransaction(null);
+              reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" });
+              setIsAddOpen(true);
+            }}
             className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none"
           >
             <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
@@ -370,16 +411,26 @@ export function FinanceManagement() {
                     {t.batchName && <span className="ml-2 px-1.5 py-0.5 bg-gray-100 rounded-md text-[9px] text-gray-500">{t.batchName}</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <p className={`font-['JetBrains_Mono'] font-medium text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                     {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
                   </p>
-                  <button
-                    onClick={() => handleDelete(t.id)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 no-print"
-                  >
-                    <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
-                  </button>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                      <button
+                        onClick={() => handleEdit(t)}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Modifier"
+                      >
+                        <iconify-icon icon="solar:pen-linear" class="text-base"></iconify-icon>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Supprimer"
+                      >
+                        <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
+                      </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -399,7 +450,7 @@ export function FinanceManagement() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
             <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">
-              Nouvelle Transaction
+              {editingTransaction ? "Modifier la Transaction" : "Nouvelle Transaction"}
             </h3>
 
             {/* Type toggle */}
@@ -490,7 +541,7 @@ export function FinanceManagement() {
                   type="submit"
                   className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
                 >
-                  Ajouter
+                  {editingTransaction ? "Appliquer les modifications" : "Ajouter"}
                 </button>
               </div>
             </form>
