@@ -44,7 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [poultryTypes, setPoultryTypes] = useState<PoultryType[]>([]);
     const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
-    const [activeSpeciesFilter, setActiveSpeciesFilter] = useState<PoultryType | 'all'>('all');
+    const [activeSpeciesFilter, setActiveSpeciesFilterState] = useState<PoultryType | 'all'>(
+        () => (localStorage.getItem('active_species_filter') as PoultryType | 'all') || 'all'
+    );
+
+    const setActiveSpeciesFilter = (type: PoultryType | 'all') => {
+        setActiveSpeciesFilterState(type);
+        localStorage.setItem('active_species_filter', type);
+    };
     const [activeBreedFilter, setActiveBreedFilter] = useState<string | null>(null);
     const [syncTrigger, setSyncTrigger] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -204,6 +211,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // Auto-select single species: if only one type configured and filter is 'all', auto-switch to it
+    useEffect(() => {
+        if (poultryTypes.length === 1) {
+            const savedFilter = localStorage.getItem('active_species_filter');
+            // Only auto-select if user hasn't explicitly chosen 'all'
+            if (!savedFilter || savedFilter === 'all') {
+                setActiveSpeciesFilter(poultryTypes[0]);
+            }
+        }
+    }, [poultryTypes]);
+
     const updatePoultrySelection = async (types: PoultryType[], breeds: string[]) => {
         setPoultryTypes(types);
         setSelectedBreeds(breeds);
@@ -229,8 +247,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clearSelection = () => {
         setPoultryTypes([]);
         setSelectedBreeds([]);
-        setActiveSpeciesFilter('all');
+        setActiveSpeciesFilterState('all');
         setActiveBreedFilter(null);
+        localStorage.removeItem('active_species_filter');
     };
 
     const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string) => {

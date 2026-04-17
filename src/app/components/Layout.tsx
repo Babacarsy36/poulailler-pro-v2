@@ -97,12 +97,16 @@ export function Layout() {
       <aside className={`hidden md:flex flex-col w-64 fixed h-screen border-r transition-colors duration-300 z-50 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
         <div className="p-6 flex items-center gap-3">
             <div className="flex items-center gap-3">
-                <div className={`px-4 py-1.5 rounded-full bg-${accentColorClass}-500 text-white flex items-center gap-1.5 shadow-md shadow-${accentColorClass}-500/20`}>
+                <div className={`px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-md transition-all duration-500 ${
+                    isMixed
+                        ? 'bg-gray-800 text-white shadow-gray-500/20'
+                        : `bg-${accentColorClass}-500 text-white shadow-${accentColorClass}-500/20`
+                }`}>
                     <div className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px] font-bold">
-                        {isMixed ? '🌍' : primaryType === 'caille' ? 'CL' : 'PL'}
+                        {isMixed ? '🌍' : activeSpeciesFilter === 'caille' ? '🥚' : '🐓'}
                     </div>
                     <span className="text-xs font-bold uppercase tracking-wider">
-                        {isMixed ? 'Tous' : primaryType === 'caille' ? 'Caille' : 'Poulet'}
+                        {isMixed ? 'Élevage' : activeSpeciesFilter === 'caille' ? 'Caille' : 'Poulet'}
                     </span>
                 </div>
             </div>
