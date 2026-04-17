@@ -170,6 +170,22 @@ export function Dashboard() {
       setIsRecovering(false);
     }
   };
+ 
+  const handleTestNotification = async () => {
+    try {
+      const { NotificationService } = await import("../services/NotificationService");
+      // Use standard browser notification for test
+      if (Notification.permission === 'granted') {
+          NotificationService.showLocalNotification("Test Réussi ! 🔔", "Vos notifications sont bien configurées sur cet appareil.");
+          toast.success("Notification de test envoyée !");
+      } else {
+          toast.warning("Les notifications ne sont pas autorisées. Vérifiez vos paramètres.");
+          await NotificationService.requestPermission(useAuth().user!.uid);
+      }
+    } catch (e) {
+      toast.error("Échec du test.");
+    }
+  };
 
   return (
     <section id="screen-dashboard" className="space-y-6">
@@ -205,6 +221,24 @@ export function Dashboard() {
           </button>
         </div>
       )}
+ 
+      {/* Test Notifications / Sync Shortcuts */}
+      <div className="grid grid-cols-2 gap-3">
+          <button 
+            onClick={handleTestNotification}
+            className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all group"
+          >
+            <iconify-icon icon="solar:bell-bing-linear" class="text-lg text-amber-500 group-hover:animate-ring"></iconify-icon>
+            <span className="text-xs font-medium text-gray-700">Tester Notifications</span>
+          </button>
+          <button 
+            onClick={() => window.location.reload()}
+            className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all group"
+          >
+            <iconify-icon icon="solar:refresh-linear" class="text-lg text-indigo-500 group-hover:rotate-180 transition-transform duration-500"></iconify-icon>
+            <span className="text-xs font-medium text-gray-700">Forcer Synchro</span>
+          </button>
+      </div>
 
       {/* KPIs Section */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

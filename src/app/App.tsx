@@ -9,7 +9,10 @@ export default function App() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(err => {
-          console.log('SW registration failed: ', err);
+          console.log('Main SW registration failed: ', err);
+        });
+        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(err => {
+          console.log('FCM SW registration failed: ', err);
         });
       });
     }

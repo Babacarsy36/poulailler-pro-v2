@@ -256,7 +256,16 @@ export function EggProduction() {
                 </div>
               )}
 
-              {(!formData.poultryType || (formData.poultryType === 'poulet')) && (
+              {(formData.poultryType === 'caille' || (activeSpeciesFilter === 'caille' && !formData.poultryType)) ? (
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
+                    <div className="w-full bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-sm font-bold text-emerald-700 flex items-center gap-2">
+                        <iconify-icon icon="solar:egg-bold-duotone"></iconify-icon>
+                        Caille
+                    </div>
+                    <input type="hidden" value="caille" {...register("breed")} />
+                </div>
+              ) : (
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
                     <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("breed")}>
