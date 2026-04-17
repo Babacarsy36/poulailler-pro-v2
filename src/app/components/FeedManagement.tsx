@@ -558,53 +558,69 @@ export function FeedManagement() {
                 </div>
 
                 {/* NEW: Chick Feeding Guide & Calculator */}
-                <div className={`clean-card rounded-3xl p-6 border-l-4 border-l-amber-500 overflow-hidden relative mt-6`}>
+                <div className={`clean-card rounded-3xl p-6 border-l-4 overflow-hidden relative mt-6 ${isCaille ? 'border-l-emerald-500' : 'border-l-amber-500'}`}>
                    <div className="absolute top-0 right-0 p-8 opacity-5">
-                      <iconify-icon icon="solar:bird-bold" className="text-8xl text-amber-500"></iconify-icon>
+                      <iconify-icon icon={isCaille ? 'ph:egg-bold' : 'solar:bird-bold'} className={`text-8xl ${isCaille ? 'text-emerald-500' : 'text-amber-500'}`}></iconify-icon>
                    </div>
                    
                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
+                      <div className={`p-3 rounded-xl ${isCaille ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                          <iconify-icon icon="solar:star-fall-2-bold-duotone" className="text-xl"></iconify-icon>
                       </div>
                       <div>
-                        <h3 className="text-lg font-black text-babs-brown uppercase tracking-wider">Guide de Ration Poussin</h3>
+                        <h3 className="text-lg font-black text-babs-brown uppercase tracking-wider">
+                          Guide de Ration {isCaille ? 'Cailleteau' : 'Poussin'}
+                        </h3>
                         <p className="text-[10px] uppercase font-bold text-gray-400">Progression Semaine 1 à 8</p>
                       </div>
                    </div>
 
                    <div className="mb-8">
-                      <div className="flex items-center gap-4 bg-amber-50/50 p-4 rounded-2xl border border-amber-100/50 mb-6">
+                      <div className={`flex items-center gap-4 p-4 rounded-2xl border mb-6 ${isCaille ? 'bg-emerald-50/50 border-emerald-100/50' : 'bg-amber-50/50 border-amber-100/50'}`}>
                          <div className="flex-1">
-                            <label className="text-[10px] font-black text-amber-800 uppercase tracking-widest block mb-2">Nombre de Poussins</label>
+                            <label className={`text-[10px] font-black uppercase tracking-widest block mb-2 ${isCaille ? 'text-emerald-800' : 'text-amber-800'}`}>
+                              Nombre de {isCaille ? 'Cailles' : 'Poussins'}
+                            </label>
                             <div className="relative">
                                <input 
                                   type="number"
-                                  className="w-full bg-white border border-amber-200 rounded-xl p-3 font-black text-amber-900 outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
+                                  className={`w-full bg-white border rounded-xl p-3 font-black outline-none transition-all ${isCaille ? 'border-emerald-200 text-emerald-900 focus:ring-emerald-500/20' : 'border-amber-200 text-amber-900 focus:ring-amber-500/20'}`}
                                   value={chickCount}
                                   onChange={(e) => setChickCount(Math.max(0, Number(e.target.value)))}
                                />
-                               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-500 uppercase">unités</span>
+                               <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold uppercase ${isCaille ? 'text-emerald-500' : 'text-amber-500'}`}>unités</span>
                             </div>
                          </div>
-                         <div className="w-px h-10 bg-amber-200/50 hidden sm:block"></div>
+                         <div className={`w-px h-10 hidden sm:block ${isCaille ? 'bg-emerald-200/50' : 'bg-amber-200/50'}`}></div>
                          <div className="flex-1 hidden sm:block">
-                            <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-1">Impact</p>
-                            <p className="text-xs text-amber-600 font-medium leading-tight">Calculez précisément les besoins de votre lot en croissance.</p>
+                            <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isCaille ? 'text-emerald-800' : 'text-amber-800'}`}>Impact</p>
+                            <p className={`text-xs font-medium leading-tight ${isCaille ? 'text-emerald-600' : 'text-amber-600'}`}>Calculez précisément les besoins de votre lot en croissance.</p>
                          </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                         {[
-                            { w: 1, age: "0-7j", r: 16 },
-                            { w: 2, age: "8-14j", r: 21 },
-                            { w: 3, age: "15-21j", r: 26 },
-                            { w: 4, age: "22-28j", r: 31 },
-                            { w: 5, age: "29-35j", r: 36 },
-                            { w: 6, age: "36-42j", r: 41 },
-                            { w: 7, age: "43-49j", r: 46 },
-                            { w: 8, age: "50-56j", r: 51 },
-                         ].map((item) => {
+                         {(isCaille 
+                           ? [
+                               { w: 1, age: "0-7j", r: 4 },
+                               { w: 2, age: "8-14j", r: 7 },
+                               { w: 3, age: "15-21j", r: 11 },
+                               { w: 4, age: "22-28j", r: 15 },
+                               { w: 5, age: "29-35j", r: 19 },
+                               { w: 6, age: "36-42j", r: 23 },
+                               { w: 7, age: "43-49j", r: 27 },
+                               { w: 8, age: "50-56j", r: 30 },
+                             ]
+                           : [
+                               { w: 1, age: "0-7j", r: 16 },
+                               { w: 2, age: "8-14j", r: 21 },
+                               { w: 3, age: "15-21j", r: 26 },
+                               { w: 4, age: "22-28j", r: 31 },
+                               { w: 5, age: "29-35j", r: 36 },
+                               { w: 6, age: "36-42j", r: 41 },
+                               { w: 7, age: "43-49j", r: 46 },
+                               { w: 8, age: "50-56j", r: 51 },
+                             ]
+                         ).map((item) => {
                             const dailyTotal = (item.r * chickCount) / 1000;
                             const weeklyTotal = dailyTotal * 7;
                             return (
@@ -614,7 +630,7 @@ export function FeedManagement() {
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-0.5">Semaine {item.w}</p>
                                         <p className="text-xs font-bold text-babs-brown">{item.age}</p>
                                      </div>
-                                     <div className="bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[10px] font-black">
+                                     <div className={`px-2 py-1 rounded-lg text-[10px] font-black ${isCaille ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                         {item.r} g/j
                                      </div>
                                   </div>
@@ -622,16 +638,16 @@ export function FeedManagement() {
                                   <div className="space-y-1.5 border-t border-gray-50 pt-3">
                                      <div className="flex justify-between items-center text-[10px]">
                                         <span className="text-gray-400 font-medium italic">Besoin/Jour :</span>
-                                        <span className="font-black text-amber-600">{dailyTotal.toFixed(2)} kg</span>
+                                        <span className={`font-black ${isCaille ? 'text-emerald-600' : 'text-amber-600'}`}>{dailyTotal.toFixed(2)} kg</span>
                                      </div>
                                      <div className="flex justify-between items-center text-[10px]">
                                         <span className="text-gray-400 font-medium italic">Besoin/Semaine :</span>
-                                        <span className="font-black text-amber-800">{weeklyTotal.toFixed(1)} kg</span>
+                                        <span className={`font-black ${isCaille ? 'text-emerald-800' : 'text-amber-800'}`}>{weeklyTotal.toFixed(1)} kg</span>
                                      </div>
                                   </div>
 
-                                  <div className="absolute bottom-0 right-0 w-8 h-8 bg-amber-50/50 rounded-tl-full flex items-center justify-center translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform">
-                                     <iconify-icon icon="solar:check-circle-bold" className="text-amber-500 text-xs"></iconify-icon>
+                                  <div className={`absolute bottom-0 right-0 w-8 h-8 rounded-tl-full flex items-center justify-center translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform ${isCaille ? 'bg-emerald-50/50' : 'bg-amber-50/50'}`}>
+                                     <iconify-icon icon="solar:check-circle-bold" className={`text-xs ${isCaille ? 'text-emerald-500' : 'text-amber-500'}`}></iconify-icon>
                                   </div>
                                </div>
                             );
@@ -639,11 +655,11 @@ export function FeedManagement() {
                       </div>
                    </div>
 
-                   <div className="bg-amber-600/5 p-4 rounded-2xl flex items-start gap-4 border border-amber-600/10">
-                      <iconify-icon icon="solar:info-circle-bold-duotone" className="text-2xl text-amber-600 mt-1"></iconify-icon>
+                   <div className={`p-4 rounded-2xl flex items-start gap-4 border ${isCaille ? 'bg-emerald-600/5 border-emerald-600/10' : 'bg-amber-600/5 border-amber-600/10'}`}>
+                      <iconify-icon icon="solar:info-circle-bold-duotone" className={`text-2xl mt-1 ${isCaille ? 'text-emerald-600' : 'text-amber-600'}`}></iconify-icon>
                       <div>
-                         <p className="text-sm font-black text-amber-900 leading-tight mb-1">Pourquoi ces ratios ?</p>
-                         <p className="text-xs text-amber-700/80 font-medium leading-relaxed">
+                         <p className={`text-sm font-black leading-tight mb-1 ${isCaille ? 'text-emerald-900' : 'text-amber-900'}`}>Pourquoi ces ratios ?</p>
+                         <p className={`text-xs font-medium leading-relaxed ${isCaille ? 'text-emerald-700/80' : 'text-amber-700/80'}`}>
                             Ce tableau suit la courbe de croissance optimale pour une conversion alimentaire efficace. 
                             Veillez à ajuster de +10% en cas de froid intense ou de -10% en cas de forte chaleur persistante.
                          </p>
