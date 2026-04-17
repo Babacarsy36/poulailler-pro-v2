@@ -271,11 +271,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string) => {
-        const effectiveType = (itemType || 'poulet') as PoultryType;
+        const rawType = (itemType || 'poulet') as string;
+        const effectiveType = rawType.toLowerCase() as PoultryType;
         
         // 1. Global Species Filter (Top Switcher)
-        if (activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter) return false;
-
+        if (activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
+ 
         // 2. Breed/Sub-type Filter (Contextual Switcher)
         if (activeBreedFilter) {
             const filterLower = activeBreedFilter.toLowerCase();
@@ -284,7 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Check if the breed matches
             const breedMatch = itemBreedLower === filterLower;
             if (!breedMatch) return false;
-
+ 
             // IMPORTANT: Check species-breed compatibility
             // If activeSpeciesFilter is 'all', ensure item's species has this breed
             const belongsToPoulet = breedList.poulet.some(b => b.id.toLowerCase() === filterLower);
@@ -292,7 +293,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             const belongsToCaille = breedList.caille.some(b => b.id.toLowerCase() === filterLower);
             if (belongsToCaille && effectiveType !== 'caille') return false;
-
+ 
             return true;
         }
 
@@ -323,10 +324,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (chickens.length === 0) return;
 
             const detectedTypes: PoultryType[] = [];
-            if (chickens.some(c => c.poultryType === 'caille')) detectedTypes.push('caille');
-            if (chickens.some(c => !c.poultryType || c.poultryType === 'poulet')) detectedTypes.push('poulet');
-            if (chickens.some(c => c.poultryType === 'lapin')) detectedTypes.push('lapin');
-            if (chickens.some(c => c.poultryType === 'pigeon')) detectedTypes.push('pigeon');
+            const hasCaille = chickens.some(c => c.poultryType?.toLowerCase() === 'caille');
+            const hasPoulet = chickens.some(c => !c.poultryType || c.poultryType.toLowerCase() === 'poulet');
+            const hasLapin = chickens.some(c => c.poultryType?.toLowerCase() === 'lapin');
+            const hasPigeon = chickens.some(c => c.poultryType?.toLowerCase() === 'pigeon');
+ 
+            if (hasCaille) detectedTypes.push('caille');
+            if (hasPoulet) detectedTypes.push('poulet');
+            if (hasLapin) detectedTypes.push('lapin');
+            if (hasPigeon) detectedTypes.push('pigeon');
 
             const missingTypes = detectedTypes.filter(t => !poultryTypes.includes(t));
             

@@ -22,7 +22,7 @@ export function Layout() {
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
     { id: 'caille' as PoultryType, abbr: 'CL', label: 'Caille' },
-  ].filter(s => poultryTypes.includes(s.id));
+  ].filter(s => poultryTypes.some(pt => pt?.toLowerCase() === s.id));
 
   const showAllOption = poultryTypes.length > 1;
 

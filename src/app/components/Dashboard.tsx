@@ -58,8 +58,8 @@ export function Dashboard() {
     const filteredFeed = feed.filter((f) => isItemActive(f.poultryType, f.poultryBreed));
 
     let total = filteredChickens.reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
-    const cailleCount = filteredChickens.filter((c) => c.poultryType === 'caille').reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
-    const pouletCount = filteredChickens.filter((c) => c.poultryType === 'poulet' || !c.poultryType).reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
+    const cailleCount = filteredChickens.filter((c) => c.poultryType?.toLowerCase() === 'caille').reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
+    const pouletCount = filteredChickens.filter((c) => !c.poultryType || c.poultryType.toLowerCase() === 'poulet').reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
 
     const breedsList = filteredChickens.map((c) => c.breed).filter(Boolean);
     const breakdown = [...new Set(breedsList)].slice(0, 3).join(" • ");
@@ -67,7 +67,7 @@ export function Dashboard() {
     const sortedEggs = [...filteredEggs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let eggsOnLastDate = 0;
     if (activeSpeciesFilter === 'all' && (!selectedBreeds || selectedBreeds.length === 0)) {
-      const groups = [...new Set(filteredEggs.map(e => `${e.poultryType || 'poulet'}-${e.poultryBreed || ''}`))];
+       const groups = [...new Set(filteredEggs.map(e => `${(e.poultryType || 'poulet').toLowerCase()}-${(e.poultryBreed || '').toLowerCase()}`))];
       groups.forEach(g => {
         const t = g.split('-')[0];
         const b = g.slice(t.length + 1);
@@ -92,10 +92,10 @@ export function Dashboard() {
     const globalBreakdown: { type: string, count: number, eggs: number }[] = [];
     if (activeSpeciesFilter === 'all') {
       ['poulet', 'caille'].forEach(type => {
-        const tCount = filteredChickens.filter(c => (c.poultryType || 'poulet') === type && c.status === 'active').reduce((acc, c) => acc + (Number(c.count) || 1), 0);
+        const tCount = filteredChickens.filter(c => (c.poultryType?.toLowerCase() || 'poulet') === type && c.status === 'active').reduce((acc, c) => acc + (Number(c.count) || 1), 0);
         let tEggs = 0;
         if (type !== 'lapin' && type !== 'pigeon') {
-            const tEggsList = filteredEggs.filter(e => (e.poultryType || 'poulet') === type);
+            const tEggsList = filteredEggs.filter(e => (e.poultryType?.toLowerCase() || 'poulet') === type);
             const groups = [...new Set(tEggsList.map(e => e.poultryBreed || ''))];
             groups.forEach(b => {
               const groupEggs = tEggsList.filter(e => (e.poultryBreed || '') === b);

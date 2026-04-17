@@ -1,12 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, PoultryType, PoultryBreed } from '../AuthContext';
 import { useNavigate } from 'react-router';
 import { ChevronRight, Check, LogOut, Info, Star } from 'lucide-react';
 import { Logo } from './Logo';
 
 export function SelectionPage() {
-    const { updatePoultrySelection, user, logout } = useAuth();
+    const { updatePoultrySelection, user, logout, poultryTypes, isPreferencesLoaded, isInitialPullDone } = useAuth();
     const navigate = useNavigate();
+ 
+    // AUTO-REDIRECT: If data is restored by the healer while on this page, go back to dashboard
+    useEffect(() => {
+        if (isPreferencesLoaded && isInitialPullDone && poultryTypes.length > 0) {
+            console.log("SelectionPage: Data found, auto-redirecting to dashboard.");
+            navigate('/');
+        }
+    }, [poultryTypes, isPreferencesLoaded, isInitialPullDone]);
+ 
     const [selectedTypes, setSelectedTypes] = useState<PoultryType[]>([]);
     const [breeds, setBreeds] = useState<string[]>([]);
 
