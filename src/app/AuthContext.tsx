@@ -211,17 +211,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // Auto-select single species: if only one type configured and filter is 'all', auto-switch to it
-    useEffect(() => {
-        if (poultryTypes.length === 1) {
-            const savedFilter = localStorage.getItem('active_species_filter');
-            // Only auto-select if user hasn't explicitly chosen 'all'
-            if (!savedFilter || savedFilter === 'all') {
-                setActiveSpeciesFilter(poultryTypes[0]);
-            }
-        }
-    }, [poultryTypes]);
-
     const updatePoultrySelection = async (types: PoultryType[], breeds: string[]) => {
         setPoultryTypes(types);
         setSelectedBreeds(breeds);

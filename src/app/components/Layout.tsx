@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 /** Version: 1.0.2 */
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export function Layout() {
   const location = useLocation();
@@ -28,29 +28,36 @@ export function Layout() {
   const breedList: Record<string, { id: string, label: string }[]> = {
     poulet: [
       { id: 'fermier', label: 'Poulet Fermier' },
-      { id: 'ornement', label: 'Poule d\'Ornement' },
+      { id: 'ornement', label: "Poule d'Ornement" },
       { id: 'pondeuse', label: 'Pondeuse' },
       { id: 'chair', label: 'Poulet de Chair' },
+    ],
+    caille: [
+      { id: 'japon', label: 'Caille du Japon' },
+      { id: 'chine', label: 'Caille de Chine' },
+      { id: 'commune', label: 'Caille Commune' },
     ]
   };
-  // Ref pour détecter la transition 1 → plusieurs espèces
-  const prevTypesLengthRef = useRef(0);
-
-  // Auto-ajustement du filtre quand les espèces chargent depuis Firebase
+  // Auto-ajustement du filtre UNIQUEMENT si aucune préférence n'a été sauvegardée
   useEffect(() => {
     if (poultryTypes.length === 0) return;
-    const prevLen = prevTypesLengthRef.current;
-    prevTypesLengthRef.current = poultryTypes.length;
-
+    
+    const savedFilter = localStorage.getItem('active_species_filter');
+    
+    // Si une préférence existe et est valide pour les espèces actuelles, on la respecte
+    if (savedFilter && savedFilter !== 'all') {
+      // Vérifier que la préférence sauvegardée correspond à une espèce disponible
+      if (poultryTypes.includes(savedFilter as PoultryType)) {
+        return; // On garde le filtre sauvegardé tel quel
+      }
+    }
+    
+    // Pas de préférence ou préférence invalide : logique par défaut
     if (poultryTypes.length === 1) {
       // Un seul type : on le sélectionne directement
       setActiveSpeciesFilter(poultryTypes[0]);
-    } else if (poultryTypes.length > 1 && prevLen <= 1) {
-      // Transition de 1 vers plusieurs types (Firebase vient de charger tout)
-      // On force 'all' pour que toutes les espèces soient visibles
-      setActiveSpeciesFilter('all');
     }
-    // Si l'utilisateur a manuellement changé, on ne touche pas
+    // Si plusieurs types et pas de préférence : on reste sur 'all'
   }, [poultryTypes]);
 
   const handleSpeciesSelect = (type: PoultryType | 'all') => {
