@@ -74,8 +74,9 @@ export function Layout() {
   ];
 
   const primaryType = activeSpeciesFilter === 'all' ? poultryTypes[0] : activeSpeciesFilter;
-  const accentColorClass = primaryType === 'caille' ? 'emerald' : 'orange';
-  const accentHex = primaryType === 'caille' ? '#10B981' : '#F59E0B';
+  const isMixed = activeSpeciesFilter === 'all';
+  const accentColorClass = isMixed ? 'indigo' : primaryType === 'caille' ? 'emerald' : 'orange';
+  const accentHex = isMixed ? '#6366F1' : primaryType === 'caille' ? '#10B981' : '#F59E0B';
 
   const { logout } = useAuth();
 
@@ -85,10 +86,16 @@ export function Layout() {
       {/* Sidebar - Desktop Only */}
       <aside className={`hidden md:flex flex-col w-64 fixed h-screen border-r transition-colors duration-300 z-50 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
         <div className="p-6 flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg bg-${accentColorClass}-500 flex items-center justify-center text-white shadow-lg shadow-${accentColorClass}-500/20`}>
-                <span className="font-['Syne'] font-bold text-lg">P</span>
+            <div className="flex items-center gap-3">
+                <div className={`px-4 py-1.5 rounded-full bg-${accentColorClass}-500 text-white flex items-center gap-1.5 shadow-md shadow-${accentColorClass}-500/20`}>
+                    <div className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px] font-bold">
+                        {isMixed ? '🌍' : primaryType === 'caille' ? 'CL' : 'PL'}
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                        {isMixed ? 'Tous' : primaryType === 'caille' ? 'Caille' : 'Poulet'}
+                    </span>
+                </div>
             </div>
-            <span className="font-['Syne'] font-bold text-xl tracking-tight">Poulailler Pro</span>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto no-scrollbar">
