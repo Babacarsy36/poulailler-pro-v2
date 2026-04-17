@@ -149,22 +149,22 @@ export function Layout() {
         <header className={`fixed top-0 inset-x-0 md:left-64 z-40 backdrop-blur-md border-b pt-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
             <div className="max-w-5xl mx-auto w-full flex flex-col px-4">
                 <div className="flex items-center justify-between h-16">
-                    {/* Mobile Menu Icon / Title */}
-                    <div className="flex items-center gap-2 md:hidden">
-                        <div className={`w-8 h-8 rounded-lg bg-${accentColorClass}-500 flex items-center justify-center text-white shadow-lg shadow-${accentColorClass}-500/20 shrink-0`}>
-                            <iconify-icon icon={isMixed ? 'solar:globus-bold' : activeSpeciesFilter === 'caille' ? 'ph:egg-bold' : 'solar:bird-bold'}></iconify-icon>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Poulailler Pro</span>
-                            <span className={`font-['Syne'] font-bold text-sm text-gray-900 leading-none truncate max-w-[120px]`}>
-                                {dynamicTitle}
-                            </span>
-                        </div>
-                    </div>
+                     {/* Mobile Menu Icon / Title */}
+                     <div className="flex items-center gap-1.5 md:hidden shrink-0">
+                         <div className={`w-7 h-7 rounded-lg bg-${accentColorClass}-500 flex items-center justify-center text-white shadow-lg shadow-${accentColorClass}-500/20 shrink-0`}>
+                             <iconify-icon icon={isMixed ? 'solar:globus-bold' : activeSpeciesFilter === 'caille' ? 'ph:egg-bold' : 'solar:bird-bold'}></iconify-icon>
+                         </div>
+                         <div className="flex flex-col min-w-0">
+                             <span className="text-[8px] font-black uppercase tracking-widest text-gray-400 leading-none mb-0.5">P-Pro</span>
+                             <span className={`font-['Syne'] font-bold text-[11px] text-gray-900 leading-none truncate max-w-[70px]`}>
+                                 {dynamicTitle}
+                             </span>
+                         </div>
+                     </div>
 
-                    {/* Species Switcher */}
-                    <div className="flex-1 overflow-x-auto no-scrollbar mx-3 select-none">
-                        <div className="flex gap-2 w-max mx-auto">
+                     {/* Species Switcher */}
+                     <div className="flex-1 overflow-x-auto no-scrollbar mx-1 select-none">
+                         <div className="flex gap-1.5 w-max md:mx-auto">
                             {showAllOption && (
                                 <button 
                                     onClick={() => handleSpeciesSelect('all')} 
@@ -206,9 +206,9 @@ export function Layout() {
                         </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="md:hidden flex items-center gap-2">
+                     {/* Actions */}
+                     <div className="flex items-center gap-1.5 shrink-0">
+                       <div className="md:hidden flex items-center gap-1.5">
                         <button onClick={toggleDarkMode} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
                           <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-lg"></iconify-icon>
                         </button>

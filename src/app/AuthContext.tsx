@@ -268,14 +268,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // 2. Breed/Sub-type Filter (Contextual Switcher)
         if (activeBreedFilter) {
-            // If we have an active breed filter, the item must match it AND be of the correct species
-            // Handle lowercase comparison safely
             const filterLower = activeBreedFilter.toLowerCase();
             const itemBreedLower = itemBreed?.toLowerCase();
             
-            // Special case: if the filter is a known breed of another species, this item shouldn't show up
-            // but usually the switcher UI prevents this.
-            return itemBreedLower === filterLower;
+            // Check if the breed matches
+            const breedMatch = itemBreedLower === filterLower;
+            if (!breedMatch) return false;
+
+            // IMPORTANT: Check species-breed compatibility
+            // If activeSpeciesFilter is 'all', ensure item's species has this breed
+            const belongsToPoulet = breedList.poulet.some(b => b.id.toLowerCase() === filterLower);
+            if (belongsToPoulet && effectiveType !== 'poulet') return false;
+            
+            const belongsToCaille = breedList.caille.some(b => b.id.toLowerCase() === filterLower);
+            if (belongsToCaille && effectiveType !== 'caille') return false;
+
+            return true;
         }
 
         // 3. User Preferences Filter (Onboarding Selection)
