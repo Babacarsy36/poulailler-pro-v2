@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({

@@ -125,7 +125,7 @@ const getProtocolsForBreed = (breed: string): ProphylaxisStep[] => {
 }
 
 export function HealthTracking() {
-  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   

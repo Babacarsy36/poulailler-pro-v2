@@ -84,7 +84,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);

@@ -42,7 +42,7 @@ interface ChickenFormData {
 }
 
 export function ChickenInventory() {
-  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, hasAccess, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, saveData } = useAuth();
   const poultryBreed = selectedBreeds[0] || "";
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
