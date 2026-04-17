@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { UserRole, PoultryType, SubscriptionTier } from './types';
 export type { PoultryType };
 import { breedList } from './constants';
+import { NotificationService } from './services/NotificationService';
 
 export type PoultryBreed = 'fermier' | 'ornement' | 'pondeuse' | 'chair' | null;
 
@@ -144,6 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!user) return;
         
+        // Initialize Notifications
+        NotificationService.requestPermission(user.uid);
+        NotificationService.initForegroundListener();
+        
         const unsubPrefs = onSnapshot(doc(db, 'users', user.uid, 'settings', 'preferences'), (prefsDoc) => {
             if (prefsDoc.exists()) {
                 const data = prefsDoc.data();
@@ -183,6 +188,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             unsubProfile();
         };
     }, [user]);
+
+    // Alert auto-notifications
+    useEffect(() => {
+        const criticalAlerts = alerts.filter(a => a.severity === 'critical');
+        if (criticalAlerts.length > 0) {
+            const lastAlert = criticalAlerts[0];
+            const notifiedKey = `notified_${lastAlert.id}`;
+            if (!localStorage.getItem(notifiedKey)) {
+                NotificationService.showLocalNotification(lastAlert.title, lastAlert.message);
+                localStorage.setItem(notifiedKey, 'true');
+            }
+        }
+    }, [alerts]);
 
     useEffect(() => {
         if (user && farmId) {
