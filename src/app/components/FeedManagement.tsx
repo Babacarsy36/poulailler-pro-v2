@@ -28,6 +28,8 @@ interface FeedFormData {
   feedType: string;
   temperature: string;
   notes: string;
+  poultryType: string;
+  breed: string;
 }
 
 interface Ingredient {
@@ -87,7 +89,7 @@ export function FeedManagement() {
   const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FeedFormData & { breed: string }>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FeedFormData>({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       type: "achat",
@@ -96,6 +98,7 @@ export function FeedManagement() {
       temperature: "28",
       notes: "",
       breed: selectedBreeds[0] || "",
+      poultryType: activeSpeciesFilter === 'all' ? 'poulet' : activeSpeciesFilter,
     }
   });
 

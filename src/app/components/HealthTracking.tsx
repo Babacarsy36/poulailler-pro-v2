@@ -25,6 +25,8 @@ interface HealthFormData {
   title: string;
   target: string;
   status: "Complété" | "En attente";
+  poultryType: string;
+  breed: string;
 }
 
 type ProphylaxisStep = {
@@ -130,7 +132,7 @@ export function HealthTracking() {
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<HealthFormData & { breed: string }>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<HealthFormData>({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       type: "Vaccin",

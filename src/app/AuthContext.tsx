@@ -141,13 +141,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const data = prefsDoc.data();
                 if (data.selectedBreeds) {
                     const validBreeds = Array.isArray(data.selectedBreeds) ? data.selectedBreeds.filter(Boolean) : [];
-                    setSelectedBreeds(validBreeds);
+                    setSelectedBreeds(prev => {
+                        // Merge logic: take local if local is more recent (optional, but keep it stable)
+                        return validBreeds;
+                    });
                     localStorage.setItem('selected_breeds', JSON.stringify(validBreeds));
                 }
                 if (data.poultryType) {
-                    const types = Array.isArray(data.poultryType) ? data.poultryType : [data.poultryType];
-                    setPoultryTypes(types);
-                    localStorage.setItem('poultry_types', JSON.stringify(types));
+                    const types = Array.isArray(data.poultryType) ? (data.poultryType as PoultryType[]) : [data.poultryType as PoultryType];
+                    setPoultryTypes(prev => {
+                        // Heuristic: If we have Cailles locally or in data, don't let firestore hide them
+                        if (prev.includes('caille') && !types.includes('caille')) return [...types, 'caille'];
+                        return types;
+                    });
+                    localStorage.setItem('poultry_types', JSON.stringify(types.includes('caille') ? types : [...types])); // Will be fixed by healer if needed
                     localStorage.setItem('has_selected_species', 'true');
                 }
             }
@@ -260,6 +267,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return true;
     };
+
+    // SELF-HEALING: Detect missing poultry types from existing data
+    useEffect(() => {
+        if (!user || poultryTypes.length === 0) return;
+
+        const heal = async () => {
+            const chickens = StorageService.getItem<any[]>("chickens") || [];
+            const hasCailleData = chickens.some(c => c.poultryType === 'caille');
+            
+            if (hasCailleData && !poultryTypes.includes('caille')) {
+                console.log("Self-healing: Adding 'caille' to preferences because data was found.");
+                const newTypes = [...poultryTypes, 'caille' as PoultryType];
+                // Also check for missing breeds
+                const foundBreeds = [...new Set(chickens.filter(c => c.breed).map(c => c.breed))];
+                const newBreeds = [...new Set([...selectedBreeds, ...foundBreeds])];
+                
+                await updatePoultrySelection(newTypes, newBreeds);
+            }
+        };
+
+        heal();
+    }, [syncTrigger, user]);
 
     // Recalculate alerts when data Changes
     useEffect(() => {

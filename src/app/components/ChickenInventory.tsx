@@ -27,6 +27,7 @@ interface Chicken {
 interface ChickenFormData {
   name: string;
   breed: string;
+  poultryType: "poulet" | "caille";
   age: string;
   ageUnit: "weeks" | "months";
   count: string;
@@ -51,6 +52,7 @@ export function ChickenInventory() {
     defaultValues: {
       name: "",
       breed: selectedBreeds[0] || "",
+      poultryType: activeSpeciesFilter === 'all' ? 'poulet' : activeSpeciesFilter,
       age: "",
       ageUnit: "months",
       count: "1",

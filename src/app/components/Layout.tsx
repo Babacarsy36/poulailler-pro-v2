@@ -73,7 +73,8 @@ export function Layout() {
     { id: 'settings', label: 'Équipe', icon: 'solar:settings-linear', path: '/team' },
   ];
 
-  const primaryType = activeSpeciesFilter === 'all' ? poultryTypes[0] : activeSpeciesFilter;
+  const safePoultryTypes = poultryTypes && poultryTypes.length > 0 ? poultryTypes : ['poulet'];
+  const primaryType = activeSpeciesFilter === 'all' ? safePoultryTypes[0] : activeSpeciesFilter;
   const isMixed = activeSpeciesFilter === 'all';
   const accentColorClass = isMixed ? 'indigo' : primaryType === 'caille' ? 'emerald' : 'orange';
   const accentHex = isMixed ? '#6366F1' : primaryType === 'caille' ? '#10B981' : '#F59E0B';
