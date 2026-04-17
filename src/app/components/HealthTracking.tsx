@@ -489,11 +489,12 @@ export function HealthTracking() {
                 </div>
               </div>
               
-              {isMixed && (
-                <div className="space-y-2">
+              {/* Espèce sélecteur - Toujours visible si plusieurs espèces sont activées */}
+              {poultryTypes.length > 1 && (
+                <div className="space-y-2 animate-in slide-in-from-top-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Espèce concernée</label>
                   <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none"
+                    className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none ${watch("poultryType" as any) === 'caille' ? 'ring-2 ring-emerald-100' : ''}`}
                     {...register("poultryType" as any)}
                   >
                     {poultryTypes.map(t => (
@@ -503,19 +504,38 @@ export function HealthTracking() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race concernée</label>
-                <select 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
-                  {...register("breed", { required: true })}
-                >
-                  {selectedBreeds.length > 0 ? selectedBreeds.map(b => (
-                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b === 'caille' ? 'Caille' : b}</option>
-                  )) : (
-                    <option value="">Toutes espèces</option>
-                  )}
-                </select>
-              </div>
+              {/* Race concernée (Poulet) */}
+              {(!watch("poultryType" as any) || watch("poultryType" as any) === 'poulet') && (
+                <div className="space-y-2 animate-in slide-in-from-top-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de Poulet</label>
+                  <select 
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
+                    {...register("breed", { required: true })}
+                  >
+                    {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).map(b => (
+                      <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b}</option>
+                    ))}
+                    {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).length === 0 && (
+                      <option value="Standard">Standard / Autre</option>
+                    )}
+                  </select>
+                </div>
+              )}
+
+              {/* Race concernée (Caille) */}
+              {watch("poultryType" as any) === 'caille' && (
+                <div className="space-y-2 animate-in slide-in-from-top-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de Caille</label>
+                  <select 
+                    className="w-full bg-emerald-50 border-none rounded-2xl p-4 font-bold text-emerald-900 appearance-none"
+                    {...register("breed", { required: true })}
+                   >
+                    <option value="japon">Caille du Japon</option>
+                    <option value="chine">Caille de Chine</option>
+                    <option value="commune">Caille Commune</option>
+                  </select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Libellé du soin</label>
