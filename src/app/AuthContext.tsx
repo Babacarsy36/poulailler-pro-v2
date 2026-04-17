@@ -34,10 +34,10 @@ interface AuthContextType {
     tier: SubscriptionTier;
     hasAccess: (requiredTier: SubscriptionTier) => boolean;
     setTierAction: (newTier: SubscriptionTier) => Promise<void>;
-    saveData: <T extends SyncItem>(key: string, data: T[]) => Promise<void>;
     alerts: Alert[];
     logout: () => Promise<void>;
     isPreferencesLoaded: boolean;
+    isInitialPullDone: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isPreferencesLoaded, setIsPreferencesLoaded] = useState(false);
+    const [isInitialPullDone, setIsInitialPullDone] = useState(false);
     const [poultryTypes, setPoultryTypes] = useState<PoultryType[]>(() => {
         try {
             const saved = localStorage.getItem('poultry_types');
@@ -100,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setIsSyncing(true);
                 SyncService.pullCloudToLocal(currentUser.uid).finally(() => {
                     setIsSyncing(false);
+                    setIsInitialPullDone(true);
                     setSyncTrigger(prev => prev + 1);
                 });
 
@@ -313,25 +315,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // SELF-HEALING: Detect missing poultry types from existing data
     useEffect(() => {
-        if (!user || poultryTypes.length === 0) return;
+        // Wait until we have a user, preferences have been checked, and initial cloud data is pulled
+        if (!user || !isPreferencesLoaded || !isInitialPullDone) return;
 
         const heal = async () => {
             const chickens = StorageService.getItem<any[]>("chickens") || [];
-            const hasCailleData = chickens.some(c => c.poultryType === 'caille');
+            if (chickens.length === 0) return;
+
+            const detectedTypes: PoultryType[] = [];
+            if (chickens.some(c => c.poultryType === 'caille')) detectedTypes.push('caille');
+            if (chickens.some(c => !c.poultryType || c.poultryType === 'poulet')) detectedTypes.push('poulet');
+            if (chickens.some(c => c.poultryType === 'lapin')) detectedTypes.push('lapin');
+            if (chickens.some(c => c.poultryType === 'pigeon')) detectedTypes.push('pigeon');
+
+            const missingTypes = detectedTypes.filter(t => !poultryTypes.includes(t));
             
-            if (hasCailleData && !poultryTypes.includes('caille')) {
-                console.log("Self-healing: Adding 'caille' to preferences because data was found.");
-                const newTypes = [...poultryTypes, 'caille' as PoultryType];
+            if (missingTypes.length > 0) {
+                console.log("Self-healing: Adding missing species to preferences:", missingTypes);
+                const newTypes = [...new Set([...poultryTypes, ...detectedTypes])];
+                
                 // Also check for missing breeds
-                const foundBreeds = [...new Set(chickens.filter(c => c.breed).map(c => c.breed))];
-                const newBreeds = [...new Set([...selectedBreeds, ...foundBreeds])];
+                const foundBreeds = [...new Set(chickens.filter(c => c.breed).map(c => c.breed.toLowerCase()))];
+                const newBreeds = [...new Set([...selectedBreeds.map(b => b.toLowerCase()), ...foundBreeds])];
                 
                 await updatePoultrySelection(newTypes, newBreeds);
+                
+                // If more than one species detected, reset filter to 'all' to show everything
+                if (newTypes.length > 1) {
+                    setActiveSpeciesFilter('all');
+                }
             }
         };
 
         heal();
-    }, [syncTrigger, user]);
+    }, [isInitialPullDone, isPreferencesLoaded, user]);
 
     // Recalculate alerts when data Changes
     useEffect(() => {
@@ -413,7 +430,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role,
             farmId,
             logout,
-            isPreferencesLoaded
+            isPreferencesLoaded,
+            isInitialPullDone
         }}>
             {children}
         </AuthContext.Provider>

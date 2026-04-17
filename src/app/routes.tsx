@@ -29,14 +29,14 @@ function AuthGuard() {
 
 // Guard to ensure species is selected
 function SelectionGuard() {
-  const { poultryTypes, isPreferencesLoaded } = useAuth();
+  const { poultryTypes, isPreferencesLoaded, isInitialPullDone } = useAuth();
   
-  if (!isPreferencesLoaded) {
+  if (!isPreferencesLoaded || !isInitialPullDone) {
     return (
       <div className="min-h-screen bg-babs-cream flex flex-col items-center justify-center gap-6 animate-pulse">
         <Logo className="w-20 h-20 opacity-50" />
         <div className="w-12 h-12 border-4 border-babs-orange border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Synchro des réglages...</p>
+        <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Synchro de vos données...</p>
       </div>
     );
   }
