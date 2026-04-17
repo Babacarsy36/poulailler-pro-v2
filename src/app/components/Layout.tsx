@@ -4,6 +4,20 @@ import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
 import { useEffect } from "react";
 
+const breedList: Record<string, { id: string, label: string }[]> = {
+  poulet: [
+    { id: 'fermier', label: 'Poulet Fermier' },
+    { id: 'ornement', label: "Poule d'Ornement" },
+    { id: 'pondeuse', label: 'Pondeuse' },
+    { id: 'chair', label: 'Poulet de Chair' },
+  ],
+  caille: [
+    { id: 'japon', label: 'Caille du Japon' },
+    { id: 'chine', label: 'Caille de Chine' },
+    { id: 'commune', label: 'Caille Commune' },
+  ]
+};
+
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,19 +39,6 @@ export function Layout() {
 
   const showAllOption = poultryTypes.length > 1;
 
-  const breedList: Record<string, { id: string, label: string }[]> = {
-    poulet: [
-      { id: 'fermier', label: 'Poulet Fermier' },
-      { id: 'ornement', label: "Poule d'Ornement" },
-      { id: 'pondeuse', label: 'Pondeuse' },
-      { id: 'chair', label: 'Poulet de Chair' },
-    ],
-    caille: [
-      { id: 'japon', label: 'Caille du Japon' },
-      { id: 'chine', label: 'Caille de Chine' },
-      { id: 'commune', label: 'Caille Commune' },
-    ]
-  };
   // Auto-ajustement du filtre UNIQUEMENT si aucune préférence n'a été sauvegardée
   useEffect(() => {
     if (poultryTypes.length === 0) return;
@@ -245,8 +246,8 @@ export function Layout() {
                         >
                             Tous
                         </button>
-                        {selectedBreeds.filter(b => breedList[activeSpeciesFilter].some(bl => bl.id === b)).map((b) => {
-                            const bInfo = breedList[activeSpeciesFilter].find(bl => bl.id === b);
+                        {selectedBreeds.filter(b => activeSpeciesFilter !== 'all' && breedList[activeSpeciesFilter]?.some(bl => bl.id === b)).map((b) => {
+                            const bInfo = activeSpeciesFilter !== 'all' ? breedList[activeSpeciesFilter].find(bl => bl.id === b) : null;
                             const label = bInfo ? bInfo.label : b;
                             const isCurrentBreed = activeBreedFilter === b;
                             return (
