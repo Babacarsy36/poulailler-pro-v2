@@ -671,6 +671,7 @@ export function FeedManagement() {
                    <span className="text-xs font-black text-orange-800 uppercase">Total Mélange</span>
                    <span className="text-xl font-black text-orange-600">{calcAmount} <span className="text-xs">kg</span></span>
                 </div>
+                </div>
            </div>
 
            {/* Feed Optimizer (Mixer) */}
