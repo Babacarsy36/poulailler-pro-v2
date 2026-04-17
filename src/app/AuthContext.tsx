@@ -227,21 +227,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string) => {
-        // 1. Species Match
         const effectiveType = (itemType || 'poulet') as PoultryType;
+        
+        // 1. Global Species Filter (Top Switcher)
+        if (activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter) return false;
+
+        // 2. Breed/Sub-type Filter (Contextual Switcher)
+        if (activeBreedFilter) {
+            // If we have an active breed filter, the item must match it AND be of the correct species
+            // Handle lowercase comparison safely
+            const filterLower = activeBreedFilter.toLowerCase();
+            const itemBreedLower = itemBreed?.toLowerCase();
+            
+            // Special case: if the filter is a known breed of another species, this item shouldn't show up
+            // but usually the switcher UI prevents this.
+            return itemBreedLower === filterLower;
+        }
+
+        // 3. User Preferences Filter (Onboarding Selection)
+        // If the user hasn't selected ANY breeds for this species, we show everything for that species
+        // If they have selected breeds, we only show those.
         const isSpeciesSelected = poultryTypes.includes(effectiveType);
         if (!isSpeciesSelected) return false;
 
-        // 2. Species Filter Match (UI top switcher)
-        if (activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter) return false;
+        // If the species has breeds defined in selectedBreeds, only show those breeds
+        const speciesBreeds = breedList[effectiveType]?.map(b => b.id) || [];
+        const hasSelectedBreedsForThisSpecies = selectedBreeds.some(sb => speciesBreeds.includes(sb));
 
-        // 3. Breed Match (Persistent Configuration)
-        const isBreedSelected = !selectedBreeds || selectedBreeds.length === 0 || selectedBreeds.some(sb => itemBreed?.toLowerCase() === sb?.toLowerCase());
-        if (!isBreedSelected) return false;
-
-        // 4. Breed Filter Match (UI top switcher)
-        if (activeBreedFilter) {
-            return itemBreed?.toLowerCase() === activeBreedFilter.toLowerCase();
+        if (hasSelectedBreedsForThisSpecies && itemBreed) {
+            return selectedBreeds.some(sb => sb.toLowerCase() === itemBreed.toLowerCase());
         }
 
         return true;

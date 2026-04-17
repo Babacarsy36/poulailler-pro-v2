@@ -78,6 +78,15 @@ export function Layout() {
   const accentColorClass = isMixed ? 'indigo' : primaryType === 'caille' ? 'emerald' : 'orange';
   const accentHex = isMixed ? '#6366F1' : primaryType === 'caille' ? '#10B981' : '#F59E0B';
 
+  const activeSpeciesInfo = speciesList.find(s => s.id === activeSpeciesFilter);
+  const breedInfo = activeBreedFilter ? [...breedList.poulet, ...breedList.caille].find(b => b.id === activeBreedFilter) : null;
+
+  const dynamicTitle = activeSpeciesFilter === 'all' 
+    ? 'Vue Globale'
+    : breedInfo 
+        ? `${activeSpeciesInfo?.label}s : ${breedInfo.label}`
+        : `Mes ${activeSpeciesInfo?.label}s`;
+
   const { logout } = useAuth();
 
   return (
@@ -141,8 +150,16 @@ export function Layout() {
             <div className="max-w-5xl mx-auto w-full flex flex-col px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Mobile Menu Icon / Title */}
-                    <div className="flex items-center gap-3 md:hidden">
-                        <span className={`font-['Syne'] font-bold text-lg text-${accentColorClass}-500`}>PLP</span>
+                    <div className="flex items-center gap-2 md:hidden">
+                        <div className={`w-8 h-8 rounded-lg bg-${accentColorClass}-500 flex items-center justify-center text-white shadow-lg shadow-${accentColorClass}-500/20 shrink-0`}>
+                            <iconify-icon icon={isMixed ? 'solar:globus-bold' : activeSpeciesFilter === 'caille' ? 'ph:egg-bold' : 'solar:bird-bold'}></iconify-icon>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1">Poulailler Pro</span>
+                            <span className={`font-['Syne'] font-bold text-sm text-gray-900 leading-none truncate max-w-[120px]`}>
+                                {dynamicTitle}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Species Switcher */}
@@ -203,22 +220,22 @@ export function Layout() {
                     </div>
                 </div>
 
-                {/* Breed Sub-switcher for Chicken (only if chicken is selected or in mixed view) */}
-                {(activeSpeciesFilter === 'poulet' || (activeSpeciesFilter === 'all' && poultryTypes.includes('poulet'))) && (
+                {/* Dynamic Breed Sub-switcher */}
+                {activeSpeciesFilter !== 'all' && breedList[activeSpeciesFilter]?.length > 0 && (
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
                         <button
                             onClick={() => handleBreedSelect(null)}
                             className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
                                 !activeBreedFilter 
-                                    ? 'bg-orange-100 border-orange-200 text-orange-600' 
+                                    ? `bg-${accentColorClass}-100 border-${accentColorClass}-200 text-${accentColorClass}-600` 
                                     : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
                             }`}
                         >
                             Tous
                         </button>
-                        {selectedBreeds.map((b) => {
-                            const breedInfo = breedList.poulet.find(bl => bl.id === b);
-                            const label = breedInfo ? breedInfo.label : b;
+                        {selectedBreeds.filter(b => breedList[activeSpeciesFilter].some(bl => bl.id === b)).map((b) => {
+                            const bInfo = breedList[activeSpeciesFilter].find(bl => bl.id === b);
+                            const label = bInfo ? bInfo.label : b;
                             const isCurrentBreed = activeBreedFilter === b;
                             return (
                                 <button
@@ -226,7 +243,7 @@ export function Layout() {
                                     onClick={() => handleBreedSelect(b)}
                                     className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
                                         isCurrentBreed 
-                                            ? 'bg-orange-100 border-orange-200 text-orange-600' 
+                                            ? `bg-${accentColorClass}-100 border-${accentColorClass}-200 text-${accentColorClass}-600` 
                                             : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
                                     }`}
                                 >
@@ -235,6 +252,31 @@ export function Layout() {
                             );
                         })}
                     </div>
+                )}
+                
+                {/* Fallback for "All" mode: Show main species as sub-filters if needed, or specific breeds */}
+                {activeSpeciesFilter === 'all' && (
+                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
+                        <p className="text-[10px] font-bold text-gray-400 flex items-center px-2 uppercase tracking-widest">Filtres :</p>
+                        {['fermier', 'ornement', 'japon', 'chine'].filter(b => selectedBreeds.includes(b)).map((b) => {
+                            const bInfo = [...breedList.poulet, ...breedList.caille].find(bl => bl.id === b);
+                            const isCurrent = activeBreedFilter === b;
+                            const bAccent = breedList.poulet.some(bl => bl.id === b) ? 'orange' : 'emerald';
+                            return (
+                                <button
+                                    key={b}
+                                    onClick={() => handleBreedSelect(b)}
+                                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+                                        isCurrent 
+                                            ? `bg-${bAccent}-100 border-${bAccent}-200 text-${bAccent}-600` 
+                                            : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    {bInfo?.label || b}
+                                </button>
+                            );
+                        })}
+                     </div>
                 )}
             </div>
         </header>

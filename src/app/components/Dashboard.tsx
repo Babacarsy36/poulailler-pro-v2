@@ -136,7 +136,7 @@ export function Dashboard() {
       lastFeedText,
       globalBreakdown
     });
-  }, [selectedDate, activeSpeciesFilter, selectedBreeds, syncTrigger]);
+  }, [selectedDate, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger]);
 
   const [chartData, setChartData] = useState<{name: string, production: number}[]>([]);
   useEffect(() => {
