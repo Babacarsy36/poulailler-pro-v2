@@ -173,8 +173,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
                 if (data.poultryType) {
                     const types = Array.isArray(data.poultryType) ? (data.poultryType as PoultryType[]) : [data.poultryType as PoultryType];
-                    setPoultryTypes(types);
-                    localStorage.setItem('poultry_types', JSON.stringify(types));
+                    setPoultryTypes(prev => {
+                        // MERGE LOGIC: Never remove a species that we currently have
+                        // unless it's an explicit clear. This prevents sync-back wipes.
+                        const combined = [...new Set([...prev.map(t => t?.toLowerCase()), ...types.map(t => t?.toLowerCase())])];
+                        return combined.filter(Boolean) as PoultryType[];
+                    });
                     localStorage.setItem('has_selected_species', 'true');
                 }
             }
@@ -241,22 +245,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const updatePoultrySelection = async (types: PoultryType[], breeds: string[]) => {
-        setPoultryTypes(types);
-        setSelectedBreeds(breeds);
+        // Ensure lowercase consistency
+        const cleanTypes = types.map(t => t?.toLowerCase() as PoultryType).filter(Boolean);
+        const cleanBreeds = breeds.map(b => b?.toLowerCase()).filter(Boolean);
+
+        setPoultryTypes(cleanTypes);
+        setSelectedBreeds(cleanBreeds);
         
         localStorage.setItem('has_selected_species', 'true');
-        
-        if (types.length > 0) localStorage.setItem('poultry_types', JSON.stringify(types));
-        else localStorage.removeItem('poultry_types');
-        
-        localStorage.setItem('selected_breeds', JSON.stringify(breeds));
+        if (cleanTypes.length > 0) localStorage.setItem('poultry_types', JSON.stringify(cleanTypes));
+        localStorage.setItem('selected_breeds', JSON.stringify(cleanBreeds));
         localStorage.removeItem('poultry_breed'); // Clean legacy
 
-        // Fire-and-forget: don't block navigation
         if (user) {
             setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
-                poultryType: types,
-                selectedBreeds: breeds,
+                poultryType: cleanTypes,
+                selectedBreeds: cleanBreeds,
                 lastUpdated: Date.now()
             }).catch(() => {});
         }
