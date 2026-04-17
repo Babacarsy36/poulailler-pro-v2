@@ -37,6 +37,7 @@ interface AuthContextType {
     saveData: <T extends SyncItem>(key: string, data: T[]) => Promise<void>;
     alerts: Alert[];
     logout: () => Promise<void>;
+    isPreferencesLoaded: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,8 +45,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [poultryTypes, setPoultryTypes] = useState<PoultryType[]>([]);
-    const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
+    const [isPreferencesLoaded, setIsPreferencesLoaded] = useState(false);
+    const [poultryTypes, setPoultryTypes] = useState<PoultryType[]>(() => {
+        try {
+            const saved = localStorage.getItem('poultry_types');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) { return []; }
+    });
+    const [selectedBreeds, setSelectedBreeds] = useState<string[]>(() => {
+        try {
+            const saved = localStorage.getItem('selected_breeds');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) { return []; }
+    });
     const [activeSpeciesFilter, setActiveSpeciesFilterState] = useState<PoultryType | 'all'>(
         () => (localStorage.getItem('active_species_filter') as PoultryType | 'all') || 'all'
     );
@@ -154,23 +166,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const data = prefsDoc.data();
                 if (data.selectedBreeds) {
                     const validBreeds = Array.isArray(data.selectedBreeds) ? data.selectedBreeds.filter(Boolean) : [];
-                    setSelectedBreeds(prev => {
-                        // Merge logic: take local if local is more recent (optional, but keep it stable)
-                        return validBreeds;
-                    });
+                    setSelectedBreeds(validBreeds);
                     localStorage.setItem('selected_breeds', JSON.stringify(validBreeds));
                 }
                 if (data.poultryType) {
                     const types = Array.isArray(data.poultryType) ? (data.poultryType as PoultryType[]) : [data.poultryType as PoultryType];
-                    setPoultryTypes(prev => {
-                        // Heuristic: If we have Cailles locally or in data, don't let firestore hide them
-                        if (prev.includes('caille') && !types.includes('caille')) return [...types, 'caille'];
-                        return types;
-                    });
-                    localStorage.setItem('poultry_types', JSON.stringify(types.includes('caille') ? types : [...types])); // Will be fixed by healer if needed
+                    setPoultryTypes(types);
+                    localStorage.setItem('poultry_types', JSON.stringify(types));
                     localStorage.setItem('has_selected_species', 'true');
                 }
             }
+            setIsPreferencesLoaded(true);
+        }, (err) => {
+            setIsPreferencesLoaded(true); // Still set to true on error to avoid infinite loading
         });
 
         const unsubProfile = onSnapshot(doc(db, 'users', user.uid, 'settings', 'profile'), (profileDoc) => {
@@ -404,7 +412,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             alerts,
             role,
             farmId,
-            logout
+            logout,
+            isPreferencesLoaded
         }}>
             {children}
         </AuthContext.Provider>
