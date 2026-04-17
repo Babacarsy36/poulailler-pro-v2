@@ -2,6 +2,7 @@ import { getDaysElapsed } from "../components/incubator/types";
 import { StorageService } from "./StorageService";
 import { Chicken, EggRecord, FeedEntry, HealthRecord } from "../types";
 import { IncubationBatch } from "../components/incubator/types";
+import { ProphylaxisService } from "./ProphylaxisService";
 
 export interface Alert {
     id: string;
@@ -90,7 +91,48 @@ export const AlertService = {
         }
 
         // 3. Health Reminders (Today's tasks)
-        // const health = StorageService.getItem<HealthRecord[]>("health") || [];
+        const health = StorageService.getItem<HealthRecord[]>("health") || [];
+        
+        activeLots.forEach(lot => {
+            if (!lot.arrivalDate) return;
+            
+            const birthDate = new Date(lot.arrivalDate);
+            const diffTime = Math.abs(now.getTime() - birthDate.getTime());
+            const ageInDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const breed = lot.breed || (lot.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
+            const protocol = ProphylaxisService.getProtocolsForBreed(breed);
+            
+            // Look for steps due today or tomorrow
+            protocol.forEach(step => {
+                const isDueToday = step.day === ageInDays;
+                const isDueTomorrow = step.day === ageInDays + 1;
+                
+                if (isDueToday || isDueTomorrow) {
+                    // Check if already done
+                    const stepDateObj = new Date(lot.arrivalDate!);
+                    stepDateObj.setDate(stepDateObj.getDate() + (step.day - 1));
+                    const stepDateStr = stepDateObj.toISOString().split("T")[0];
+                    
+                    const isAlreadyDone = health.some(h => 
+                        h.date === stepDateStr && 
+                        h.title.toLowerCase().includes(step.title.toLowerCase())
+                    );
+                    
+                    if (!isAlreadyDone) {
+                        alerts.push({
+                            id: `health-${lot.id}-${step.day}`,
+                            type: 'health-reminder',
+                            severity: isDueToday ? 'critical' : 'warning',
+                            title: isDueToday ? `Vaccin à faire AUJOURD'HUI ! 💉` : `Vaccin demain : ${step.title} 📅`,
+                            message: `${step.title} pour le lot ${lot.breed || lot.id} (Âge: J${ageInDays}). ${step.description}`,
+                            link: '/health',
+                            createdAt: Date.now()
+                        });
+                    }
+                }
+            });
+        });
 
         // 4. Hatchery (Hatching today/tomorrow)
         const incubation = StorageService.getItem<IncubationBatch[]>("incubation") || [];
