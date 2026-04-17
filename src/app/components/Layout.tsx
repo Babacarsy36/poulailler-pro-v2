@@ -3,20 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
 import { useEffect } from "react";
-
-const breedList: Record<string, { id: string, label: string }[]> = {
-  poulet: [
-    { id: 'fermier', label: 'Poulet Fermier' },
-    { id: 'ornement', label: "Poule d'Ornement" },
-    { id: 'pondeuse', label: 'Pondeuse' },
-    { id: 'chair', label: 'Poulet de Chair' },
-  ],
-  caille: [
-    { id: 'japon', label: 'Caille du Japon' },
-    { id: 'chine', label: 'Caille de Chine' },
-    { id: 'commune', label: 'Caille Commune' },
-  ]
-};
+import { breedList } from "../constants";
 
 export function Layout() {
   const location = useLocation();

@@ -8,6 +8,7 @@ import { Alert, AlertService } from './services/AlertService';
 import { toast } from 'sonner';
 import { UserRole, PoultryType, SubscriptionTier } from './types';
 export type { PoultryType };
+import { breedList } from './constants';
 
 export type PoultryBreed = 'fermier' | 'ornement' | 'pondeuse' | 'chair' | null;
 
