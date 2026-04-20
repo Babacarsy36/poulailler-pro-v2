@@ -32,7 +32,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { isItemActive, poultryTypes, activeSpeciesFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
