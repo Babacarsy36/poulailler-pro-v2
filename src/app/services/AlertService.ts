@@ -28,6 +28,7 @@ export const AlertService = {
         // 1. Egg Drop Detection (>15% drop vs 7d average)
         const eggs = StorageService.getItem<EggRecord[]>("eggs") || [];
         const filteredEggs = eggs.filter((e) => {
+            if (e._deleted) return false;
             const typeMatch = !poultryType || e.poultryType === poultryType || (poultryType === 'poulet' && !e.poultryType);
             const breedMatch = checkBreedMatch(e.poultryBreed);
             return typeMatch && breedMatch;
@@ -59,12 +60,14 @@ export const AlertService = {
         const feed = StorageService.getItem<FeedEntry[]>("feed") || [];
         const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
         const activeLots = chickens.filter((c) => {
+            if (c._deleted || c.status !== 'active') return false;
             const typeMatch = !poultryType || c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
             const breedMatch = checkBreedMatch(c.breed);
-            return c.status === 'active' && typeMatch && breedMatch;
+            return typeMatch && breedMatch;
         });
         
         const totalKg = feed.filter((f) => {
+            if (f._deleted) return false;
             const typeMatch = !poultryType || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
             const breedMatch = checkBreedMatch(f.poultryBreed);
             return typeMatch && breedMatch;
@@ -136,7 +139,7 @@ export const AlertService = {
 
         // 4. Hatchery (Hatching today/tomorrow)
         const incubation = StorageService.getItem<IncubationBatch[]>("incubation") || [];
-        const ongoing = incubation.filter((b) => b.status === 'incubating' || b.status === 'ongoing');
+        const ongoing = incubation.filter((b) => !b._deleted && (b.status === 'incubating' || b.status === 'ongoing'));
         
         ongoing.forEach((b) => {
             const elapsed = getDaysElapsed(b.startDate);

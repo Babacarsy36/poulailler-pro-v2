@@ -53,9 +53,9 @@ export function Dashboard() {
     const feed = StorageService.getItem<FeedEntry[]>("feed") || [];
     // const health = StorageService.getItem<HealthRecord[]>("health") || [];
 
-    const filteredChickens = chickens.filter((c) => isItemActive(c.poultryType, c.breed));
-    const filteredEggs = eggs.filter((e) => isItemActive(e.poultryType, e.poultryBreed));
-    const filteredFeed = feed.filter((f) => isItemActive(f.poultryType, f.poultryBreed));
+    const filteredChickens = chickens.filter((c) => !c._deleted && isItemActive(c.poultryType, c.breed));
+    const filteredEggs = eggs.filter((e) => !e._deleted && isItemActive(e.poultryType, e.poultryBreed));
+    const filteredFeed = feed.filter((f) => !f._deleted && isItemActive(f.poultryType, f.poultryBreed));
 
     let total = filteredChickens.reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
     const cailleCount = filteredChickens.filter((c) => c.poultryType?.toLowerCase() === 'caille').reduce((acc: number, c) => acc + (Number(c.count) || 1), 0);
@@ -81,8 +81,20 @@ export function Dashboard() {
     }
 
     const activeLots = filteredChickens.filter((c) => c.status === 'active');
-    const hasDetailedFemaleCounts = activeLots.some((c) => Number(c.femaleCount || 0) > 0);
-    const totalActiveLayers = activeLots.reduce((acc: number, c) => {
+    
+    const nowTime = new Date().getTime();
+    const activeLayersLots = activeLots.filter((c) => {
+        const arrival = c.arrivalDate ? new Date(c.arrivalDate).getTime() : nowTime;
+        const ageDays = Math.ceil(Math.abs(nowTime - arrival) / (1000 * 60 * 60 * 24));
+        let minAge = 140; 
+        if (c.poultryType === 'caille') minAge = 42; 
+        else if (c.breed?.toLowerCase().includes('fermier')) minAge = 150;
+        else if (c.breed?.toLowerCase().includes('ornement')) minAge = 160;
+        return ageDays >= minAge;
+    });
+
+    const hasDetailedFemaleCounts = activeLayersLots.some((c) => Number(c.femaleCount || 0) > 0);
+    const totalActiveLayers = activeLayersLots.reduce((acc: number, c) => {
       const femaleCount = Number(c.femaleCount || 0);
       if (femaleCount > 0) return acc + femaleCount;
       return acc + (Number(c.count) || 1);

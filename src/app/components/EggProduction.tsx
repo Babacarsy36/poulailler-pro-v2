@@ -54,9 +54,26 @@ export function EggProduction() {
 
   useEffect(() => {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
+    const now = new Date().getTime();
+    
     const females = chickens
-      .filter((c: Chicken) => !c._deleted && isItemActive(c.poultryType, c.breed))
+      .filter((c: Chicken) => {
+        if (c._deleted || !isItemActive(c.poultryType, c.breed) || c.status !== 'active') return false;
+        
+        // Calculate age
+        const arrival = c.arrivalDate ? new Date(c.arrivalDate).getTime() : now;
+        const ageDays = Math.ceil(Math.abs(now - arrival) / (1000 * 60 * 60 * 24));
+        
+        // Minimum laying age
+        let minAge = 140; // Default Pondeuse (20 weeks)
+        if (c.poultryType === 'caille') minAge = 42; // 6 weeks
+        else if (c.breed?.toLowerCase().includes('fermier')) minAge = 150;
+        else if (c.breed?.toLowerCase().includes('ornement')) minAge = 160;
+
+        return ageDays >= minAge;
+      })
       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
+      
     setTotalFemales(females);
   }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
 
