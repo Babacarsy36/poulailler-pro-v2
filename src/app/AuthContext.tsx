@@ -274,12 +274,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('active_species_filter');
     };
 
-    const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string) => {
+    const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string, ignoreSpecies = false) => {
         const rawType = (itemType || 'poulet') as string;
         const effectiveType = rawType.toLowerCase() as PoultryType;
         
         // 1. Global Species Filter (Top Switcher)
-        if (activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
+        if (!ignoreSpecies && activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
  
         // 2. Breed/Sub-type Filter (Contextual Switcher)
         if (activeBreedFilter) {

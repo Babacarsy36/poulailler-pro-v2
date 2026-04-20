@@ -1,9 +1,11 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
 /** Version: 1.0.2 */
-import { useAuth, PoultryType, PoultryBreed } from "../AuthContext";
+import { useAuth, PoultryType } from "../AuthContext";
 import { NotificationCenter } from "./ui/NotificationCenter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { breedList } from "../constants";
+import { Logo } from "./Logo";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Layout() {
   const location = useLocation();
@@ -18,6 +20,7 @@ export function Layout() {
     isDarkMode, 
     toggleDarkMode 
   } = useAuth();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
@@ -149,16 +152,22 @@ export function Layout() {
         <header className={`fixed top-0 inset-x-0 md:left-64 z-40 backdrop-blur-md border-b pt-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
             <div className="max-w-5xl mx-auto w-full flex flex-col px-4">
                 <div className="flex items-center justify-between h-16">
-                     {/* Mobile Menu Icon / Title */}
-                     <div className="flex items-center gap-1.5 md:hidden shrink-0">
-                         <div className={`w-7 h-7 rounded-lg bg-${accentColorClass}-500 flex items-center justify-center text-white shadow-lg shadow-${accentColorClass}-500/20 shrink-0`}>
-                             <iconify-icon icon={isMixed ? 'solar:globus-bold' : activeSpeciesFilter === 'caille' ? 'ph:egg-bold' : 'solar:bird-bold'}></iconify-icon>
-                         </div>
-                         <div className="flex flex-col min-w-0">
-                             <span className="text-[8px] font-black uppercase tracking-widest text-gray-400 leading-none mb-0.5">P-Pro</span>
-                             <span className={`font-['Syne'] font-bold text-[11px] text-gray-900 leading-none truncate max-w-[70px]`}>
-                                 {dynamicTitle}
-                             </span>
+                     {/* Mobile Burger & Logo */}
+                     <div className="flex items-center gap-3 md:hidden shrink-0">
+                         <button 
+                            onClick={() => setIsDrawerOpen(true)}
+                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'}`}
+                         >
+                            <iconify-icon icon="solar:hamburger-menu-linear" class="text-xl"></iconify-icon>
+                         </button>
+                         <div className="flex items-center gap-2" onClick={() => navigate('/')}>
+                             <Logo className="w-8 h-8 rounded-xl" />
+                             <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 leading-none">P-Pro</span>
+                                <span className={`font-['Syne'] font-bold text-[10px] ${isDarkMode ? 'text-zinc-100' : 'text-gray-900'} leading-none truncate max-w-[80px]`}>
+                                    {dynamicTitle}
+                                </span>
+                             </div>
                          </div>
                      </div>
 
@@ -290,10 +299,10 @@ export function Layout() {
         <nav className={`md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-md border-t pb-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]' : 'bg-white/90 border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]'}`}>
             <div className="flex justify-around items-center h-20 px-2 pb-2">
                 {[
-                  { id: 'dashboard', label: 'Dashboard', icon: 'solar:widget-linear', path: '/' },
+                  { id: 'dashboard', label: 'Home', icon: 'solar:widget-linear', path: '/' },
                   { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
+                  { id: 'eggs', label: 'Ponte', icon: 'ph:egg-bold', path: '/eggs' },
                   { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
-                  { id: 'production', label: 'Production', icon: 'ph:egg-bold', path: '/eggs' },
                   { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
                 ].map((item) => {
                     const isActive = location.pathname === item.path;
@@ -303,28 +312,95 @@ export function Layout() {
                             onClick={() => navigate(item.path)} 
                             className="flex flex-col items-center gap-1 w-14 p-2 rounded-xl transition-all relative"
                         >
-                            <iconify-icon 
-                              icon={item.icon} 
-                              className={`text-2xl ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}
-                            ></iconify-icon>
-                            <span className={`text-[10px] font-bold ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}>
+                            <div className={`p-2 rounded-xl transition-all ${isActive ? isDarkMode ? 'bg-zinc-800' : `bg-${accentColorClass}-50` : ''}`}>
+                                <iconify-icon 
+                                icon={item.icon} 
+                                className={`text-2xl ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}
+                                ></iconify-icon>
+                            </div>
+                            <span className={`text-[9px] font-bold ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}>
                               {item.label}
                             </span>
-                            {isActive && <div className={`absolute -top-1 w-6 h-1 rounded-b-full bg-${accentColorClass}-500`}></div>}
                         </button>
                     )
                 })}
-                {/* Menu Plus for others */}
-                <button 
-                    onClick={() => navigate('/finances')}
-                    className={`flex flex-col items-center gap-1 w-14 p-2 rounded-xl transition-all relative ${location.pathname === '/finances' ? 'text-orange-500' : 'text-gray-400'}`}
-                >
-                    <iconify-icon icon="solar:menu-dots-bold" className="text-2xl"></iconify-icon>
-                    <span className="text-[10px] font-bold">Plus</span>
-                    {['/finances', '/incubator', '/team'].includes(location.pathname) && <div className={`absolute -top-1 w-6 h-1 rounded-b-full bg-${accentColorClass}-500`}></div>}
-                </button>
             </div>
         </nav>
+
+        {/* Mobile Sidebar Overlay (Drawer) */}
+        <AnimatePresence>
+            {isDrawerOpen && (
+                <>
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsDrawerOpen(false)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden"
+                    />
+                    <motion.aside 
+                        initial={{ x: "-100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "-100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className={`fixed top-0 left-0 bottom-0 w-[280px] z-[101] md:hidden shadow-2xl flex flex-col transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}
+                    >
+                        <div className="p-6 flex items-center justify-between border-b dark:border-zinc-800">
+                            <div className="flex items-center gap-3">
+                                <Logo className="w-10 h-10" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-black text-orange-500 uppercase tracking-tighter">Poulailler Pro</span>
+                                    <span className="text-[10px] text-gray-500 font-medium">Gestion d'Élevage</span>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsDrawerOpen(false)}
+                                className={`w-8 h-8 flex items-center justify-center rounded-lg ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'}`}
+                            >
+                                <iconify-icon icon="solar:close-circle-linear" class="text-xl"></iconify-icon>
+                            </button>
+                        </div>
+
+                        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+                            {navItems.map((item) => {
+                                const isActive = location.pathname === item.path;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => {
+                                            navigate(item.path);
+                                            setIsDrawerOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 ${
+                                            isActive 
+                                                ? isDarkMode ? `bg-zinc-800 text-${accentColorClass}-400` : `bg-${accentColorClass}-50 text-${accentColorClass}-600`
+                                                : isDarkMode ? 'text-zinc-500' : 'text-gray-500'
+                                        }`}
+                                    >
+                                        <iconify-icon 
+                                            icon={item.icon} 
+                                            className={`text-2xl ${isActive ? `text-${accentColorClass}-500` : 'opacity-70'}`}
+                                        ></iconify-icon>
+                                        <span className="text-sm font-bold">{item.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+
+                        <div className="p-4 border-t dark:border-zinc-800 space-y-2">
+                             <button onClick={() => { toggleDarkMode(); setIsDrawerOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-xl"></iconify-icon>
+                                <span className="text-sm font-bold">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                            </button>
+                            <button onClick={logout} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10`}>
+                                <iconify-icon icon="solar:logout-3-linear" class="text-xl"></iconify-icon>
+                                <span className="text-sm font-bold">Déconnexion</span>
+                            </button>
+                        </div>
+                    </motion.aside>
+                </>
+            )}
+        </AnimatePresence>
       </div>
     </div>
   );

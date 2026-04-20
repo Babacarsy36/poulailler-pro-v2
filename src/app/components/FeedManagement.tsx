@@ -30,6 +30,7 @@ interface FeedFormData {
   notes: string;
   poultryType: string;
   breed: string;
+  totalPrice?: string;
 }
 
 interface Ingredient {
@@ -273,6 +274,24 @@ export function FeedManagement() {
       updatedAt: now
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+
+    // AUTOMATIC FINANCE INTEGRATION
+    if (data.type === 'achat' && data.totalPrice && Number(data.totalPrice) > 0) {
+      const finances = StorageService.getItem<any[]>("finances") || [];
+      const newTransaction = {
+        id: `feed_${now}`,
+        type: 'expense',
+        amount: Number(data.totalPrice),
+        category: "Alimentation",
+        description: `Achat ${data.quantity}kg ${data.feedType}`,
+        date: data.date,
+        poultryType: newEntry.poultryType,
+        poultryBreed: newEntry.poultryBreed,
+        updatedAt: now
+      };
+      saveData("finances", [newTransaction, ...finances]);
+    }
+
     reset({
       date: new Date().toISOString().split("T")[0],
       type: "achat",
@@ -281,6 +300,7 @@ export function FeedManagement() {
       temperature: "28",
       notes: "",
       breed: selectedBreeds[0] || "",
+      totalPrice: "",
     });
     setIsAddOpen(false);
   };
@@ -985,6 +1005,22 @@ export function FeedManagement() {
                   {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
                 </div>
               </div>
+
+              {watch("type") === 'achat' && (
+                <div className="space-y-2 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Prix Total de l'achat (FCFA)</label>
+                    <div className="relative">
+                        <input 
+                            type="number"
+                            className="w-full bg-emerald-50/30 border border-emerald-100 rounded-2xl p-4 font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-200 transition-all"
+                            placeholder="Ex: 15000 (Saisie auto en Finance)"
+                            {...register("totalPrice")}
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600">FCFA</span>
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-medium px-2 italic">Si renseigné, cette dépense sera ajoutée automatiquement à vos finances.</p>
+                </div>
+              )}
               <div className="space-y-2">
                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Température Ambiante (°C)</label>
                  <div className="flex bg-gray-50 border-none rounded-2xl p-1 items-stretch focus-within:ring-2 focus-within:ring-orange-100 transition-all">

@@ -118,7 +118,7 @@ export function FinanceManagement() {
         date: data.date,
         batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
         batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
-        poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : "poulet",
+        poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (data.breed ? (breedList.caille.some(b => b.id === data.breed) ? 'caille' : 'poulet') : "poulet"),
         poultryBreed: data.breed || selectedBreeds[0] || undefined,
         updatedAt: now
       };
@@ -154,7 +154,8 @@ export function FinanceManagement() {
 
   const filteredTransactions = transactions.filter(t => {
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
-      return isItemActive(t.poultryType, t.poultryBreed) && typeFilterMatch;
+      // Finances are globalized: we ignore the species filter unless a breed filter is active
+      return isItemActive(t.poultryType, t.poultryBreed, !activeBreedFilter) && typeFilterMatch;
   });
 
   const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
