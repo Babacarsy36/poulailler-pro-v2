@@ -33,7 +33,7 @@ export function IncubatorManagement() {
   const accentLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
   const accentBorder = isMixed ? "border-indigo-100" : isCaille ? "border-emerald-100" : "border-orange-100";
 
-  const filtered = batches.filter(b => speciesFilter === 'all' || b.species === speciesFilter);
+  const filtered = batches.filter(b => !b._deleted && (speciesFilter === 'all' || b.species === speciesFilter));
   const ongoing = filtered.filter(b => b.status === 'ongoing');
   const hatched = filtered.filter(b => b.status === 'hatched');
 
@@ -73,7 +73,9 @@ export function IncubatorManagement() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Supprimer ce lot ?')) saveBatches(batches.filter(b => b.id !== id));
+    if (confirm('Supprimer ce lot ?')) {
+      saveBatches(batches.map(b => b.id === id ? { ...b, _deleted: true, updatedAt: Date.now() } : b));
+    }
   };
 
   const handleDetailUpdate = (b: IncubationBatch) => {
@@ -103,17 +105,17 @@ export function IncubatorManagement() {
       {/* Global Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
           <div className="clean-card p-3 rounded-2xl flex flex-col items-center justify-center text-center border-l-4 border-l-emerald-500">
-              <p className="font-['JetBrains_Mono'] text-xl font-bold text-emerald-600">{batches.reduce((a, b) => a + (b.fertileCount || 0), 0)}</p>
+              <p className="font-['JetBrains_Mono'] text-xl font-bold text-emerald-600">{batches.filter(b => !b._deleted).reduce((a, b) => a + (b.fertileCount || 0), 0)}</p>
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Fertiles</p>
           </div>
           <div className="clean-card p-3 rounded-2xl flex flex-col items-center justify-center text-center border-l-4 border-l-red-500">
-              <p className="font-['JetBrains_Mono'] text-xl font-bold text-red-600">{batches.reduce((a, b) => a + (b.deadCount || 0), 0)}</p>
+              <p className="font-['JetBrains_Mono'] text-xl font-bold text-red-600">{batches.filter(b => !b._deleted).reduce((a, b) => a + (b.deadCount || 0), 0)}</p>
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Morts</p>
           </div>
           <div className="clean-card p-3 rounded-2xl flex flex-col items-center justify-center text-center border-l-4 border-l-blue-500">
               <p className="font-['JetBrains_Mono'] text-xl font-bold text-blue-600">
-                {batches.reduce((a, b) => a + (b.eggsCount || 0), 0) > 0
-                  ? Math.round((batches.reduce((a, b) => a + (b.fertileCount || 0), 0) / batches.reduce((a, b) => a + (b.eggsCount || 0), 0)) * 100)
+                {batches.filter(b => !b._deleted).reduce((a, b) => a + (b.eggsCount || 0), 0) > 0
+                  ? Math.round((batches.filter(b => !b._deleted).reduce((a, b) => a + (b.fertileCount || 0), 0) / batches.filter(b => !b._deleted).reduce((a, b) => a + (b.eggsCount || 0), 0)) * 100)
                   : 0}%
               </p>
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Taux</p>

@@ -78,7 +78,7 @@ export function ChickenInventory() {
   const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
   const btnBg = isMixed ? "bg-indigo-500 hover:bg-indigo-600" : isCaille ? "bg-emerald-500 hover:bg-emerald-600" : "bg-orange-500 hover:bg-orange-600";
 
-  const filteredChickens = chickens.filter((c) => isItemActive(c.poultryType, c.breed));
+  const filteredChickens = chickens.filter((c) => !c._deleted && isItemActive(c.poultryType, c.breed));
 
   // Mating ratio calculation
   const matingRatio = 1/4; // 1 coq pour 4 poules (Goliath et Cailles)
@@ -408,7 +408,11 @@ export function ChickenInventory() {
                   <iconify-icon icon="solar:pen-linear"></iconify-icon> Modifier
                 </button>
                 <button 
-                  onClick={() => { if(window.confirm("Supprimer ce lot ?")) saveChickens(chickens.filter(c => c.id !== chicken.id)); }}
+                  onClick={() => { 
+                    if(window.confirm("Supprimer ce lot ?")) {
+                      saveChickens(chickens.map(c => c.id === chicken.id ? { ...c, _deleted: true, updatedAt: Date.now() } : c));
+                    }
+                  }}
                   className="p-2 px-3 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-xl text-gray-400 transition-colors outline-none"
                 >
                   <iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon>

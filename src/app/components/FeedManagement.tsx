@@ -305,7 +305,7 @@ export function FeedManagement() {
     setIsAddOpen(false);
   };
 
-  const filteredEntries = entries.filter(e => isItemActive(e.poultryType, e.poultryBreed));
+  const filteredEntries = entries.filter(e => !e._deleted && isItemActive(e.poultryType, e.poultryBreed));
 
   const totalFeed = filteredEntries.reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
@@ -314,7 +314,7 @@ export function FeedManagement() {
   // Consumption Calculation Engine
   const calculateDailyConsumption = () => {
     let dailyTotalKg = 0;
-    allChickens.filter(c => c.status === 'active').forEach(c => {
+    allChickens.filter(c => !c._deleted && c.status === 'active').forEach(c => {
       if (isItemActive(c.poultryType, c.breed)) {
           const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
           const phases = getPhasesForBreed(breed);
@@ -904,7 +904,12 @@ export function FeedManagement() {
                            <Edit2 className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => saveEntries(entries.filter(e => e.id !== entry.id))}
+                          onClick={() => {
+                            if(confirm("Supprimer cette opération ?")) {
+                              saveEntries(entries.map(e => e.id === entry.id ? { ...e, _deleted: true, updatedAt: Date.now() } : e));
+                              toast.success("Opération supprimée");
+                            }
+                          }}
                           className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                           title="Supprimer l'opération"
                         >

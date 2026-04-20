@@ -149,12 +149,16 @@ export function HealthTracking() {
   };
 
   const unmarkStepAsDone = (step: ProphylaxisStep, dateStr: string) => {
-    const updatedRecords = records.filter(r => !(r.date === dateStr && r.title === step.title && r.target === selectedBreed));
+    const updatedRecords = records.map(r => 
+        (r.date === dateStr && r.title === step.title && r.target === selectedBreed) 
+            ? { ...r, _deleted: true, updatedAt: Date.now() } 
+            : r
+    );
     saveRecords(updatedRecords);
     toast.info(`${step.title} décoché !`);
   };
 
-  const filteredRecords = records.filter(r => isItemActive(r.poultryType, r.poultryBreed));
+  const filteredRecords = records.filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed));
 
   const remediesProtocols = [
     { title: "Gombo", desc: "Digestion & Vitamines.", usage: "Posologie: 3 gombos hachés dans 1L d'eau. Macérer 6h pour libérer le mucilage." },
@@ -340,7 +344,11 @@ export function HealthTracking() {
                       </div>
                       <div className="flex items-center">
                         <button 
-                          onClick={() => saveRecords(records.filter(r => r.id !== record.id))}
+                          onClick={() => {
+                            if(confirm("Supprimer ce soin ?")) {
+                              saveRecords(records.map(r => r.id === record.id ? { ...r, _deleted: true, updatedAt: Date.now() } : r));
+                            }
+                          }}
                           className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
                         >
                           <Trash2 className="w-4 h-4" />

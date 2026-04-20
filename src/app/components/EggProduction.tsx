@@ -55,7 +55,7 @@ export function EggProduction() {
   useEffect(() => {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
     const females = chickens
-      .filter((c: Chicken) => isItemActive(c.poultryType, c.breed))
+      .filter((c: Chicken) => !c._deleted && isItemActive(c.poultryType, c.breed))
       .reduce((sum: number, c: Chicken) => sum + (typeof c.femaleCount === 'string' ? parseInt(c.femaleCount) : c.femaleCount || 0), 0);
     setTotalFemales(females);
   }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
@@ -81,7 +81,7 @@ export function EggProduction() {
     setIsAddOpen(false);
   };
 
-  const filteredRecords = records.filter(r => isItemActive(r.poultryType, r.poultryBreed));
+  const filteredRecords = records.filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed));
 
   const totalEggs = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
   const lastRecord = filteredRecords[0];
@@ -205,7 +205,11 @@ export function EggProduction() {
                   <iconify-icon icon="solar:pen-linear" class="text-base"></iconify-icon>
                 </button>
                 <button
-                  onClick={() => { if (window.confirm("Supprimer cette récolte ?")) saveRecords(records.filter(r => r.id !== record.id)); }}
+                  onClick={() => { 
+                    if (window.confirm("Supprimer cette récolte ?")) {
+                      saveRecords(records.map(r => r.id === record.id ? { ...r, _deleted: true, updatedAt: Date.now() } : r)); 
+                    }
+                  }}
                   className="p-2 bg-gray-50 hover:bg-red-50 rounded-xl text-gray-400 hover:text-red-500 transition-colors"
                 >
                   <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>

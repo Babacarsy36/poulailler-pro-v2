@@ -7,7 +7,8 @@ const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubat
 export interface SyncItem {
   id: string;
   updatedAt?: number;
-  [key: string]: string | number | boolean | undefined | string[] | number[] | boolean[] | object;
+  _deleted?: boolean;
+  [key: string]: string | number | boolean | undefined | string[] | number[] | boolean[] | object | null;
 }
 
 export const SyncService = {
@@ -24,12 +25,20 @@ export const SyncService = {
     const merged = new Map<string, T>();
     
     // Process local then cloud to handle merges
+    // Note: We MUST keep items with _deleted: true in the final array 
+    // so they can be pushed/pulled as tombstones.
     [...local, ...cloud].forEach(item => {
       if (!item.id) return;
       const existing = merged.get(item.id);
-      // If no existing or item is newer, use it. 
-      // If item has no updatedAt, we default it to 0.
-      if (!existing || (Number(item.updatedAt) || 0) >= (Number(existing.updatedAt) || 0)) {
+      
+      // Merge Strategy:
+      // 1. If no existing, take it.
+      // 2. If item is newer (higher updatedAt), take it.
+      // 3. If updatedAt is equal, take the one that is marked as deleted (deletes win tie-breaks)
+      const itemTime = Number(item.updatedAt) || 0;
+      const existingTime = Number(existing?.updatedAt) || 0;
+
+      if (!existing || itemTime > existingTime || (itemTime === existingTime && item._deleted)) {
         merged.set(item.id, item);
       }
     });

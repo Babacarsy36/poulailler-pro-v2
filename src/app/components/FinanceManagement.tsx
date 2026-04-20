@@ -147,12 +147,13 @@ export function FinanceManagement() {
 
   const handleDelete = async (id: string) => {
     if(confirm("Supprimer cette transaction ?")) {
-      await saveTransactions(transactions.filter(t => t.id !== id));
+      await saveTransactions(transactions.map(t => t.id === id ? { ...t, _deleted: true, updatedAt: Date.now() } : t));
       toast.success("Transaction supprimée.");
     }
   };
 
   const filteredTransactions = transactions.filter(t => {
+      if (t._deleted) return false;
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
       // Finances are globalized: we ignore the species filter unless a breed filter is active
       return isItemActive(t.poultryType, t.poultryBreed, !activeBreedFilter) && typeFilterMatch;
