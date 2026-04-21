@@ -172,8 +172,8 @@ export function Layout() {
                      </div>
 
                      {/* Species Switcher */}
-                     <div className="flex-1 overflow-x-auto no-scrollbar mx-1 select-none">
-                         <div className="flex gap-1.5 w-max md:mx-auto">
+                     <div className="flex-1 overflow-x-auto no-scrollbar mx-0 select-none">
+                         <div className="flex gap-1.5 w-max">
                             {showAllOption && (
                                 <button 
                                     onClick={() => handleSpeciesSelect('all')} 
@@ -216,15 +216,7 @@ export function Layout() {
                     </div>
 
                      {/* Actions */}
-                     <div className="flex items-center gap-1.5 shrink-0">
-                       <div className="md:hidden flex items-center gap-1.5">
-                        <button onClick={toggleDarkMode} className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isDarkMode ? 'bg-zinc-800 text-amber-400' : 'bg-gray-100 text-gray-600'}`}>
-                          <iconify-icon icon={isDarkMode ? "solar:sun-bold-duotone" : "solar:moon-linear"} class="text-lg"></iconify-icon>
-                        </button>
-                        <button onClick={logout} className="w-9 h-9 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-500 transition-all hover:bg-red-100">
-                          <iconify-icon icon="solar:logout-3-linear" class="text-lg"></iconify-icon>
-                        </button>
-                      </div>
+                     <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                       <NotificationCenter />
                     </div>
                 </div>

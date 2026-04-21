@@ -12,6 +12,7 @@ import { HatchSummary } from './incubator/HatchSummary';
 import { FinancialSummary } from './incubator/FinancialSummary';
 import { FAQSection } from './incubator/FAQSection';
 import { getDaysElapsed, getDayTip } from './incubator/types';
+import { ProFeatureOverlay } from './ui/ProFeatureOverlay';
 
 type TabId = 'batches' | 'summary' | 'finances' | 'faq';
 
@@ -92,7 +93,12 @@ export function IncubatorManagement() {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+    <ProFeatureOverlay
+      title="Couvaison Intelligente"
+      description="Optimisez vos taux d'éclosion avec un suivi jour par jour, des alertes de mirage et une gestion complète des paramètres d'incubation."
+      hasAccess={hasAccess('PRO')}
+    >
+      <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       {/* Header Section */}
       <div className="flex flex-col gap-1">
           <div className="flex items-baseline gap-2">
@@ -293,6 +299,7 @@ export function IncubatorManagement() {
           onClose={() => setDetailBatch(null)}
         />
       )}
-    </div>
+      )}
+    </ProFeatureOverlay>
   );
 }

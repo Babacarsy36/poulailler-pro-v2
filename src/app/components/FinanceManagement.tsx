@@ -8,6 +8,7 @@ import { AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } f
 import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProFeatureOverlay } from "./ui/ProFeatureOverlay";
 
 export type Transaction = {
   id: string;
@@ -201,6 +202,11 @@ export function FinanceManagement() {
   }
 
   return (
+    <ProFeatureOverlay 
+      title="Finances Avancées" 
+      description="Prenez le contrôle total de votre rentabilité avec des graphiques détaillés, le suivi par lot et l'analyse du ROI."
+      hasAccess={hasAccess('PRO')}
+    >
     <section id="screen-finance" className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -550,6 +556,6 @@ export function FinanceManagement() {
           </div>
         </div>
       )}
-    </section>
+    </ProFeatureOverlay>
   );
 }

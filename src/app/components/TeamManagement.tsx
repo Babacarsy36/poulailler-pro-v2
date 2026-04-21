@@ -5,6 +5,7 @@ import { db } from "../firebaseConfig";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { UserRole } from "../types";
+import { ProFeatureOverlay } from "./ui/ProFeatureOverlay";
 
 interface TeamMember {
   uid: string;
@@ -156,7 +157,12 @@ export function TeamManagement() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <ProFeatureOverlay
+      title="Gestion d'Équipe"
+      description="Collaborez avec vos employés et gestionnaires. Attribuez des rôles spécifiques et suivez les actions de chacun en temps réel."
+      hasAccess={hasAccess('PRO')}
+    >
+      <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-4xl font-extrabold text-babs-brown tracking-tight">Mon Équipe</h2>
@@ -344,6 +350,7 @@ export function TeamManagement() {
            </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ProFeatureOverlay>
   );
 }
