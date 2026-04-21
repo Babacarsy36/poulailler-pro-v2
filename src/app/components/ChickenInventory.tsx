@@ -496,7 +496,7 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {formData.breed === 'fermier' && (
+              {formData.poultryType === 'poulet' && formData.breed === 'fermier' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Sous-race / Souche</label>
                   <select 
@@ -512,7 +512,27 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {formData.breed === 'ornement' && (
+              {formData.poultryType === 'caille' && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-emerald-600">Souche / Mutation (Cailles)</label>
+                  <select 
+                    className="w-full bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-sm font-medium text-emerald-900 outline-none focus:border-emerald-400 transition-all"
+                    defaultValue="Pharaon"
+                    onChange={(e) => setValue('name', `Caille ${e.target.value} ${new Date().getFullYear()}`)}
+                  >
+                    <option value="Pharaon">Pharaon (Classique / Sauvage)</option>
+                    <option value="Jumbo">Jumbo (Chair lourde)</option>
+                    <option value="Isabelle">Isabelle</option>
+                    <option value="Tuxedo">Tuxedo (Bicolore)</option>
+                    <option value="Blanc">Blanc Anglais</option>
+                    <option value="Manchourie">Manchourie (Dorée)</option>
+                    <option value="Rosetta">Rosetta</option>
+                    <option value="Autre">Autre mutation</option>
+                  </select>
+                </div>
+              )}
+
+              {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
                 <>
                   <div className="space-y-1.5 animate-in slide-in-from-top-2">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>

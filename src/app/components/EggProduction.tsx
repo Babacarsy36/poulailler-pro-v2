@@ -101,6 +101,28 @@ export function EggProduction() {
   const filteredRecords = records.filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed));
 
   const totalEggs = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
+
+  const now = new Date();
+  
+  // Lundi début de semaine
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  let eggsThisWeek = 0;
+  let eggsThisMonth = 0;
+  let eggsThisYear = 0;
+
+  filteredRecords.forEach(r => {
+    const recordDate = new Date(r.date);
+    if (recordDate >= startOfWeek) eggsThisWeek += r.quantity;
+    if (recordDate >= startOfMonth) eggsThisMonth += r.quantity;
+    if (recordDate >= startOfYear) eggsThisYear += r.quantity;
+  });
+
   const lastRecord = filteredRecords[0];
   const layingRate = lastRecord && totalFemales > 0 ? ((lastRecord.quantity / totalFemales) * 100) : null;
 
@@ -123,20 +145,62 @@ export function EggProduction() {
         </button>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 select-none">
-        <div className={`clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 ${accentBorderLeft} hover:scale-105 transition-transform`}>
-          <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
-            <iconify-icon icon={accentIcon} stroke-width="1.5" class={`text-xl ${accentColor}`}></iconify-icon>
-            <span className="truncate font-medium">Total</span>
+      {/* KPI Row (Production Totals) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 select-none mb-6">
+        <div className={`clean-card rounded-2xl w-full p-3 flex flex-col justify-between border-l-4 border-l-blue-500 hover:scale-105 transition-transform`}>
+          <div className="flex items-center gap-2 text-[10px] text-gray-500 font-['DM_Sans'] uppercase tracking-wider">
+            <iconify-icon icon="solar:calendar-date-linear" stroke-width="1.5" class="text-xl text-blue-500"></iconify-icon>
+            <span className="truncate font-bold">Cette Semaine</span>
           </div>
-          <div>
+          <div className="mt-2">
+            <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{eggsThisWeek}</div>
+            <div className="text-[9px] font-bold tracking-tight inline-block px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 uppercase">
+              œufs
+            </div>
+          </div>
+        </div>
+
+        <div className={`clean-card rounded-2xl w-full p-3 flex flex-col justify-between border-l-4 border-l-cyan-500 hover:scale-105 transition-transform`}>
+          <div className="flex items-center gap-2 text-[10px] text-gray-500 font-['DM_Sans'] uppercase tracking-wider">
+            <iconify-icon icon="solar:calendar-minimalistic-linear" stroke-width="1.5" class="text-xl text-cyan-500"></iconify-icon>
+            <span className="truncate font-bold">Ce Mois</span>
+          </div>
+          <div className="mt-2">
+            <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{eggsThisMonth}</div>
+            <div className="text-[9px] font-bold tracking-tight inline-block px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-600 uppercase">
+              œufs
+            </div>
+          </div>
+        </div>
+
+        <div className={`clean-card rounded-2xl w-full p-3 flex flex-col justify-between border-l-4 border-l-purple-500 hover:scale-105 transition-transform`}>
+          <div className="flex items-center gap-2 text-[10px] text-gray-500 font-['DM_Sans'] uppercase tracking-wider">
+            <iconify-icon icon="solar:calendar-search-linear" stroke-width="1.5" class="text-xl text-purple-500"></iconify-icon>
+            <span className="truncate font-bold">Cette Année</span>
+          </div>
+          <div className="mt-2">
+            <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{eggsThisYear}</div>
+            <div className="text-[9px] font-bold tracking-tight inline-block px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 uppercase">
+              œufs
+            </div>
+          </div>
+        </div>
+
+        <div className={`clean-card rounded-2xl w-full p-3 flex flex-col justify-between border-l-4 ${accentBorderLeft} hover:scale-105 transition-transform`}>
+          <div className="flex items-center gap-2 text-[10px] text-gray-500 font-['DM_Sans'] uppercase tracking-wider">
+            <iconify-icon icon={accentIcon} stroke-width="1.5" class={`text-xl ${accentColor}`}></iconify-icon>
+            <span className="truncate font-bold">Global</span>
+          </div>
+          <div className="mt-2">
             <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{totalEggs}</div>
-            <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${accentBgLight} ${accentColor}`}>
+            <div className={`text-[9px] font-bold tracking-tight inline-block px-1.5 py-0.5 rounded ${accentBgLight} ${accentColor} uppercase`}>
               unités récoltées
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 select-none mb-6">
 
         <div className="clean-card rounded-2xl w-full h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform">
           <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
