@@ -291,7 +291,7 @@ export function Layout() {
         </header>
 
         {/* Main Content */}
-        <main className={`flex-1 w-full max-w-5xl mx-auto ${ (activeSpeciesFilter === 'poulet' || (activeSpeciesFilter === 'all' && poultryTypes.includes('poulet'))) ? 'pt-28' : 'pt-20'} pb-28 md:pb-8 px-4 scroll-smooth min-h-screen`}>
+        <main className={`flex-1 w-full max-w-5xl mx-auto ${ (activeSpeciesFilter === 'poulet' || (activeSpeciesFilter === 'all' && poultryTypes.includes('poulet'))) ? 'pt-[8.5rem]' : 'pt-28'} pb-28 md:pb-8 px-4 scroll-smooth min-h-screen`}>
             <Outlet />
         </main>
 

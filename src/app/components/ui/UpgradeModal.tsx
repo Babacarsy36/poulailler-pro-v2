@@ -45,11 +45,11 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-amber-300 to-amber-600 rounded-2xl shadow-[0_10px_30px_-5px_rgba(245,158,11,0.4)] flex items-center justify-center mb-6 md:mb-8 rotate-3">
               <Crown className="w-6 h-6 md:w-9 md:h-9 text-zinc-900 fill-zinc-900" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-['Syne'] font-extrabold mb-3 md:mb-4 leading-tight tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-black mb-3 md:mb-4 leading-tight">
               Passez à <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200">l'Excellence PRO</span>
             </h2>
-            <p className="text-[10px] md:text-xs font-medium text-zinc-400 leading-relaxed max-w-[180px]">
+            <p className="text-xs md:text-sm font-medium text-zinc-400 leading-relaxed max-w-[200px]">
               Optimisez chaque aspect de votre exploitation avec nos technologies de pointe.
             </p>
           </div>
@@ -107,8 +107,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             <div className="pt-2 md:pt-4">
                <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl p-5 md:p-6 mb-6 md:mb-8 border border-zinc-100 dark:border-white/5 relative group transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl md:text-5xl font-['Syne'] font-extrabold text-zinc-900 dark:text-white tracking-tighter">5.000</span>
-                    <span className="text-[10px] md:text-xs font-bold text-zinc-400 uppercase tracking-widest">FCFA / MOIS</span>
+                    <span className="text-5xl md:text-6xl font-black text-zinc-900 dark:text-white">5.000</span>
+                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-2">FCFA / MOIS</span>
                   </div>
                   <p className="text-[9px] md:text-[10px] text-zinc-400 font-medium mt-2 flex items-center gap-1.5 italic">
                     <Check className="w-3 h-3 text-emerald-500" /> Annulable à tout moment. Satisfait ou remboursé.
@@ -150,7 +150,7 @@ function FeatureItem({ icon, color, bg, title, desc }: { icon: any, color: strin
         {icon}
       </div>
       <div>
-        <p className="font-['Syne'] font-bold text-zinc-900 dark:text-zinc-100 text-sm tracking-tight">{title}</p>
+        <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{title}</p>
         <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed max-w-[240px] mt-0.5">{desc}</p>
       </div>
     </div>

@@ -40,6 +40,7 @@ export function HealthTracking() {
   
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
+  const [activeReminders, setActiveReminders] = useState<any[]>([]);
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<HealthFormData>({
     defaultValues: {
@@ -68,6 +69,7 @@ export function HealthTracking() {
     if (saved) {
       setRecords(saved);
     }
+    setActiveReminders(StorageService.getItem<any[]>('vaccine_reminders') || []);
   }, [syncTrigger]);
 
   useEffect(() => {
@@ -150,7 +152,7 @@ export function HealthTracking() {
   };
 
   const scheduleReminder = (step: ProphylaxisStep, dateStr: string) => {
-    const reminders = StorageService.getItem<any[]>('vaccine_reminders') || [];
+    let reminders = StorageService.getItem<any[]>('vaccine_reminders') || [];
     const id = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
     
     if (!reminders.some(r => r.id === id && r.date === dateStr)) {
@@ -162,13 +164,17 @@ export function HealthTracking() {
             breed: selectedBreed
         });
         StorageService.setItem('vaccine_reminders', reminders);
+        setActiveReminders([...reminders]);
         toast.success(`Rappel activé pour le ${new Date(dateStr).toLocaleDateString('fr-FR')} !`);
         
         if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
              Notification.requestPermission();
         }
     } else {
-        toast.info("Un rappel est déjà programmé pour cette date.");
+        reminders = reminders.filter(r => !(r.id === id && r.date === dateStr));
+        StorageService.setItem('vaccine_reminders', reminders);
+        setActiveReminders([...reminders]);
+        toast.info("Rappel désactivé.");
     }
   };
 
@@ -313,6 +319,8 @@ export function HealthTracking() {
                       const isPast = new Date() > stepDateObj;
                       const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
                       const isCommonBase = step.day <= 24;
+                      const reminderId = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
+                      const isReminderActive = activeReminders.some(r => r.id === reminderId && r.date === stepDateStr);
 
                       return (
                         <div key={idx} className="relative flex items-start gap-4 md:gap-6 group">
@@ -337,8 +345,12 @@ export function HealthTracking() {
                                 </div>
                                 {!isDone ? (
                                     <div className="flex gap-2 items-center">
-                                      <button onClick={() => scheduleReminder(step, stepDateStr)} className="text-gray-300 hover:text-blue-500 transition-colors p-1 flex items-center justify-center bg-gray-50 rounded-lg hover:bg-blue-50" title="Activer un rappel push">
-                                        <iconify-icon icon="solar:bell-bing-linear" class="text-lg md:text-xl"></iconify-icon>
+                                      <button 
+                                        onClick={() => scheduleReminder(step, stepDateStr)} 
+                                        className={`p-1 flex items-center justify-center rounded-lg transition-colors ${isReminderActive ? 'text-blue-500 bg-blue-50 shadow-sm' : 'text-gray-300 hover:text-blue-500 bg-gray-50 hover:bg-blue-50'}`} 
+                                        title={isReminderActive ? "Désactiver le rappel push" : "Activer un rappel push"}
+                                      >
+                                        <iconify-icon icon={isReminderActive ? "solar:bell-bing-bold-duotone" : "solar:bell-bing-linear"} class="text-lg md:text-xl"></iconify-icon>
                                       </button>
                                       <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
                                         <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
