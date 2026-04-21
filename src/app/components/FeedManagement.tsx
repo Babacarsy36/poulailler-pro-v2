@@ -271,8 +271,8 @@ export function FeedManagement() {
       ...data,
       quantity: Number(data.quantity),
       temperature: data.temperature ? Number(data.temperature) : undefined,
-      poultryType: (data as any).poultryType || (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet'),
-      poultryBreed: (data as any).breed || selectedBreeds[0] || undefined,
+      poultryType: 'global',
+      poultryBreed: 'global',
       updatedAt: now
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -307,17 +307,17 @@ export function FeedManagement() {
     setIsAddOpen(false);
   };
 
-  const filteredEntries = entries.filter(e => !e._deleted && isItemActive(e.poultryType, e.poultryBreed));
+  // Alimentation globale (toutes races confondues)
+  const filteredEntries = entries.filter(e => !e._deleted);
 
   const totalFeed = filteredEntries.reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
 
-  // Consumption Calculation Engine
+  // Consumption Calculation Engine (GLOBAL)
   const calculateDailyConsumption = () => {
     let dailyTotalKg = 0;
     allChickens.filter(c => !c._deleted && c.status === 'active').forEach(c => {
-      if (isItemActive(c.poultryType, c.breed)) {
           const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
           const phases = getPhasesForBreed(breed);
           
@@ -336,7 +336,6 @@ export function FeedManagement() {
             const count = Number(c.count) || 1;
             dailyTotalKg += (avgGrams * count * weatherFactor) / 1000;
           }
-      }
     });
 
     return dailyTotalKg;
@@ -997,44 +996,7 @@ export function FeedManagement() {
                 </div>
               </div>
 
-              {/* Espèce sélecteur - Toujours visible si plusieurs espèces sont activées */}
-              {poultryTypes.length > 1 && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce concernée</label>
-                    <select 
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all ${watch("poultryType" as any) === 'caille' ? 'border-emerald-200 bg-emerald-50/30' : ''}`}
-                    {...register("poultryType" as any)}
-                    >
-                    {poultryTypes.map(t => (
-                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
-                    ))}
-                    </select>
-                </div>
-              )}
 
-              {/* Race associée (Poulet) */}
-              {(!watch("poultryType" as any) || (watch("poultryType" as any) === 'poulet')) && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
-                    <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("breed" as any)}>
-                        {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).map(b => (
-                            <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                        ))}
-                    </select>
-                </div>
-              )}
-
-              {/* Race associée (Caille) */}
-              {watch("poultryType" as any) === 'caille' && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de Caille</label>
-                    <select className="w-full bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-emerald-400" {...register("breed" as any)}>
-                      <option value="japon">Caille du Japon</option>
-                      <option value="chine">Caille de Chine</option>
-                      <option value="commune">Caille Commune</option>
-                    </select>
-                </div>
-              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -1051,9 +1013,16 @@ export function FeedManagement() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Aliment</label>
                   <input 
                     className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.feedType ? 'ring-2 ring-red-500' : ''}`}
-                    placeholder="Ex: Miettes Croissance..."
+                    placeholder="Ex: Démarrage, Pondeuse..."
+                    list="feed-types-list"
                     {...register("feedType", { required: "Type d'aliment requis" })}
                   />
+                  <datalist id="feed-types-list">
+                    <option value="Démarrage" />
+                    <option value="Croissance" />
+                    <option value="Pondeuse" />
+                    <option value="Mélange Maison" />
+                  </datalist>
                   {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
                 </div>
               </div>
@@ -1087,17 +1056,7 @@ export function FeedManagement() {
                     </div>
                  </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de la récolte</label>
-                <select 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
-                  {...register("breed", { required: true })}
-                >
-                  {selectedBreeds.map(b => (
-                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                  ))}
-                </select>
-              </div>
+
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>
