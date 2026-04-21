@@ -275,12 +275,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('active_species_filter');
     };
 
-    const isItemActive = (itemType?: PoultryType | string | null, itemBreed?: string, ignoreSpecies = false) => {
-        const rawType = (itemType || 'poulet') as string;
-        const effectiveType = rawType.toLowerCase() as PoultryType;
-        
         // 1. Global Species Filter (Top Switcher)
-        if (!ignoreSpecies && activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
+        // If an item has NO explicit species (null/undefined), it's considered GLOBAL and visible in all species views.
+        const isEntryGlobal = !itemType;
+        if (!ignoreSpecies && activeSpeciesFilter !== 'all' && !isEntryGlobal && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
  
         // 2. Breed/Sub-type Filter (Contextual Switcher)
         if (activeBreedFilter) {
@@ -380,10 +378,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const setTierAction = async (newTier: SubscriptionTier) => {
         if (!user) return;
-        try {
             setTier(newTier);
-            // Save to root document for maximum reliability
-            await setDoc(doc(db, 'users', user.uid), {
+            // Save to profile document instead of root to avoid PERMISSION_DENIED
+            await setDoc(doc(db, 'users', user.uid, 'settings', 'profile'), {
                 tier: newTier,
                 updatedAt: Date.now()
             }, { merge: true });

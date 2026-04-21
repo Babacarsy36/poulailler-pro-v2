@@ -299,7 +299,6 @@ export function IncubatorManagement() {
           onClose={() => setDetailBatch(null)}
         />
       )}
-      </div>
     </ProFeatureOverlay>
   );
 }

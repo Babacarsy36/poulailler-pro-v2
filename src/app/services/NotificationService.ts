@@ -29,7 +29,7 @@ export const NotificationService = {
   async saveTokenToFirestore(userId: string, token: string) {
     try {
       if (!userId) return;
-      const userRef = doc(db, "users", userId);
+      const userRef = doc(db, "users", userId, "settings", "profile");
       await updateDoc(userRef, {
         fcmTokens: arrayUnion(token)
       });
