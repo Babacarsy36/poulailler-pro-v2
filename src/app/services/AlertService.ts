@@ -67,14 +67,21 @@ export const AlertService = {
             return typeMatch && breedMatch;
         });
         
+        const isGlobal = !poultryType || poultryType === 'all';
+        
         const totalKg = feed.filter((f) => {
             if (f._deleted) return false;
-            const typeMatch = !poultryType || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
-            const breedMatch = checkBreedMatch(f.poultryBreed);
+            const typeMatch = isGlobal || f.poultryType === poultryType || (poultryType === 'poulet' && !f.poultryType);
+            const breedMatch = isGlobal || checkBreedMatch(f.poultryBreed);
             return typeMatch && breedMatch;
         }).reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
         
-        const dailyCons = activeLots.reduce((acc: number, c) => {
+        const dailyCons = activeLots.filter(c => {
+            if (isGlobal) return true;
+            const typeMatch = c.poultryType === poultryType || (poultryType === 'poulet' && !c.poultryType);
+            const breedMatch = checkBreedMatch(c.breed);
+            return typeMatch && breedMatch;
+        }).reduce((acc: number, c) => {
             const breedCons = c.poultryType === 'caille' ? 0.03 : 0.12; 
             return acc + (breedCons * (Number(c.count) || 1));
         }, 0);

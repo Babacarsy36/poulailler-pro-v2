@@ -364,11 +364,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Recalculate alerts when data Changes
     useEffect(() => {
         if (user) {
-            // Use the first type for legacy alert support if needed, or pass full list
-            const newAlerts = AlertService.getAlerts(poultryTypes[0] || undefined, selectedBreeds);
+            const newAlerts = AlertService.getAlerts(activeSpeciesFilter, selectedBreeds);
             setAlerts(newAlerts);
         }
-    }, [syncTrigger, poultryTypes, selectedBreeds, user]);
+    }, [syncTrigger, poultryTypes, selectedBreeds, user, activeSpeciesFilter]);
 
     const saveData = async <T extends SyncItem>(key: string, data: T[]) => {
         const isFarm = !!farmId && farmId !== user?.uid;
