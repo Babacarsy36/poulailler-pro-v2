@@ -362,7 +362,7 @@ export function Layout() {
                         </div>
 
                         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-                            {navItems.map((item) => {
+                            {navItems.filter(item => !['dashboard', 'inventory', 'eggs', 'health', 'feed'].includes(item.id)).map((item) => {
                                 const isActive = location.pathname === item.path;
                                 return (
                                     <button

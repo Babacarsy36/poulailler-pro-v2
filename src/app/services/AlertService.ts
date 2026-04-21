@@ -158,6 +158,29 @@ export const AlertService = {
             }
         });
 
+        // 5. Explicit Reminders (Added manually from Health Calendar)
+        const vaccineReminders = StorageService.getItem<any[]>("vaccine_reminders") || [];
+        vaccineReminders.forEach(rem => {
+            const remDate = new Date(rem.date);
+            if (now.getTime() - remDate.getTime() > 2 * 24 * 60 * 60 * 1000) return; // ignore ancient
+            
+            const diffTime = remDate.getTime() - new Date(todayStr).getTime();
+            const daysRemaining = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (daysRemaining === 0 || daysRemaining === 1) {
+                const isDueToday = daysRemaining === 0;
+                alerts.push({
+                    id: `rem-u-${rem.id}`,
+                    type: 'health-reminder',
+                    severity: isDueToday ? 'critical' : 'warning',
+                    title: isDueToday ? `Rappel : ${rem.title} AUJOURD'HUI ! 💊` : `Rappel : ${rem.title} demain 📅`,
+                    message: `Soin programmé pour: ${rem.breed}. ${rem.description}`,
+                    link: '/health',
+                    createdAt: Date.now()
+                });
+            }
+        });
+
         return alerts;
     }
 };

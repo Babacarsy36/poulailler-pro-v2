@@ -205,9 +205,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Alert auto-notifications
     useEffect(() => {
-        const criticalAlerts = alerts.filter(a => a.severity === 'critical');
-        if (criticalAlerts.length > 0) {
-            const lastAlert = criticalAlerts[0];
+        // Notifie pour les Critical (Aujourd'hui) ET les Warning (Demain)
+        const priorityAlerts = alerts.filter(a => a.severity === 'critical' || (a.severity === 'warning' && a.type === 'health-reminder'));
+        if (priorityAlerts.length > 0) {
+            const lastAlert = priorityAlerts[0];
             const notifiedKey = `notified_${lastAlert.id}`;
             if (!localStorage.getItem(notifiedKey)) {
                 NotificationService.showLocalNotification(lastAlert.title, lastAlert.message);

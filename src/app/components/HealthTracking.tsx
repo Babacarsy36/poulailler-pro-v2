@@ -148,6 +148,29 @@ export function HealthTracking() {
     toast.success(`${step.title} marqué comme réalisé !`);
   };
 
+  const scheduleReminder = (step: ProphylaxisStep, dateStr: string) => {
+    const reminders = StorageService.getItem<any[]>('vaccine_reminders') || [];
+    const id = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
+    
+    if (!reminders.some(r => r.id === id && r.date === dateStr)) {
+        reminders.push({
+            id,
+            date: dateStr,
+            title: step.title,
+            description: step.description,
+            breed: selectedBreed
+        });
+        StorageService.setItem('vaccine_reminders', reminders);
+        toast.success(`Rappel activé pour le ${new Date(dateStr).toLocaleDateString('fr-FR')} !`);
+        
+        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+             Notification.requestPermission();
+        }
+    } else {
+        toast.info("Un rappel est déjà programmé pour cette date.");
+    }
+  };
+
   const unmarkStepAsDone = (step: ProphylaxisStep, dateStr: string) => {
     const updatedRecords = records.map(r => 
         (r.date === dateStr && r.title === step.title && r.target === selectedBreed) 
@@ -296,9 +319,14 @@ export function HealthTracking() {
                                     </p>
                                 </div>
                                 {!isDone ? (
-                                    <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
-                                      <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
-                                    </button>
+                                    <div className="flex gap-2 items-center">
+                                      <button onClick={() => scheduleReminder(step, stepDateStr)} className="text-gray-300 hover:text-blue-500 transition-colors p-1 flex items-center justify-center bg-gray-50 rounded-lg hover:bg-blue-50" title="Activer un rappel push">
+                                        <iconify-icon icon="solar:bell-bing-linear" class="text-lg md:text-xl"></iconify-icon>
+                                      </button>
+                                      <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
+                                        <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
+                                      </button>
+                                    </div>
                                   ) : (
                                     <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
                                       <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
