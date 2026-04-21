@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, CartesianGrid, Legend } from 'recharts';
 import { IncubationBatch, SPECIES_CONFIG, SpeciesKey, getHatchRate } from './types';
 
 interface Props {
@@ -16,6 +16,8 @@ export function HatchSummary({ batches }: Props) {
   const chartData = hatched.slice(-8).map(b => ({
     name: (b.name || SPECIES_CONFIG[b.species as SpeciesKey].label).slice(0, 10),
     rate: getHatchRate(b.fertileCount, b.eggsCount),
+    placed: b.eggsCount,
+    hatched: b.fertileCount,
   }));
 
   // Average rate
@@ -138,21 +140,26 @@ export function HatchSummary({ batches }: Props) {
         )}
 
         {/* Chart */}
-        {chartData.length > 1 && (
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Taux par lot</p>
-            <div className="h-40">
+        {chartData.length > 0 && (
+          <div className="mt-6">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Volume vs Taux de réussite</p>
+            <div className="h-48 w-full bg-white/50 p-2 rounded-xl">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 700 }} />
-                  <YAxis tick={{ fontSize: 9 }} domain={[0, 100]} />
-                  <Tooltip />
-                  <Bar dataKey="rate" radius={[6, 6, 0, 0]}>
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.rate >= 75 ? '#2563eb' : '#94a3b8'} />
-                    ))}
-                  </Bar>
-                </BarChart>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 700, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 9, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 9, fill: '#10B981' }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ color: '#1F2937', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#6B7280', fontSize: '12px' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+                  <Bar yAxisId="left" dataKey="placed" name="Placés" fill="#E2E8F0" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="hatched" name="Couvés" fill="#10B981" radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="rate" name="Taux (%)" stroke="#F59E0B" strokeWidth={3} dot={{ r: 4, fill: '#F59E0B', strokeWidth: 2, stroke: '#fff' }} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>

@@ -43,8 +43,9 @@ export const AlertService = {
 
         const avg7Days = last7Days.reduce((a, b) => a + b, 0) / 7;
         const todayEggs = filteredEggs.filter((e) => e.date === todayStr).reduce((acc: number, e) => acc + (e.quantity || 0), 0);
+        const hasTodayEntry = filteredEggs.some((e) => e.date === todayStr);
 
-        if (avg7Days > 10 && todayEggs < avg7Days * 0.85) {
+        if (hasTodayEntry && avg7Days > 10 && todayEggs < avg7Days * 0.85) {
             alerts.push({
                 id: 'egg-drop-' + todayStr,
                 type: 'egg-drop',
@@ -78,9 +79,10 @@ export const AlertService = {
             return acc + (breedCons * (Number(c.count) || 1));
         }, 0);
 
-        if (dailyCons > 0) {
+        const feedEntriesCount = feed.filter((f) => !f._deleted).length;
+        if (feedEntriesCount > 0 && dailyCons > 0) {
             const autonomy = totalKg / dailyCons;
-            if (autonomy < 3) {
+            if (autonomy < 2 && totalKg >= 0) {
                 alerts.push({
                     id: 'low-feed-' + todayStr,
                     type: 'low-feed',

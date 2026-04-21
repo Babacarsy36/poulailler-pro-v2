@@ -6,6 +6,7 @@ import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { ProphylaxisService, ProphylaxisStep } from "../services/ProphylaxisService";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface HealthRecord {
   [key: string]: any;
@@ -194,6 +195,22 @@ export function HealthTracking() {
 
   const currentProphylaxis = ProphylaxisService.getProtocolsForBreed(selectedBreed);
 
+  const interventionTypes = filteredRecords.reduce((acc, curr) => {
+    acc[curr.type] = (acc[curr.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const COLORS: Record<string, string> = {
+     'Vaccin': '#F59E0B',
+     'Traitement': '#10B981',
+     'Prévention': '#3B82F6',
+  };
+
+  const chartData = Object.keys(interventionTypes).map(key => ({
+      name: key,
+      value: interventionTypes[key]
+  }));
+
   return (
     <section id="screen-health" className="space-y-6">
       {/* Header */}
@@ -345,6 +362,40 @@ export function HealthTracking() {
 
         {/* History & Remedies */}
         <div className="lg:col-span-5 space-y-6">
+
+          {/* Graphique de Santé */}
+          <div className="clean-card rounded-3xl p-4 md:p-5">
+            <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4">Répartition des Soins</h3>
+            {chartData.length > 0 ? (
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[entry.name] || '#9CA3AF'} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      itemStyle={{ color: '#1F2937', fontWeight: 'bold' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', paddingTop: '10px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-48 flex items-center justify-center text-gray-400 text-xs font-bold uppercase">Aucune donnée</div>
+            )}
+          </div>
+
           {/* History List */}
           <div className="clean-card rounded-3xl p-4 md:p-5 flex flex-col h-[400px] md:h-[500px]">
             <div className="flex items-center gap-2 mb-4">

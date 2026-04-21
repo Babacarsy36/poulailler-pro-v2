@@ -5,7 +5,9 @@ import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface FeedEntry {
   id: string;
@@ -344,6 +346,19 @@ export function FeedManagement() {
   const autonomyDays = dailyConsumption > 0 ? Math.floor(totalFeed / dailyConsumption) : Infinity;
   const autonomyColor = autonomyDays > 7 ? 'text-emerald-500' : autonomyDays > 3 ? 'text-orange-500' : 'text-red-500';
 
+  const chartData = Array.from({ length: 14 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const dStr = d.toISOString().split('T')[0];
+    const consumed = filteredEntries
+      .filter(e => e.date === dStr && e.type === "utilisation")
+      .reduce((sum, e) => sum + e.quantity, 0);
+    return {
+      name: d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+      consommation: consumed
+    };
+  });
+
   const phases = getPhasesForBreed(selectedBreed);
   const currentDate = new Date();
   const arrDate = new Date(arrivalDate);
@@ -539,7 +554,9 @@ export function FeedManagement() {
                     value={calcGoal}
                     onChange={(e) => setCalcGoal(e.target.value)}
                   >
-                    {Object.keys(STANDARD_RECIPES).map(k => <option key={k} value={k}>{k}</option>)}
+                    {Object.keys(STANDARD_RECIPES)
+                      .filter(k => k !== "Lapin" && k !== "Pigeon")
+                      .map(k => <option key={k} value={k}>{k}</option>)}
                   </select>
                 </div>
                 <div>
@@ -849,6 +866,36 @@ export function FeedManagement() {
                 </div>
               )}
            </div>
+         </div>
+
+         {/* Graphique de Consommation */}
+         <div className="clean-card rounded-3xl p-5 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <iconify-icon icon="solar:chart-square-linear" class="text-xl text-gray-400"></iconify-icon>
+                <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Consommation (14 jrs)</h3>
+              </div>
+            </div>
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorCons" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={isCaille ? "#10B981" : "#F59E0B"} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={isCaille ? "#10B981" : "#F59E0B"} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" tick={{fontSize: 10, fill: '#9CA3AF'}} axisLine={false} tickLine={false} />
+                  <YAxis tick={{fontSize: 10, fill: '#9CA3AF'}} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ color: '#1F2937', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#6B7280', fontSize: '12px' }}
+                  />
+                  <Area type="monotone" dataKey="consommation" stroke={isCaille ? "#10B981" : "#F59E0B"} strokeWidth={3} fillOpacity={1} fill="url(#colorCons)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
          </div>
 
          {/* History */}
