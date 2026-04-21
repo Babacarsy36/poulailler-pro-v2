@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Plus, Leaf, History, Trash2, Calendar, CheckCircle } from "lucide-react";
+import { Heart, Plus, Leaf, History, Trash2, Calendar, CheckCircle, X } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
@@ -37,6 +37,7 @@ export function HealthTracking() {
   const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showRemedies, setShowRemedies] = useState(true);
   
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
@@ -452,22 +453,31 @@ export function HealthTracking() {
           </div>
 
           {/* Natural Remedies Section */}
-          <div className="clean-card rounded-3xl p-4 md:p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" class="text-xl text-emerald-500"></iconify-icon>
-              <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Bibliothèque Bio</h3>
+          {showRemedies && (
+            <div className="clean-card rounded-3xl p-4 md:p-5 relative animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <button 
+                onClick={() => setShowRemedies(false)}
+                className="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 bg-gray-50 hover:bg-red-50 rounded-xl transition-colors z-10"
+                title="Fermer ce bloc"
+              >
+                <X className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+              <div className="flex items-center gap-2 mb-3 pr-8">
+                <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" class="text-xl text-emerald-500"></iconify-icon>
+                <h3 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Bibliothèque Bio</h3>
+              </div>
+              
+              <div className="overflow-x-auto pb-4 custom-scrollbar flex gap-4">
+                {remediesProtocols.map((p, i) => (
+                  <div key={i} className="min-w-[180px] md:min-w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 relative group">
+                    <p className="font-black text-emerald-700 text-xs md:text-sm mb-1">{p.title}</p>
+                    <p className="text-[9px] md:text-[10px] text-gray-500 font-medium mb-2">{p.desc}</p>
+                    <p className="bg-emerald-50 text-emerald-800 text-[9px] md:text-[10px] p-2 rounded-xl font-bold">{p.usage}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            
-            <div className="overflow-x-auto pb-4 custom-scrollbar flex gap-4">
-              {remediesProtocols.map((p, i) => (
-                <div key={i} className="min-w-[180px] md:min-w-[200px] bg-white rounded-2xl p-4 shadow-sm border border-emerald-50">
-                  <p className="font-black text-emerald-700 text-xs md:text-sm mb-1">{p.title}</p>
-                  <p className="text-[9px] md:text-[10px] text-gray-500 font-medium mb-2">{p.desc}</p>
-                  <p className="bg-emerald-50 text-emerald-800 text-[9px] md:text-[10px] p-2 rounded-xl font-bold">{p.usage}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

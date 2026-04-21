@@ -316,8 +316,8 @@ export function Dashboard() {
                   </div>
                 </div>
                 {(item.type === 'poulet' || item.type === 'caille') && (
-                  <div className="mt-3 sm:mt-0 flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-100/50">
-                    <span className="text-[10px] font-medium text-gray-500 uppercase">Jour :</span>
+                  <div className="mt-3 sm:mt-0 flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-100/50" title="Production de ce jour">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase">Ponte :</span>
                     <span className="font-['JetBrains_Mono'] font-medium text-sm text-gray-900">{item.eggs}</span>
                   </div>
                 )}
