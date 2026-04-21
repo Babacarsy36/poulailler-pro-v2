@@ -556,6 +556,7 @@ export function FinanceManagement() {
           </div>
         </div>
       )}
+      </section>
     </ProFeatureOverlay>
   );
 }
