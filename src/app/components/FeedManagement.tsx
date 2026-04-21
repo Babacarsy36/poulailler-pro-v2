@@ -120,38 +120,84 @@ export function FeedManagement() {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
 
-  const [calcGoal, setCalcGoal] = useState<string>("Pondeuse");
+  const [calcGoal, setCalcGoal] = useState<string>("Poulet de chair Démarrage (Concentré 10%)");
   const [calcAmount, setCalcAmount] = useState<number>(50);
   const [chickCount, setChickCount] = useState<number>(100);
 
   const STANDARD_RECIPES: Record<string, { type: string, ingredients: {name: string, pct: number, isProt?: boolean}[] }> = {
-    "Pondeuse": {
+    "Poulet de chair Démarrage (Concentré 10%)": {
+       type: "Chair",
+       ingredients: [
+         { name: "Maïs", pct: 56 },
+         { name: "Soja", pct: 29, isProt: true },
+         { name: "Son de Blé", pct: 5 },
+         { name: "Concentré 10%", pct: 10 }
+       ]
+    },
+    "Poulet de chair Croissance (Concentré 10%)": {
+       type: "Chair",
+       ingredients: [
+         { name: "Maïs", pct: 61 },
+         { name: "Soja", pct: 26, isProt: true },
+         { name: "Son de Blé", pct: 3 },
+         { name: "Concentré 10%", pct: 10 }
+       ]
+    },
+    "Poulet de chair Finition (Concentré 10%)": {
+       type: "Chair",
+       ingredients: [
+         { name: "Maïs", pct: 62 },
+         { name: "Soja", pct: 25, isProt: true },
+         { name: "Son de Blé", pct: 3 },
+         { name: "Concentré 10%", pct: 10 }
+       ]
+    },
+    "Pondeuse Démarrage (Ponte 5%)": {
        type: "Ponte",
        ingredients: [
-         { name: "Maïs concassé", pct: 60 },
-         { name: "Tourteau (Soja/Arachide)", pct: 20, isProt: true },
-         { name: "Farine de Poisson", pct: 5, isProt: true },
-         { name: "Son de blé / Mil", pct: 5 },
-         { name: "Coquillage (Calcium)", pct: 8 },
-         { name: "CMV (Minéraux/Vitamines)", pct: 2 }
+         { name: "Maïs", pct: 56 },
+         { name: "Soja", pct: 22, isProt: true },
+         { name: "Tourteau arachide", pct: 7, isProt: true },
+         { name: "Son de blé", pct: 5 },
+         { name: "Farine de poisson", pct: 4, isProt: true },
+         { name: "CMAV 5%", pct: 5 },
+         { name: "Carbonate Ca", pct: 1 }
        ]
     },
-    "Poulet de chair Démarrage": {
-       type: "Chair",
+    "Pondeuse Phase Poulette (Ponte 5%)": {
+       type: "Ponte",
        ingredients: [
-         { name: "Maïs concassé", pct: 55 },
-         { name: "Tourteau (Soja/Arachide)", pct: 32, isProt: true },
-         { name: "Farine de Poisson", pct: 8, isProt: true },
-         { name: "CMV / Minéraux purs", pct: 5 }
+         { name: "Maïs", pct: 59 },
+         { name: "Soja", pct: 16, isProt: true },
+         { name: "Tourteau arachide", pct: 7, isProt: true },
+         { name: "Son de blé", pct: 8 },
+         { name: "Farine de poisson", pct: 2, isProt: true },
+         { name: "CMAV 5%", pct: 5 },
+         { name: "Carbonate Ca", pct: 3 }
        ]
     },
-    "Poulet de chair Finition": {
-       type: "Chair",
+    "Pondeuse Pré-Ponte (Ponte 5%)": {
+       type: "Ponte",
        ingredients: [
-         { name: "Maïs concassé", pct: 65 },
-         { name: "Tourteau (Soja/Arachide)", pct: 25, isProt: true },
-         { name: "Farine de Poisson", pct: 5, isProt: true },
-         { name: "CMV / Minéraux purs", pct: 5 }
+         { name: "Maïs", pct: 57 },
+         { name: "Soja", pct: 15, isProt: true },
+         { name: "Tourteau arachide", pct: 7, isProt: true },
+         { name: "Son de blé", pct: 6 },
+         { name: "Farine de poisson", pct: 2, isProt: true },
+         { name: "CMAV 5%", pct: 5 },
+         { name: "Carbonate Ca", pct: 8 }
+       ]
+    },
+    "Pondeuse Ponte (Ponte 5%)": {
+       type: "Ponte",
+       ingredients: [
+         { name: "Maïs", pct: 59 },
+         { name: "Soja", pct: 14, isProt: true },
+         { name: "Tourteau arachide", pct: 7, isProt: true },
+         { name: "Son de blé", pct: 4 },
+         { name: "Farine de poisson", pct: 2, isProt: true },
+         { name: "CMAV 5%", pct: 5 },
+         { name: "Carbonate Ca", pct: 9 }
        ]
     },
     "Poulet Brahma herminé en ponte": {
@@ -172,24 +218,6 @@ export function FeedManagement() {
          { name: "Son de blé / Mil", pct: 10 },
          { name: "Coquillage (Calcium)", pct: 8 },
          { name: "CMV / Minéraux purs", pct: 2 }
-       ]
-    },
-    "Lapin": {
-       type: "Lapin",
-       ingredients: [
-         { name: "Granulés Luzerne/Foin (Fibre)", pct: 60 },
-         { name: "Orge / Son de blé", pct: 30 },
-         { name: "Tourteau (Protéine)", pct: 8, isProt: true },
-         { name: "CMV / Sel minéral", pct: 2 }
-       ]
-    },
-    "Pigeon": {
-       type: "Pigeon",
-       ingredients: [
-         { name: "Maïs concassé / Graines", pct: 35 },
-         { name: "Blé entier", pct: 25 },
-         { name: "Pois / Vesces", pct: 30, isProt: true },
-         { name: "Sorgho / Dari", pct: 10 }
        ]
     }
   };
