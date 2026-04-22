@@ -278,8 +278,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const effectiveType = itemType?.toLowerCase() || 'poulet';
 
         // 1. Global Species Filter (Top Switcher)
-        // If an item has NO explicit species (null/undefined), it's considered GLOBAL and visible in all species views.
-        const isEntryGlobal = !itemType;
+        // If an item has NO explicit species (null/undefined) or is 'global', it's visible in all species views.
+        const isEntryGlobal = !itemType || itemType === 'global';
         if (!ignoreSpecies && activeSpeciesFilter !== 'all' && !isEntryGlobal && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
  
         // 2. Breed/Sub-type Filter (Contextual Switcher)

@@ -963,7 +963,7 @@ export function FeedManagement() {
                       <span className={`text-xl font-black ${entry.type === 'achat' ? 'text-emerald-500' : 'text-orange-500'}`}>
                          {entry.type === 'achat' ? '+' : '-'}{entry.quantity} <span className="text-sm">kg</span>
                       </span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
                         <button 
                           onClick={() => {
                             const val = window.prompt(`Nouvelle quantité (kg) pour ${entry.feedType} :`, entry.quantity.toString());
@@ -1040,19 +1040,19 @@ export function FeedManagement() {
                   {errors.quantity && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.quantity.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Aliment</label>
-                  <input 
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type d'Aliment</label>
+                  <select 
                     className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.feedType ? 'ring-2 ring-red-500' : ''}`}
-                    placeholder="Ex: Démarrage, Pondeuse..."
-                    list="feed-types-list"
                     {...register("feedType", { required: "Type d'aliment requis" })}
-                  />
-                  <datalist id="feed-types-list">
-                    <option value="Démarrage" />
-                    <option value="Croissance" />
-                    <option value="Pondeuse" />
-                    <option value="Mélange Maison" />
-                  </datalist>
+                  >
+                    <option value="" disabled>Choisir l'aliment...</option>
+                    <option value="Démarrage">Démarrage</option>
+                    <option value="Croissance">Croissance</option>
+                    <option value="Finition">Finition</option>
+                    <option value="Pondeuse">Pondeuse</option>
+                    <option value="Mélange Maison">Mélange Maison</option>
+                    <option value="Autre">Autre</option>
+                  </select>
                   {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
                 </div>
               </div>

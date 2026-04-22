@@ -114,6 +114,7 @@ export function FinanceManagement() {
       setEditingTransaction(null);
       toast.success("Transaction mise à jour !");
     } else {
+      const isExpense = data.type === 'expense';
       const newTransaction: Transaction = {
         id: now.toString(),
         type: data.type,
@@ -123,8 +124,8 @@ export function FinanceManagement() {
         date: data.date,
         batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
         batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
-        poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (data.breed?.toLowerCase() === 'caille' || breedList.caille.some(b => b.id === data.breed) ? 'caille' : 'poulet'),
-        poultryBreed: data.breed || selectedBreeds[0] || undefined,
+        poultryType: isExpense ? 'global' : (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (data.breed?.toLowerCase() === 'caille' || breedList.caille.some(b => b.id === data.breed) ? 'caille' : 'poulet')),
+        poultryBreed: isExpense ? 'global' : (data.breed || selectedBreeds[0] || undefined),
         updatedAt: now
       };
       const newTransactions = [newTransaction, ...transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -433,7 +434,7 @@ export function FinanceManagement() {
                   <p className={`font-['JetBrains_Mono'] font-medium text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                     {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
                   </p>
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                  <div className="flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity no-print">
                       <button
                         onClick={() => handleEdit(t)}
                         className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
@@ -528,17 +529,19 @@ export function FinanceManagement() {
                     {...register("date", { required: true })}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
-                  <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none"
-                    {...register("breed", { required: true })}
-                  >
-                    {selectedBreeds.map(b => (
-                      <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                    ))}
-                  </select>
-                </div>
+                {formType === 'income' && (
+                  <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
+                    <select 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none"
+                      {...register("breed", { required: true })}
+                    >
+                      {selectedBreeds.map(b => (
+                        <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label>

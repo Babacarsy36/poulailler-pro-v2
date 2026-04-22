@@ -68,7 +68,8 @@ export function Layout() {
     { id: 'incubator', label: 'Couvaison', icon: 'solar:fire-linear', path: '/incubator' },
     { id: 'finance', label: 'Finances', icon: 'solar:wallet-linear', path: '/finances' },
     { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
-    { id: 'settings', label: 'Équipe', icon: 'solar:settings-linear', path: '/team' },
+    { id: 'selection', label: 'Configuration', icon: 'solar:settings-bold-duotone', path: '/selection' },
+    { id: 'settings', label: 'Équipe', icon: 'solar:users-group-two-rounded-linear', path: '/team' },
   ];
 
   const safePoultryTypes = poultryTypes && poultryTypes.length > 0 ? poultryTypes : ['poulet'];
@@ -221,8 +222,10 @@ export function Layout() {
                     </div>
                 </div>
 
-                {/* Dynamic Breed Sub-switcher */}
-                {activeSpeciesFilter !== 'all' && breedList[activeSpeciesFilter]?.length > 0 && (
+                {/* Dynamic Breed Sub-switcher - Hidden on global screens (Finance, Feed, Incubator) */}
+                {activeSpeciesFilter !== 'all' && 
+                 breedList[activeSpeciesFilter]?.length > 0 && 
+                 !['/finances', '/feed', '/incubator'].includes(location.pathname) && (
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
                         <button
                             onClick={() => handleBreedSelect(null)}
@@ -255,7 +258,7 @@ export function Layout() {
                     </div>
                 )}
                 
-                {activeSpeciesFilter === 'all' && (
+                {activeSpeciesFilter === 'all' && !['/finances', '/feed', '/incubator'].includes(location.pathname) && (
                    <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-100 dark:border-zinc-800/50">
                         <p className="text-[10px] font-black text-gray-900 dark:text-zinc-300 flex items-center px-2 uppercase tracking-[0.1em]">Filtres :</p>
                         {['fermier', 'ornement', 'japon', 'chine'].filter(b => selectedBreeds.includes(b)).map((b) => {

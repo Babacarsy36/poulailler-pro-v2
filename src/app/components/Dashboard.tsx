@@ -416,6 +416,16 @@ export function Dashboard() {
                       <p className="text-xs font-light text-gray-500 truncate">Injecter des données de démo</p>
                   </div>
               </button>
+              <button onClick={() => navigate("/selection")} className="w-full clean-card rounded-2xl p-3 flex items-center gap-4 hover:bg-gray-50 transition-colors border-2 border-dashed border-orange-100 bg-orange-50/30">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0 border border-orange-200">
+                      <iconify-icon icon="solar:settings-bold-duotone" stroke-width="1.5" className="text-xl text-orange-600"></iconify-icon>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium text-orange-900 truncate">Configurer l'Élevage</p>
+                      <p className="text-xs font-medium text-orange-600/70 truncate">Modifier vos races & espèces</p>
+                  </div>
+                  <iconify-icon icon="solar:alt-arrow-right-linear" className="text-orange-400"></iconify-icon>
+              </button>
           </div>
       </div>
 
