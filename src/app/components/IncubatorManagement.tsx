@@ -17,7 +17,7 @@ import { ProFeatureOverlay } from './ui/ProFeatureOverlay';
 type TabId = 'batches' | 'summary' | 'finances' | 'faq';
 
 export function IncubatorManagement() {
-  const { syncTrigger, saveData, poultryTypes, activeSpeciesFilter, isDarkMode } = useAuth();
+  const { syncTrigger, saveData, poultryTypes, activeSpeciesFilter, isDarkMode, hasAccess } = useAuth();
   const [batches, setBatches] = useState<IncubationBatch[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>('batches');
   const [speciesFilter, setSpeciesFilter] = useState<SpeciesKey | 'all'>('all');
@@ -45,7 +45,7 @@ export function IncubatorManagement() {
     if (!isCritical) return null;
     return { 
       id: b.id, 
-      name: b.name || SPECIES_CONFIG[b.species as SpeciesKey].label, 
+      name: b.name || (SPECIES_CONFIG[b.species as SpeciesKey]?.label || b.species), 
       tip, 
       day,
       isDanger: tip.includes('⚠️') || tip.includes('🐣')
