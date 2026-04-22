@@ -172,8 +172,8 @@ export function Layout() {
                          </div>
                      </div>
 
-                     {/* Species Switcher - Hidden on global screens */}
-                     {!['/finances', '/feed', '/incubator', '/health', '/selection'].includes(location.pathname) && (
+                     {/* Species Switcher - Hidden on global screens or if single species */}
+                     {poultryTypes.length > 1 && !['/finances', '/feed', '/incubator', '/health', '/selection'].includes(location.pathname) && (
                          <div className="flex-1 overflow-x-auto no-scrollbar mx-0 select-none">
                              <div className="flex gap-1.5 w-max">
                                 {showAllOption && (

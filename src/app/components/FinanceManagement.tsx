@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // BUILD_TRIGGER_170821
+import { useState, useEffect } from "react"; // BUILD_TRIGGER_170821_v3
 import { Shield } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router";
@@ -64,12 +64,8 @@ export function FinanceManagement() {
 
   const isCaille = activeSpeciesFilter === 'caille';
   const isMixed = activeSpeciesFilter === 'all';
-  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
-  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
-  const bgLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
-  const btnBg = isMixed ? "bg-indigo-600 hover:bg-indigo-700" : isCaille ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-600 hover:bg-orange-700";
   const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
-  const accentBgLight = isCaille ? "bg-emerald-50" : "bg-orange-50";
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
 
   useEffect(() => {
     const data = StorageService.getItem<Transaction[]>("finances") || [];
@@ -161,13 +157,8 @@ export function FinanceManagement() {
   const filteredTransactions = transactions.filter(t => {
       if (t._deleted) return false;
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
-      
-      // If we are in "All" species view, show all transactions that match the type
       if (activeSpeciesFilter === 'all' && !activeBreedFilter) return typeFilterMatch;
-
-      // We show them anyway to avoid data loss.
       if (!t.poultryBreed && !t.poultryType) return true;
-
       return (activeSpeciesFilter === 'all' || isItemActive(t.poultryType, t.poultryBreed)) && typeFilterMatch;
   });
 
@@ -183,7 +174,6 @@ export function FinanceManagement() {
   });
   const chartData = Object.values(chartDataMap).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-14);
 
-  // Lot profitability analysis
   const lotStats = batches.map(batch => {
     const batchTransactions = filteredTransactions.filter(t => t.batchId === batch.id);
     const income = batchTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -219,95 +209,64 @@ export function FinanceManagement() {
       hasAccess={hasAccess('PRO')}
     >
     <section id="screen-finance" className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Finances</h1>
-          <p className="text-xs font-light text-gray-500 mt-1">Rentabilité & suivi détaillé</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs font-light text-gray-500">Rentabilité & suivi détaillé</p>
+            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+            <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-bold animate-pulse">
+                <iconify-icon icon="solar:check-read-linear"></iconify-icon>
+                <span>Synchronisé</span>
+            </div>
+          </div>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => window.print()}
-            className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none"
-          >
+          <button onClick={() => window.print()} className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none">
             <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
           </button>
-          <button
-            onClick={() => {
-              setEditingTransaction(null);
-              reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" });
-              setIsAddOpen(true);
-            }}
-            className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none"
-          >
+          <button onClick={() => { setEditingTransaction(null); reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" }); setIsAddOpen(true); }} className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none">
             <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
             <span className="font-medium text-sm hidden sm:inline">Transaction</span>
           </button>
         </div>
       </div>
 
-      {/* Balance & Chart Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Balance Hero */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className={`flex flex-col justify-center p-6 rounded-3xl relative overflow-hidden bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'}`}
-        >
+      <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className={`flex flex-col justify-center p-6 rounded-[2rem] relative overflow-hidden bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-l-4 ${balance >= 0 ? accentBorderLeft : 'border-l-red-500'}`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-100 to-transparent rounded-full -mr-16 -mt-16 blur-2xl z-0"></div>
           <div className="relative z-10">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-1">Solde Total</p>
-            <p className={`font-['JetBrains_Mono'] text-4xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
-              {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-base text-gray-400 font-normal">FCFA</span>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-1">Solde Total</p>
+            <p className={`font-['JetBrains_Mono'] text-4xl sm:text-5xl font-medium tracking-tight ${balance >= 0 ? accentColor : 'text-red-500'}`}>
+              {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-sm sm:text-base text-gray-400 font-normal">F</span>
             </p>
           </div>
-          <div className="flex gap-6 mt-4 pt-4 border-t border-gray-100/50 relative z-10">
+          <div className="flex justify-between sm:justify-start gap-8 mt-6 pt-6 border-t border-gray-100/50 relative z-10">
             <div>
-              <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Recettes</p>
-              <p className="font-['JetBrains_Mono'] text-sm font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Recettes</p>
+              <p className="font-['JetBrains_Mono'] text-base font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
             </div>
-            <div className="w-px bg-gray-100"></div>
+            <div className="w-px bg-gray-100 hidden sm:block"></div>
             <div>
-              <p className="text-[10px] font-medium text-gray-500 uppercase mb-0.5">Dépenses</p>
-              <p className="font-['JetBrains_Mono'] text-sm font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dépenses</p>
+              <p className="font-['JetBrains_Mono'] text-base font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
 
         {chartData.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="clean-card rounded-3xl p-5 select-none h-full bg-white/60 backdrop-blur-xl border border-white/40"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="clean-card rounded-3xl p-5 select-none h-full bg-white/60 backdrop-blur-xl border border-white/40">
             <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4">Évolution Financière</h2>
             <div className="h-[120px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id="finIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2}></stop>
-                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0.0}></stop>
-                    </linearGradient>
-                    <linearGradient id="finExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}></stop>
-                      <stop offset="100%" stopColor="#ef4444" stopOpacity={0.0}></stop>
-                    </linearGradient>
+                    <linearGradient id="finIncome" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22c55e" stopOpacity={0.2}></stop><stop offset="100%" stopColor="#22c55e" stopOpacity={0.0}></stop></linearGradient>
+                    <linearGradient id="finExpense" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}></stop><stop offset="100%" stopColor="#ef4444" stopOpacity={0.0}></stop></linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 9, fill: '#9ca3af' }}
-                    tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                  />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', fontSize: '10px', fontFamily: 'DM Sans' }}
-                    formatter={(value: number) => [`${value.toLocaleString()} F`, undefined]}
-                  />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#9ca3af' }} tickFormatter={(val) => new Date(val).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} />
+                  <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', fontSize: '10px', fontFamily: 'DM Sans' }} formatter={(value: number) => [`${value.toLocaleString()} F`, undefined]} />
                   <Area type="monotone" dataKey="income" name="Recettes" stroke="#22c55e" strokeWidth={2} fill="url(#finIncome)" />
                   <Area type="monotone" dataKey="expense" name="Dépenses" stroke="#ef4444" strokeWidth={2} fill="url(#finExpense)" />
                 </AreaChart>
@@ -317,17 +276,11 @@ export function FinanceManagement() {
         )}
       </div>
 
-      {/* Analyse par Lot (PRO) */}
       <div className="relative">
         <div className="flex items-center gap-2 mb-3 ml-1">
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Analyse par Lot</h2>
-          {!hasAccess('PRO') && (
-            <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-medium flex items-center gap-1">
-              <iconify-icon icon="solar:crown-star-linear"></iconify-icon> PRO
-            </span>
-          )}
+          {!hasAccess('PRO') && <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-medium flex items-center gap-1"><iconify-icon icon="solar:crown-star-linear"></iconify-icon> PRO</span>}
         </div>
-
         <div className={`space-y-3 ${!hasAccess('PRO') ? 'blur-sm grayscale opacity-30 select-none pointer-events-none' : ''}`}>
           {lotStats.length === 0 ? (
             <div className="clean-card rounded-2xl p-4 text-center py-8">
@@ -337,239 +290,95 @@ export function FinanceManagement() {
           ) : lotStats.map(stat => (
             <div key={stat.id} className="clean-card rounded-2xl p-4">
               <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 truncate">{stat.name}</p>
-                  <p className="text-[10px] font-light text-gray-500 mt-0.5">Coût/sujet : <span className="font-['JetBrains_Mono'] font-medium">{stat.costPerBird.toLocaleString()} F</span></p>
-                </div>
-                <div className={`px-2 py-1 rounded-lg text-[10px] font-medium ${
-                  stat.roi >= 20 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                  stat.roi >= 0 ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                  'bg-red-50 text-red-700 border border-red-100'
-                }`}>
-                  {stat.roi >= 0 ? '+' : ''}{stat.roi}% ROI
-                </div>
+                <div><p className="text-sm font-medium text-gray-900 truncate">{stat.name}</p><p className="text-[10px] font-light text-gray-500 mt-0.5">Coût/sujet : <span className="font-['JetBrains_Mono'] font-medium">{stat.costPerBird.toLocaleString()} F</span></p></div>
+                <div className={`px-2 py-1 rounded-lg text-[10px] font-medium ${stat.roi >= 20 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : stat.roi >= 0 ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>{stat.roi >= 0 ? '+' : ''}{stat.roi}% ROI</div>
               </div>
               <div className="flex gap-4 pt-3 border-t border-gray-50">
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase">Recettes</p>
-                  <p className="font-['JetBrains_Mono'] text-xs font-medium text-emerald-600">+{stat.income.toLocaleString()} F</p>
-                </div>
+                <div><p className="text-[10px] text-gray-400 uppercase">Recettes</p><p className="font-['JetBrains_Mono'] text-xs font-medium text-emerald-600">+{stat.income.toLocaleString()} F</p></div>
                 <div className="w-px bg-gray-100"></div>
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase">Dépenses</p>
-                  <p className="font-['JetBrains_Mono'] text-xs font-medium text-red-500">-{stat.expense.toLocaleString()} F</p>
-                </div>
+                <div><p className="text-[10px] text-gray-400 uppercase">Dépenses</p><p className="font-['JetBrains_Mono'] text-xs font-medium text-red-500">-{stat.expense.toLocaleString()} F</p></div>
                 <div className="w-px bg-gray-100"></div>
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase">Net</p>
-                  <p className={`font-['JetBrains_Mono'] text-xs font-medium ${stat.profit >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                    {stat.profit >= 0 ? '+' : ''}{stat.profit.toLocaleString()} F
-                  </p>
-                </div>
+                <div><p className="text-[10px] text-gray-400 uppercase">Net</p><p className={`font-['JetBrains_Mono'] text-xs font-medium ${stat.profit >= 0 ? 'text-gray-900' : 'text-red-600'}`}>{stat.profit >= 0 ? '+' : ''}{stat.profit.toLocaleString()} F</p></div>
               </div>
             </div>
           ))}
         </div>
-
         {!hasAccess('PRO') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
             <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl p-5 shadow-xl text-center max-w-[220px]">
               <iconify-icon icon="solar:crown-star-bold-duotone" class="text-3xl text-amber-500 mb-2 block"></iconify-icon>
               <p className="text-xs font-medium text-gray-700 mb-3">Débloquez l'analyse de rentabilité par lot</p>
-              <button
-                onClick={() => navigate('/?upgrade=true')}
-                className="w-full py-2 bg-gray-900 text-white rounded-xl text-xs font-medium"
-              >
-                Devenir PRO 🚀
-              </button>
+              <button onClick={() => navigate('/?upgrade=true')} className="w-full py-2 bg-gray-900 text-white rounded-xl text-xs font-medium">Devenir PRO 🚀</button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Transactions */}
       <div>
         <div className="flex items-center justify-between mb-4 ml-1">
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900">Transactions</h2>
-          {/* Filter tabs */}
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             {(['all', 'income', 'expense'] as const).map(filter => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}
-              >
-                {filter === 'all' ? 'Tous' : filter === 'income' ? 'Recettes' : 'Dépenses'}
-              </button>
+              <button key={filter} onClick={() => setActiveFilter(filter)} className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>{filter === 'all' ? 'Tous' : filter === 'income' ? 'Recettes' : 'Dépenses'}</button>
             ))}
           </div>
         </div>
-
         <div className="space-y-3">
           <AnimatePresence initial={false}>
             {filteredTransactions.map(t => (
-              <motion.div 
-                key={t.id} 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="clean-card rounded-2xl p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group overflow-hidden"
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${t.type === 'income' ? 'bg-emerald-50 border border-emerald-100' : 'bg-red-50 border border-red-100'}`}>
-                  <iconify-icon
-                    icon={t.type === 'income' ? "solar:arrow-down-linear" : "solar:arrow-up-linear"}
-                    stroke-width="1.5"
-                    class={`text-xl ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}
-                  ></iconify-icon>
-                </div>
+              <motion.div key={t.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="clean-card rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 transition-colors group overflow-hidden">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 ${t.type === 'income' ? 'bg-emerald-50 border border-emerald-100' : 'bg-red-50 border border-red-100'}`}><iconify-icon icon={t.type === 'income' ? "solar:arrow-down-bold-duotone" : "solar:arrow-up-bold-duotone"} class={`text-xl sm:text-2xl ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}></iconify-icon></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{t.category}</p>
-                  <p className="text-xs font-light text-gray-500 truncate">
-                    {new Date(t.date).toLocaleDateString('fr-FR')}
-                    {t.description && ` • ${t.description}`}
-                    {t.batchName && <span className="ml-2 px-1.5 py-0.5 bg-gray-100 rounded-md text-[9px] text-gray-500">{t.batchName}</span>}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-gray-900 truncate">{t.category}</p>
+                    {t.batchName && <span className="px-1.5 py-0.5 bg-gray-100 rounded-md text-[8px] sm:text-[9px] font-bold text-gray-500 uppercase tracking-tighter truncate max-w-[80px]">{t.batchName}</span>}
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-400 truncate mt-0.5">{new Date(t.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} {t.description && ` • ${t.description}`}</p>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <p className={`font-['JetBrains_Mono'] font-medium text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} F
-                  </p>
-                  <div className="flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity no-print">
-                      <button
-                        onClick={() => handleEdit(t)}
-                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Modifier"
-                      >
-                        <iconify-icon icon="solar:pen-linear" class="text-base"></iconify-icon>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Supprimer"
-                      >
-                        <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
-                      </button>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <p className={`font-['JetBrains_Mono'] font-bold text-sm sm:text-base ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>{t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()} <span className="text-[10px] font-normal opacity-60">F</span></p>
+                  <div className="flex items-center gap-1 no-print">
+                      <button onClick={() => handleEdit(t)} className="p-1 px-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors border border-gray-100 sm:border-none"><iconify-icon icon="solar:pen-linear" class="text-base"></iconify-icon></button>
+                      <button onClick={() => handleDelete(t.id)} className="p-1 px-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-gray-100 sm:border-none"><iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon></button>
                   </div>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-
-          {filteredTransactions.length === 0 && (
-            <div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200">
-              <iconify-icon icon="solar:wallet-line-duotone" class="text-4xl text-gray-300 mb-2 block"></iconify-icon>
-              <p className="text-xs font-light text-gray-500">Aucune transaction enregistrée.</p>
-            </div>
-          )}
+          {filteredTransactions.length === 0 && (<div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200"><iconify-icon icon="solar:wallet-line-duotone" class="text-4xl text-gray-300 mb-2 block"></iconify-icon><p className="text-xs font-light text-gray-500">Aucune transaction enregistrée.</p></div>)}
         </div>
       </div>
 
-      {/* Add Modal */}
       {isAddOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">
-              {editingTransaction ? "Modifier la Transaction" : "Nouvelle Transaction"}
-            </h3>
-
-            {/* Type toggle */}
+            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">{editingTransaction ? "Modifier la Transaction" : "Nouvelle Transaction"}</h3>
             <div className="flex bg-gray-100 p-1 rounded-2xl mb-5 gap-1">
-              <button
-                type="button"
-                onClick={() => { setValue('type', 'expense'); setValue('category', ''); }}
-                className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                Dépense
-              </button>
-              <button
-                type="button"
-                onClick={() => { setValue('type', 'income'); setValue('category', ''); }}
-                className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'income' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                Recette
-              </button>
+              <button type="button" onClick={() => { setValue('type', 'expense'); setValue('category', ''); }} className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}>Dépense</button>
+              <button type="button" onClick={() => { setValue('type', 'income'); setValue('category', ''); }} className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'income' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}>Recette</button>
             </div>
-
             <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Montant (FCFA)</label>
-                <input
-                  type="number"
-                  className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors ${errors.amount ? 'border-red-300' : 'border-gray-200'}`}
-                  placeholder="Ex: 5000"
-                  {...register("amount", { required: "Montant requis", min: 1 })}
-                />
+                <input type="number" className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors ${errors.amount ? 'border-red-300' : 'border-gray-200'}`} placeholder="Ex: 5000" {...register("amount", { required: "Montant requis", min: 1 })} />
                 {errors.amount && <p className="text-red-500 text-[10px] font-medium">{errors.amount.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie</label>
-                <select
-                  className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none ${errors.category ? 'border-red-300' : 'border-gray-200'}`}
-                  {...register("category", { required: "Catégorie requise" })}
-                >
-                  <option value="" disabled>Sélectionner...</option>
-                  {currentCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
+                <select className={`w-full bg-gray-50 border rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none ${errors.category ? 'border-red-300' : 'border-gray-200'}`} {...register("category", { required: "Catégorie requise" })}><option value="" disabled>Sélectionner...</option>{currentCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}</select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Description / Note</label>
-                <input
-                  type="text"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                  placeholder="Facultatif"
-                  {...register("description")}
-                />
-              </div>
+              <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Description / Note</label><input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-gray-400 transition-colors" placeholder="Facultatif" {...register("description")} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
-                  <input
-                    type="date"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                    {...register("date", { required: true })}
-                  />
-                </div>
-                {formType === 'income' && (
-                  <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
-                    <select 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none"
-                      {...register("breed", { required: true })}
-                    >
-                      {selectedBreeds.map(b => (
-                        <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label>
-                  <select
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none"
-                    {...register("selectedBatchId")}
-                  >
-                    <option value="none">Hors lot</option>
-                    {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                  </select>
-                </div>
+                <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label><input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors" {...register("date", { required: true })} /></div>
+                {formType === 'income' && (<div className="space-y-1.5 animate-in slide-in-from-top-2"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label><select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none" {...register("breed", { required: true })}>{selectedBreeds.map(b => (<option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>))}</select></div>)}
+                <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label><select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none" {...register("selectedBatchId")}><option value="none">Hors lot</option>{batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
               </div>
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
-                >
-                  {editingTransaction ? "Appliquer les modifications" : "Ajouter"}
-                </button>
-              </div>
+              <div className="flex gap-3 pt-4 border-t border-gray-100"><button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Annuler</button><button type="submit" className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>{editingTransaction ? "Appliquer les modifications" : "Ajouter"}</button></div>
             </form>
           </div>
         </div>
       )}
-      </section>
+    </section>
     </ProFeatureOverlay>
   );
 }

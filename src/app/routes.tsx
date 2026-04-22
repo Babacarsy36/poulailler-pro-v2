@@ -31,21 +31,25 @@ function AuthGuard() {
 function SelectionGuard() {
   const { poultryTypes, isPreferencesLoaded, isInitialPullDone } = useAuth();
   
-  if (!isPreferencesLoaded || !isInitialPullDone) {
-    return (
-      <div className="min-h-screen bg-babs-cream flex flex-col items-center justify-center gap-6 animate-pulse">
-        <Logo className="w-20 h-20 opacity-50" />
-        <div className="w-12 h-12 border-4 border-babs-orange border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Synchro de vos données...</p>
-      </div>
-    );
-  }
-
-  const hasSelected = localStorage.getItem('has_selected_species') === 'true';
+  const hasSelectedLocal = localStorage.getItem('has_selected_species') === 'true';
   const hasTypes = poultryTypes && poultryTypes.length > 0;
   
-  if (!hasTypes && !hasSelected) return <Navigate to="/selection" replace />;
-  return <Outlet />;
+  // If we have data (local or cloud), we are good
+  if (hasTypes || (hasSelectedLocal && !isInitialPullDone)) return <Outlet />;
+
+  // If sync is totally done and we still have nothing, then redirect
+  if (isInitialPullDone && isPreferencesLoaded && !hasTypes) {
+    return <Navigate to="/selection" replace />;
+  }
+
+  // Otherwise, stay on loading
+  return (
+    <div className="min-h-screen bg-babs-cream flex flex-col items-center justify-center gap-6 animate-pulse">
+      <Logo className="w-20 h-20 opacity-50" />
+      <div className="w-12 h-12 border-4 border-babs-orange border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Synchro de vos données...</p>
+    </div>
+  );
 }
 
 // Guard to ensure user has Pro or Business tier access

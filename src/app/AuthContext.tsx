@@ -179,7 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const combined = [...new Set([...prev.map(t => t?.toLowerCase()), ...types.map(t => t?.toLowerCase())])];
                         return combined.filter(Boolean) as PoultryType[];
                     });
-                    localStorage.setItem('has_selected_species', 'true');
+                    if (types.length > 0) {
+                        localStorage.setItem('has_selected_species', 'true');
+                        localStorage.setItem('poultry_types', JSON.stringify(types));
+                    }
                 }
             }
             setIsPreferencesLoaded(true);
@@ -279,8 +282,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // 1. Global Species Filter (Top Switcher)
         // If an item has NO explicit species (null/undefined) or is 'global', it's visible in all species views.
-        const isEntryGlobal = !itemType || itemType === 'global';
-        if (!ignoreSpecies && activeSpeciesFilter !== 'all' && !isEntryGlobal && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
+        const isEntryGlobal = !itemType || itemType === 'global' || itemType === 'Global';
+        
+        // If item is global, it passes the species check automatically
+        if (isEntryGlobal) {
+            // If we have a breed filter active, global items should STILL be visible 
+            // unless they explicitly have a DIFFERENT breed (usually they have none)
+            if (activeBreedFilter && itemBreed && itemBreed !== 'global' && itemBreed.toLowerCase() !== activeBreedFilter.toLowerCase()) {
+                return false;
+            }
+            return true;
+        }
+
+        if (!ignoreSpecies && activeSpeciesFilter !== 'all' && effectiveType !== activeSpeciesFilter.toLowerCase()) return false;
  
         // 2. Breed/Sub-type Filter (Contextual Switcher)
         if (activeBreedFilter) {
