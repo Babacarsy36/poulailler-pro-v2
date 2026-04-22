@@ -117,6 +117,7 @@ export function FeedManagement() {
 
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
+  const [activeSection, setActiveSection] = useState<'priority' | 'other'>('priority');
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
 
@@ -448,10 +449,24 @@ export function FeedManagement() {
         )}
       </div>
 
-      <div className="space-y-6">
-         <div className="space-y-6">
-           {/* placeholder div for visual consistency */}
+      {/* Section Switcher */}
+      <div className="flex bg-gray-100 dark:bg-zinc-800/80 rounded-2xl p-1.5 gap-1.5">
+         <button 
+           onClick={() => setActiveSection('priority')}
+           className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeSection === 'priority' ? 'bg-white dark:bg-zinc-700 text-babs-brown shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+         >
+           Priorité
+         </button>
+         <button 
+           onClick={() => setActiveSection('other')}
+           className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeSection === 'other' ? 'bg-white dark:bg-zinc-700 text-babs-brown shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+         >
+           Autre
+         </button>
+      </div>
 
+      {activeSection === 'priority' ? (
+        <>
            {/* Nutritional Phase Generator */}
            <div className="clean-card rounded-3xl p-5">
              <div className="flex items-center gap-3 mb-6">
@@ -516,48 +531,10 @@ export function FeedManagement() {
                    </div>
                 </div>
              </div>
-
-             {/* Timeline Mini */}
-             <div className="space-y-4">
-                <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-2 ml-2">Cycle complet (Cliquez pour détails)</p>
-                {phases.map((p, i) => {
-                   const isExpanded = activePhaseToExpand === i;
-                   return (
-                     <div key={i} className={`flex flex-col p-4 rounded-3xl transition-all cursor-pointer border ${isExpanded ? 'bg-orange-50 border-orange-100 shadow-md scale-[1.02]' : 'bg-transparent border-transparent hover:bg-gray-50'}`} onClick={() => setExpandedPhase(isExpanded ? null : i)}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black transition-colors ${i === currentPhaseIndex ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : (i < currentPhaseIndex ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-400')}`}>
-                                {i < currentPhaseIndex ? <CheckCircle className="w-4 h-4"/> : i + 1}
-                             </div>
-                             <span className={`font-black text-sm ${i === currentPhaseIndex ? 'text-orange-700' : 'text-babs-brown'}`}>{p.name}</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-lg shadow-sm border border-gray-100">J{p.duration[0]}-J{p.duration[1]===999?'∞':p.duration[1]}</span>
-                        </div>
-                        
-                        {isExpanded && (
-                          <div className="mt-4 pt-4 border-t border-orange-100/50 space-y-3 animate-in fade-in slide-in-from-top-2">
-                             <div className="flex items-start gap-2">
-                               <Info className="w-4 h-4 text-orange-400 mt-0.5" />
-                               <p className="text-xs text-orange-800 font-bold leading-relaxed">{p.description}</p>
-                             </div>
-                             <div className="flex items-start gap-2 bg-white/60 p-3 rounded-xl border border-orange-50">
-                               {weather === "hot" ? <ThermometerSun className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" /> : 
-                                weather === "cold" ? <ThermometerSnowflake className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" /> :
-                                <Package className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />}
-                               <div>
-                                 <p className="text-xs text-orange-800 font-black">Consommation : <span className="font-bold">{adjustConsumption(p.consumption, weather)}</span></p>
-                                 {weather === "hot" && <p className="text-[10px] text-red-600 font-bold mt-1.5 leading-tight">☀️ Stress Thermique: Baisse d'appétit de ~15%. Nourrissez à la fraîche (très tôt ou tard). Vitamine C d'urgence dans l'eau.</p>}
-                                 {weather === "cold" && <p className="text-[10px] text-blue-600 font-bold mt-1.5 leading-tight">❄️ Climat Frais: Appétit en hausse de ~15% pour se réchauffer. Gardez la litière bien sèche et évitez les courants d'air.</p>}
-                               </div>
-                             </div>
-                          </div>
-                        )}
-                     </div>
-                   );
-                })}
-             </div>
            </div>
-
+        </>
+      ) : (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
            {/* Feed Calculator (Standard) */}
            <div className="clean-card rounded-3xl p-5 border-l-4 border-l-orange-500">
              <div className="absolute top-0 right-0 p-4 opacity-5 bg-babs-orange rounded-bl-[4rem]">
