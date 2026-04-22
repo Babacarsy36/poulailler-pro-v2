@@ -378,6 +378,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const setTierAction = async (newTier: SubscriptionTier) => {
         if (!user) return;
+        try {
             setTier(newTier);
             // Save to profile document instead of root to avoid PERMISSION_DENIED
             await setDoc(doc(db, 'users', user.uid, 'settings', 'profile'), {
