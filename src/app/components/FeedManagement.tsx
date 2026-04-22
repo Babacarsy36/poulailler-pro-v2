@@ -535,6 +535,7 @@ export function FeedManagement() {
         </>
       ) : (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
            {/* Feed Calculator (Standard) */}
            <div className="clean-card rounded-3xl p-5 border-l-4 border-l-orange-500">
              <div className="absolute top-0 right-0 p-4 opacity-5 bg-babs-orange rounded-bl-[4rem]">
@@ -871,6 +872,11 @@ export function FeedManagement() {
               )}
            </div>
          </div>
+      )}
+
+      {/* Common priority sections (Graph & History) - Visible in Priority tab */}
+      {activeSection === 'priority' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
          {/* Graphique de Consommation */}
          <div className="clean-card rounded-3xl p-5 mb-6">
@@ -980,7 +986,8 @@ export function FeedManagement() {
               </div>
             </div>
          </div>
-         </div>
+        </div>
+      )}
 
       {isAddOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">

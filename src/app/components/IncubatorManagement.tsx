@@ -281,6 +281,7 @@ export function IncubatorManagement() {
           {activeTab === 'finances' && <FinancialSummary batches={filtered} />}
           {activeTab === 'faq' && <FAQSection />}
       </div>
+      </div>
 
       {/* Modals & Wizards */}
       {wizardOpen && (
