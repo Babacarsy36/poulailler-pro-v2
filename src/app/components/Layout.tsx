@@ -222,10 +222,10 @@ export function Layout() {
                     </div>
                 </div>
 
-                {/* Dynamic Breed Sub-switcher - Hidden on global screens (Finance, Feed, Incubator) */}
+                {/* Dynamic Breed Sub-switcher - Hidden on global screens (Finance, Feed, Incubator, Health) */}
                 {activeSpeciesFilter !== 'all' && 
                  breedList[activeSpeciesFilter]?.length > 0 && 
-                 !['/finances', '/feed', '/incubator'].includes(location.pathname) && (
+                 !['/finances', '/feed', '/incubator', '/health'].includes(location.pathname) && (
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
                         <button
                             onClick={() => handleBreedSelect(null)}
@@ -258,7 +258,7 @@ export function Layout() {
                     </div>
                 )}
                 
-                {activeSpeciesFilter === 'all' && !['/finances', '/feed', '/incubator'].includes(location.pathname) && (
+                {activeSpeciesFilter === 'all' && !['/finances', '/feed', '/incubator', '/health'].includes(location.pathname) && (
                    <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-100 dark:border-zinc-800/50">
                         <p className="text-[10px] font-black text-gray-900 dark:text-zinc-300 flex items-center px-2 uppercase tracking-[0.1em]">Filtres :</p>
                         {['fermier', 'ornement', 'japon', 'chine'].filter(b => selectedBreeds.includes(b)).map((b) => {
