@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProFeatureOverlay } from "./ui/ProFeatureOverlay";
+import { breedList } from "../constants";
 
 export type Transaction = {
   id: string;
@@ -19,7 +20,10 @@ export type Transaction = {
   date: string;
   batchId?: string;
   batchName?: string;
+  poultryType?: string;
+  poultryBreed?: string;
   updatedAt?: number;
+  _deleted?: boolean;
 };
 
 interface FinanceFormData {
@@ -119,7 +123,7 @@ export function FinanceManagement() {
         date: data.date,
         batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
         batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
-        poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (data.breed ? (breedList.caille.some(b => b.id === data.breed) ? 'caille' : 'poulet') : "poulet"),
+        poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (data.breed?.toLowerCase() === 'caille' || breedList.caille.some(b => b.id === data.breed) ? 'caille' : 'poulet'),
         poultryBreed: data.breed || selectedBreeds[0] || undefined,
         updatedAt: now
       };
@@ -156,8 +160,14 @@ export function FinanceManagement() {
   const filteredTransactions = transactions.filter(t => {
       if (t._deleted) return false;
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
-      // Finances are globalized: we ignore the species filter unless a breed filter is active
-      return isItemActive(t.poultryType, t.poultryBreed, !activeBreedFilter) && typeFilterMatch;
+      
+      // If we are in "All" species view, show all transactions that match the type
+      if (activeSpeciesFilter === 'all' && !activeBreedFilter) return typeFilterMatch;
+
+      // We show them anyway to avoid data loss.
+      if (!t.poultryBreed && !t.poultryType) return true;
+
+      return (activeSpeciesFilter === 'all' || isItemActive(t.poultryType, t.poultryBreed)) && typeFilterMatch;
   });
 
   const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);

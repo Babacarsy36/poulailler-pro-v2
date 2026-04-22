@@ -33,10 +33,10 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
   return (
     <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-500">
-      <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto no-scrollbar shadow-[0_40px_80px_-15px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 relative flex flex-col md:flex-row border border-white/10 scroll-smooth">
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl md:rounded-[2.5rem] w-full max-w-2xl max-h-[92vh] md:max-h-[90vh] overflow-y-auto no-scrollbar shadow-[0_40px_80px_-15px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 relative flex flex-col md:flex-row border border-white/10 scroll-smooth">
         
         {/* Left Side: Luxury Branding */}
-        <div className="bg-zinc-900 md:w-5/12 p-6 md:p-10 text-white flex flex-col justify-between relative overflow-hidden shrink-0">
+        <div className="bg-zinc-900 md:w-5/12 p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden shrink-0 min-h-[200px] md:min-h-auto">
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full -ml-16 -mb-16 blur-2xl"></div>
@@ -45,16 +45,16 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-amber-300 to-amber-600 rounded-2xl shadow-[0_10px_30px_-5px_rgba(245,158,11,0.4)] flex items-center justify-center mb-6 md:mb-8 rotate-3">
               <Crown className="w-6 h-6 md:w-9 md:h-9 text-zinc-900 fill-zinc-900" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-black mb-3 md:mb-4 leading-tight">
-              Passez à <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200">l'Excellence PRO</span>
+            <h2 className="text-2xl md:text-4xl font-black mb-2 md:mb-4 leading-tight">
+              Passez à <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200"> l'Excellence PRO</span>
             </h2>
-            <p className="text-xs md:text-sm font-medium text-zinc-400 leading-relaxed max-w-[200px]">
-              Optimisez chaque aspect de votre exploitation avec nos technologies de pointe.
+            <p className="text-[10px] md:text-sm font-medium text-zinc-400 leading-relaxed max-w-[200px] md:max-w-none">
+              Optimisez votre exploitation avec nos technologies.
             </p>
           </div>
 
-          <div className="mt-8 md:mt-12 space-y-4 relative z-10 border-t border-white/5 pt-6 md:pt-8">
+          <div className="mt-4 md:mt-12 space-y-4 relative z-10 border-t border-white/5 pt-4 md:pt-8 hidden md:block">
             <div className="flex items-center gap-3">
                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-white/5 flex items-center justify-center">
                  <ShieldCheck className="w-4 h-4 text-amber-400" />

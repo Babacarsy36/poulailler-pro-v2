@@ -354,8 +354,8 @@ export function EggProduction() {
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
                     <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("breed")}>
-                        {selectedBreeds.filter(b => b !== 'caille').map(b => (
-                            <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>
+                        {selectedBreeds.filter(b => b === 'fermier' || b === 'ornement').map(b => (
+                            <option key={b} value={b}>{b === 'fermier' ? 'Poulet Fermier' : "Poule d'Ornement"}</option>
                         ))}
                     </select>
                 </div>

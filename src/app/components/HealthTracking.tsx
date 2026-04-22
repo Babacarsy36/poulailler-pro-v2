@@ -41,6 +41,8 @@ export function HealthTracking() {
   
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
+  const [initialAge, setInitialAge] = useState(1);
+  const [showTips, setShowTips] = useState(true);
   const [activeReminders, setActiveReminders] = useState<any[]>([]);
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<HealthFormData>({
@@ -236,38 +238,46 @@ export function HealthTracking() {
       </div>
 
       {/* Important Alerts */}
-      <div className="bg-zinc-900 rounded-3xl p-5 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
-         <div className="flex items-center gap-2 mb-3">
-            <iconify-icon icon="solar:danger-bold" class="text-xl text-amber-400"></iconify-icon>
-            <h4 className="text-sm font-black uppercase tracking-widest text-amber-400">Conseils de Vaccination</h4>
-         </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
-               <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-500 flex-shrink-0">
-                  <iconify-icon icon="solar:heart-break-bold"></iconify-icon>
-               </div>
-               <p className="text-[11px] font-medium leading-relaxed">Ne jamais vacciner un sujet malade ou affaibli.</p>
-            </div>
-            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
-               <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0">
-                  <iconify-icon icon="solar:water-drop-bold"></iconify-icon>
-               </div>
-               <p className="text-[11px] font-medium leading-relaxed">Arrêter l'eau 2-3h avant pour garantir la soif.</p>
-            </div>
-            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
-               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
-                  <iconify-icon icon="solar:filter-bold"></iconify-icon>
-               </div>
-               <p className="text-[11px] font-medium leading-relaxed">Utiliser uniquement de l'eau propre, non chlorée (eau de puits/source).</p>
-            </div>
-            <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
-               <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-500 flex-shrink-0">
-                  <iconify-icon icon="solar:leaf-bold"></iconify-icon>
-               </div>
-               <p className="text-[11px] font-medium leading-relaxed">Donner des vitamines (Anti-stress) 2-3 jours après le vaccin.</p>
-            </div>
-         </div>
-      </div>
+      {showTips && (
+        <div className="bg-zinc-900 rounded-3xl p-5 text-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-500 relative">
+           <button 
+             onClick={() => setShowTips(false)}
+             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/20 transition-colors"
+           >
+             <X className="w-4 h-4" />
+           </button>
+           <div className="flex items-center gap-2 mb-3">
+              <iconify-icon icon="solar:danger-bold" class="text-xl text-amber-400"></iconify-icon>
+              <h4 className="text-sm font-black uppercase tracking-widest text-amber-400">Conseils de Vaccination</h4>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+                 <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-500 flex-shrink-0">
+                    <iconify-icon icon="solar:heart-break-bold"></iconify-icon>
+                 </div>
+                 <p className="text-[11px] font-medium leading-relaxed">Ne jamais vacciner un sujet malade ou affaibli.</p>
+              </div>
+              <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+                 <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0">
+                    <iconify-icon icon="solar:water-drop-bold"></iconify-icon>
+                 </div>
+                 <p className="text-[11px] font-medium leading-relaxed">Arrêter l'eau 2-3h avant pour garantir la soif.</p>
+              </div>
+              <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+                 <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
+                    <iconify-icon icon="solar:filter-bold"></iconify-icon>
+                 </div>
+                 <p className="text-[11px] font-medium leading-relaxed">Utiliser uniquement de l'eau propre, non chlorée (eau de puits/source).</p>
+              </div>
+              <div className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+                 <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-500 flex-shrink-0">
+                    <iconify-icon icon="solar:leaf-bold"></iconify-icon>
+                 </div>
+                 <p className="text-[11px] font-medium leading-relaxed">Donner des vitamines (Anti-stress) 2-3 jours après le vaccin.</p>
+              </div>
+           </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Prophylaxis Generator Engine */}
@@ -283,7 +293,7 @@ export function HealthTracking() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
                   <select 
@@ -291,12 +301,14 @@ export function HealthTracking() {
                     value={selectedBreed}
                     onChange={(e) => setSelectedBreed(e.target.value)}
                   >
-                    <option value="Poulet de chair">Poulet de chair</option>
-                    <option value="Pondeuse">Pondeuse</option>
-                    <option value="Poulet Fermier">Poulet Fermier</option>
-                    <option value="Poule d'Ornement">Poule d'Ornement</option>
-                    <option value="Reproducteur">Reproducteur</option>
-                    <option value="Caille">Caille</option>
+                    {selectedBreeds.includes('chair') && <option value="Poulet de chair">Poulet de chair</option>}
+                    {selectedBreeds.includes('pondeuse') && <option value="Pondeuse">Pondeuse</option>}
+                    {selectedBreeds.includes('fermier') && <option value="Poulet Fermier">Poulet Fermier</option>}
+                    {selectedBreeds.includes('ornement') && <option value="Poule d'Ornement">Poule d'Ornement</option>}
+                    {selectedBreeds.includes('reproducteur') && <option value="Reproducteur">Reproducteur</option>}
+                    {activeSpeciesFilter === 'caille' && <option value="Caille">Caille</option>}
+                    {/* Fallback if nothing matches user settings yet */}
+                    {selectedBreeds.length === 0 && activeSpeciesFilter !== 'caille' && <option value="Poulet Fermier">Poulet Fermier</option>}
                   </select>
                 </div>
                 <div>
@@ -308,6 +320,41 @@ export function HealthTracking() {
                     onChange={e => setArrivalDate(e.target.value)}
                   />
                 </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Âge à l'arrivée</label>
+                  <div className="relative">
+                    <input 
+                      type="number"
+                      className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
+                      value={initialAge}
+                      onChange={e => setInitialAge(Math.max(1, parseInt(e.target.value) || 1))}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">jours</span>
+                  </div>
+                </div>
+            </div>
+            
+            {/* Current Age Highlight */}
+            <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
+                <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Âge estimé du lot</p>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <p className="text-2xl font-black text-babs-brown">
+                    {(() => {
+                      const diffTime = Math.abs(new Date().getTime() - new Date(arrivalDate).getTime());
+                      return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + initialAge;
+                    })()} jours
+                  </p>
+                  <span className="text-[9px] font-bold text-gray-400 italic">(Date d'arrivée + âge initial)</span>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-start gap-3 shadow-sm">
+                   <iconify-icon icon="solar:info-circle-linear" class="text-blue-500 text-lg mt-0.5"></iconify-icon>
+                   <div>
+                     <p className="font-black text-blue-700 uppercase text-xs tracking-wider">Suivi biologique</p>
+                     <p className="text-[10px] text-gray-500 font-bold mt-1 leading-relaxed">
+                       Le programme de prophylaxie s'ajuste automatiquement selon l'âge réel de vos sujets.
+                     </p>
+                   </div>
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar relative border-t border-gray-100 pt-6">
@@ -315,9 +362,12 @@ export function HealthTracking() {
                 <div className="space-y-6 relative z-10">
                   {currentProphylaxis.map((step, idx) => {
                       const stepDateObj = new Date(arrivalDate);
-                      stepDateObj.setDate(stepDateObj.getDate() + (step.day - 1));
+                      const diffTime = Math.abs(new Date().getTime() - stepDateObj.getTime());
+                      const currentAgeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + initialAge;
+                      
+                      stepDateObj.setDate(stepDateObj.getDate() + (step.day - initialAge));
                       const stepDateStr = stepDateObj.toISOString().split("T")[0];
-                      const isPast = new Date() > stepDateObj;
+                      const isPast = currentAgeDays > step.day;
                       const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
                       const isCommonBase = step.day <= 24;
                       const reminderId = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;

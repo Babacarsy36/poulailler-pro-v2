@@ -221,9 +221,32 @@
 
   .dark .bg-white { background-color: #18181B !important; border-color: rgba(255,255,255,0.06) !important; }
   .dark .bg-gray-50 { background-color: #0C0C0E !important; }
-  .dark .bg-gray-100 { background-color: #27272A !important; }
-  .dark .bg-gray-200 { background-color: #3F3F46 !important; }
+  .dark .bg-gray-100 { background-color: #121214 !important; }
+  .dark .bg-gray-200 { background-color: #1a1a1c !important; }
+  
+  /* Status Color Overrides for Dark Mode */
+  .dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.1) !important; }
+  .dark .text-blue-900 { color: #93C5FD !important; }
+  .dark .text-blue-700 { color: #60A5FA !important; }
+  .dark .text-blue-600 { color: #3B82F6 !important; }
+  .dark .border-l-blue-500 { border-left-color: #3B82F6 !important; }
+  
+  .dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.1) !important; }
+  .dark .text-red-900 { color: #FCA5A5 !important; }
+  .dark .text-red-700 { color: #F87171 !important; }
+  .dark .border-l-red-500 { border-left-color: #EF4444 !important; }
 
+  .dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.1) !important; }
+  .dark .text-emerald-900 { color: #6EE7B7 !important; }
+  .dark .text-emerald-700 { color: #34D399 !important; }
+  .dark .border-l-emerald-500 { border-left-color: #10B981 !important; }
+
+  .dark .bg-orange-50 { background-color: rgba(245, 158, 11, 0.1) !important; }
+  .dark .text-orange-900 { color: #FDBA74 !important; }
+  .dark .text-orange-700 { color: #FB923C !important; }
+  .dark .border-l-orange-500 { border-left-color: #F59E0B !important; }
+
+  .dark .border-gray-50 { border-color: rgba(255,255,255,0.04) !important; }
   .dark .border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
   .dark .border-gray-200 { border-color: rgba(255,255,255,0.09) !important; }
 
@@ -242,8 +265,8 @@
 
 @layer base {
   .bg-card {
-    @apply backdrop-blur-2xl border border-white/60 shadow-premium;
-    background: rgba(255, 255, 255, 0.7);
+    @apply backdrop-blur-2xl border border-white/60 dark:border-white/5 shadow-premium;
+    background: var(--card);
   }
 
   html { font-size: var(--font-size); }

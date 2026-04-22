@@ -117,6 +117,7 @@ export function FeedManagement() {
 
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
+  const [initialAge, setInitialAge] = useState(1);
   const [activeSection, setActiveSection] = useState<'priority' | 'other'>('priority');
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
@@ -391,7 +392,7 @@ export function FeedManagement() {
   const currentDate = new Date();
   const arrDate = new Date(arrivalDate);
   const diffTime = Math.abs(currentDate.getTime() - arrDate.getTime());
-  const currentAgeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const currentAgeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + initialAge;
 
   let currentPhaseIndex = phases.findIndex(p => currentAgeDays >= p.duration[0] && currentAgeDays <= p.duration[1]);
   if(currentPhaseIndex === -1 && currentAgeDays > 0) currentPhaseIndex = phases.length - 1;
@@ -479,7 +480,7 @@ export function FeedManagement() {
                  </div>
              </div>
 
-             <div className="space-y-4 mb-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
                   <select 
@@ -487,11 +488,13 @@ export function FeedManagement() {
                     value={selectedBreed}
                     onChange={(e) => setSelectedBreed(e.target.value)}
                   >
-                    <option value="Poulet de chair">Poulet de chair / Rainbow</option>
-                    <option value="Pondeuse">Pondeuse</option>
-                    <option value="Poulet Fermier">Poulet Fermier</option>
-                    <option value="Poule d'Ornement">Poule d'Ornement</option>
-                    <option value="Caille">Caille</option>
+                    {selectedBreeds.includes('chair') && <option value="Poulet de chair">Poulet de chair</option>}
+                    {selectedBreeds.includes('pondeuse') && <option value="Pondeuse">Pondeuse</option>}
+                    {selectedBreeds.includes('fermier') && <option value="Poulet Fermier">Poulet Fermier</option>}
+                    {selectedBreeds.includes('ornement') && <option value="Poule d'Ornement">Poule d'Ornement</option>}
+                    {selectedBreeds.includes('reproducteur') && <option value="Reproducteur">Reproducteur</option>}
+                    {activeSpeciesFilter === 'caille' && <option value="Caille">Caille</option>}
+                    {selectedBreeds.length === 0 && activeSpeciesFilter !== 'caille' && <option value="Poulet Fermier">Poulet Fermier</option>}
                   </select>
                 </div>
                 <div>
@@ -502,6 +505,18 @@ export function FeedManagement() {
                     value={arrivalDate}
                     onChange={e => setArrivalDate(e.target.value)}
                   />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Âge à l'arrivée</label>
+                  <div className="relative">
+                    <input 
+                      type="number"
+                      className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
+                      value={initialAge}
+                      onChange={e => setInitialAge(Math.max(1, parseInt(e.target.value) || 1))}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">jours</span>
+                  </div>
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 flex items-center gap-1">
@@ -520,9 +535,12 @@ export function FeedManagement() {
              </div>
 
              {/* Current Phase Highlight */}
-             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
-                <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Âge estimé du lot</p>
-                <p className="text-2xl font-black text-babs-brown mb-2">{currentAgeDays} jours</p>
+              <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
+                 <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Âge estimé du lot</p>
+                 <div className="flex items-baseline gap-2 mb-2">
+                   <p className="text-2xl font-black text-babs-brown">{currentAgeDays} jours</p>
+                   <span className="text-[9px] font-bold text-gray-400 italic">(Date d'arrivée + âge initial)</span>
+                 </div>
                 <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-start gap-3 shadow-sm">
                    <Info className="w-5 h-5 text-blue-500 mt-0.5" />
                    <div>

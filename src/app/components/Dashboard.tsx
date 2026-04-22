@@ -308,7 +308,21 @@ export function Dashboard() {
               <div key={item.type} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100/50">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden border border-gray-50">
-                    <img src={`/assets/icons/${item.type}.png`} alt={item.type} className="w-full h-full object-cover scale-110" />
+                    <img 
+                      src={`/assets/icons/${item.type}.png`} 
+                      alt={item.type} 
+                      className="w-full h-full object-cover scale-110" 
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const icon = document.createElement('iconify-icon');
+                          icon.setAttribute('icon', item.type === 'poulet' ? 'fluent-emoji:chicken' : 'fluent-emoji:egg');
+                          icon.className = 'text-3xl';
+                          parent.appendChild(icon);
+                        }
+                      }}
+                    />
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900 text-sm capitalize">{item.type}</h4>

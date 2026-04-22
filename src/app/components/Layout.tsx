@@ -226,10 +226,10 @@ export function Layout() {
                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
                         <button
                             onClick={() => handleBreedSelect(null)}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 ${
                                 !activeBreedFilter 
-                                    ? `bg-${accentColorClass}-100 border-${accentColorClass}-200 text-${accentColorClass}-600` 
-                                    : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
+                                    ? `bg-${accentColorClass}-600 border-${accentColorClass}-600 text-white shadow-md` 
+                                    : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-400 hover:border-gray-300'
                             }`}
                         >
                             Tous
@@ -242,10 +242,10 @@ export function Layout() {
                                 <button
                                     key={b}
                                     onClick={() => handleBreedSelect(b)}
-                                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+                                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 ${
                                         isCurrentBreed 
-                                            ? `bg-${accentColorClass}-100 border-${accentColorClass}-200 text-${accentColorClass}-600` 
-                                            : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
+                                            ? `bg-${accentColorClass}-100 dark:bg-${accentColorClass}-900/30 border-${accentColorClass}-200 dark:border-${accentColorClass}-700 text-${accentColorClass}-700 dark:text-${accentColorClass}-400` 
+                                            : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-400 hover:border-gray-300'
                                     }`}
                                 >
                                     {label}
@@ -255,10 +255,9 @@ export function Layout() {
                     </div>
                 )}
                 
-                {/* Fallback for "All" mode: Show main species as sub-filters if needed, or specific breeds */}
                 {activeSpeciesFilter === 'all' && (
-                     <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-50 dark:border-zinc-800/50">
-                        <p className="text-[10px] font-bold text-gray-400 flex items-center px-2 uppercase tracking-widest">Filtres :</p>
+                   <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-100 dark:border-zinc-800/50">
+                        <p className="text-[10px] font-black text-gray-900 dark:text-zinc-300 flex items-center px-2 uppercase tracking-[0.1em]">Filtres :</p>
                         {['fermier', 'ornement', 'japon', 'chine'].filter(b => selectedBreeds.includes(b)).map((b) => {
                             const bInfo = [...breedList.poulet, ...breedList.caille].find(bl => bl.id === b);
                             const isCurrent = activeBreedFilter === b;
@@ -267,10 +266,10 @@ export function Layout() {
                                 <button
                                     key={b}
                                     onClick={() => handleBreedSelect(b)}
-                                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+                                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 ${
                                         isCurrent 
-                                            ? `bg-${bAccent}-100 border-${bAccent}-200 text-${bAccent}-600` 
-                                            : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
+                                            ? `bg-${bAccent}-100 dark:bg-${bAccent}-900/30 border-${bAccent}-200 dark:border-${bAccent}-700 text-${bAccent}-700 dark:text-${bAccent}-400` 
+                                            : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-400 hover:border-gray-300'
                                     }`}
                                 >
                                     {bInfo?.label || b}
