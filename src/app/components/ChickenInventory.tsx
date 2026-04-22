@@ -496,21 +496,7 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {formData.poultryType === 'poulet' && formData.breed === 'fermier' && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Sous-race / Souche</label>
-                  <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                    defaultValue="Goliath"
-                    onChange={(e) => setValue('name', `${e.target.value} ${new Date().getFullYear()}`)}
-                  >
-                    <option value="Standard">Standard (Local / Métissé)</option>
-                    <option value="Goliath">Goliath</option>
-                    <option value="Rainbow">Rainbow</option>
-                    <option value="Bleu d'Hollande">Bleu d'Hollande</option>
-                  </select>
-                </div>
-              )}
+
 
               {formData.poultryType === 'caille' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2">
