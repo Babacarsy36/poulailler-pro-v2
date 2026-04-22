@@ -109,7 +109,7 @@ export function IncubatorManagement() {
       </div>
 
       {/* Global Stats Grid */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div className="clean-card p-3 rounded-2xl flex flex-col items-center justify-center text-center border-l-4 border-l-emerald-500">
               <p className="font-['JetBrains_Mono'] text-xl font-bold text-emerald-600">{batches.filter(b => !b._deleted).reduce((a, b) => a + (b.fertileCount || 0), 0)}</p>
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Fertiles</p>

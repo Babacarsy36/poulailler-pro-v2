@@ -316,7 +316,7 @@ export function EggProduction() {
               Nouvelle Récolte
             </h3>
             <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
                   <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("date", { required: true })} />

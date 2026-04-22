@@ -219,10 +219,10 @@
   .dark .text-gray-500 { color: #71717A !important; }
   .dark .text-gray-400 { color: #52525B !important; }
 
-  .dark .bg-white { background-color: #18181B !important; }
-  .dark .bg-gray-50 { background-color: #27272A !important; }
-  .dark .bg-gray-100 { background-color: #3F3F46 !important; }
-  .dark .bg-gray-200 { background-color: #52525B !important; }
+  .dark .bg-white { background-color: #18181B !important; border-color: rgba(255,255,255,0.06) !important; }
+  .dark .bg-gray-50 { background-color: #0C0C0E !important; }
+  .dark .bg-gray-100 { background-color: #27272A !important; }
+  .dark .bg-gray-200 { background-color: #3F3F46 !important; }
 
   .dark .border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
   .dark .border-gray-200 { border-color: rgba(255,255,255,0.09) !important; }
@@ -230,14 +230,14 @@
   .dark input,
   .dark select,
   .dark textarea {
-    background-color: #27272A !important;
+    background-color: #0C0C0E !important;
     border-color: rgba(255,255,255,0.1) !important;
     color: #F4F4F5 !important;
   }
-  .dark input::placeholder { color: #71717A !important; }
-  .dark select option { background-color: #27272A; color: #F4F4F5; }
+  .dark input::placeholder { color: #52525B !important; }
+  .dark select option { background-color: #18181B; color: #F4F4F5; }
 
-  .dark .bg-gray-900 { background-color: #F4F4F5 !important; color: #09090B !important; }
+  .dark .bg-gray-900 { background-color: #FDFCFB !important; color: #0C0C0E !important; }
 }
 
 @layer base {

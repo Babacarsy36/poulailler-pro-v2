@@ -573,7 +573,7 @@ export function FeedManagement() {
                  </div>
              </div>
 
-             <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 block mb-1">Objectif Elevage</label>
                   <select 

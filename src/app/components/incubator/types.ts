@@ -1,7 +1,7 @@
 export interface IncubationBatch {
   id: string;
   name: string;
-  species: 'poulet' | 'caille' | 'canard' | 'oie' | 'dinde' | 'pigeon';
+  species: 'poulet' | 'chair' | 'pondeuse' | 'caille' | 'canard' | 'oie' | 'dinde' | 'pigeon';
   startDate: string;
   totalDays: number;
   incubatorName: string;
@@ -23,6 +23,8 @@ export interface IncubationBatch {
 
 export const SPECIES_CONFIG = {
   poulet: { label: 'Poulet', emoji: '🐔', totalDays: 21, tempC: 37.7, tempF: 99.9, humidity: '50-55%', humidityHatch: '65-75%' },
+  chair: { label: 'Poulet de chair', emoji: '🍗', totalDays: 21, tempC: 37.7, tempF: 99.9, humidity: '50-55%', humidityHatch: '65-75%' },
+  pondeuse: { label: 'Pondeuse', emoji: '🥚', totalDays: 21, tempC: 37.7, tempF: 99.9, humidity: '50-55%', humidityHatch: '65-75%' },
   caille:  { label: 'Caille', emoji: '🐦', totalDays: 17, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '65-70%' },
   canard:  { label: 'Canard', emoji: '🦆', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '58-62%', humidityHatch: '70-75%' },
   oie:     { label: 'Oie', emoji: '🪿', totalDays: 30, tempC: 37.4, tempF: 99.3, humidity: '55-60%', humidityHatch: '70-75%' },

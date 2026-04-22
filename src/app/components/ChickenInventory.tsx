@@ -617,7 +617,7 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Âge</label>
                   <div className="flex bg-gray-50 border border-gray-200 rounded-xl p-1 items-stretch focus-within:border-gray-400 transition-colors">
@@ -657,7 +657,8 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col gap-3">
+              {!(formData.breed === 'chair' || formData.breed === 'pondeuse') && (
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col gap-3">
                  <div className="flex items-center gap-2">
                     <iconify-icon icon="solar:checklist-minimalistic-linear" class="text-lg text-gray-500"></iconify-icon>
                     <p className="text-[10px] font-medium uppercase tracking-widest text-gray-600">Reproduction (Optionnel)</p>
@@ -682,6 +683,7 @@ export function ChickenInventory() {
                  </div>
                  <p className="text-[9px] text-gray-400 font-light leading-snug">Remplir ces champs remplacera la quantité totale par la somme des mâles et femelles.</p>
               </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
