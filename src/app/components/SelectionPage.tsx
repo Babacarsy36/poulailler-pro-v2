@@ -49,7 +49,17 @@ export function SelectionPage() {
     return (
         <div className="min-h-screen bg-babs-cream flex items-center justify-center p-6 sm:p-8 relative">
             {/* Auth Top Bar */}
-            {user && (
+                <div className="absolute top-6 left-6 sm:left-auto sm:right-[180px] flex items-center gap-2">
+                    {poultryTypes.length > 0 && (
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors shadow-sm active:scale-95 flex items-center gap-2 font-bold text-xs"
+                        >
+                            <iconify-icon icon="solar:close-circle-linear" class="text-xl"></iconify-icon>
+                            <span className="hidden sm:inline">Quitter</span>
+                        </button>
+                    )}
+                </div>
                 <div className="absolute top-6 right-6 flex items-center gap-4 bg-white/50 backdrop-blur-md p-2 pl-4 rounded-2xl border border-white/50 shadow-sm">
                     <div className="text-right hidden sm:block">
                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Session active</p>

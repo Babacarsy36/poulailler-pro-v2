@@ -480,11 +480,11 @@ export function FeedManagement() {
                  </div>
              </div>
 
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div>
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+                <div className="col-span-2 sm:col-span-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Souche Elevée</label>
                   <select 
-                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none`}
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none text-xs sm:text-sm`}
                     value={selectedBreed}
                     onChange={(e) => setSelectedBreed(e.target.value)}
                   >
@@ -497,39 +497,39 @@ export function FeedManagement() {
                     {selectedBreeds.length === 0 && activeSpeciesFilter !== 'caille' && <option value="Poulet Fermier">Poulet Fermier</option>}
                   </select>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Date d'arrivée</label>
+                <div className="col-span-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Arrivée</label>
                   <input 
                     type="date"
-                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none`}
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-xs sm:text-sm h-[42px] sm:h-auto`}
                     value={arrivalDate}
                     onChange={e => setArrivalDate(e.target.value)}
                   />
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Âge à l'arrivée</label>
+                <div className="col-span-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Âge</label>
                   <div className="relative">
                     <input 
                       type="number"
-                      className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
+                      className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-xs sm:text-sm h-[42px] sm:h-auto`}
                       value={initialAge}
                       onChange={e => setInitialAge(Math.max(1, parseInt(e.target.value) || 1))}
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">jours</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-gray-400 mt-0.5">j</span>
                   </div>
                 </div>
-                <div>
+                <div className="col-span-2 lg:col-span-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 flex items-center gap-1">
                     <Thermometer className="w-3 h-3"/> Météo
                   </label>
                   <select 
-                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none appearance-none cursor-pointer`}
+                    className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none appearance-none cursor-pointer text-xs sm:text-sm`}
                     value={weather}
                     onChange={e => setWeather(e.target.value as "normal" | "hot" | "cold")}
                   >
-                    <option value="normal">Tempérée (Normale)</option>
-                    <option value="hot">Forte Chaleur (Canicule) ☀️</option>
-                    <option value="cold">Fraîcheur (Froid/Pluie) ❄️</option>
+                    <option value="normal">Tempérée</option>
+                    <option value="hot">Canicule ☀️</option>
+                    <option value="cold">Froid ❄️</option>
                   </select>
                 </div>
              </div>
@@ -569,11 +569,11 @@ export function FeedManagement() {
                  </div>
              </div>
 
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10 text-xs sm:text-sm">
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 block mb-1">Objectif Elevage</label>
                   <select 
-                    className="w-full bg-gray-50 border border-transparent focus:border-orange-200 rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none transition-colors"
+                    className="w-full bg-gray-50 border border-transparent focus:border-orange-200 rounded-2xl p-3 sm:p-4 font-bold text-babs-brown appearance-none outline-none transition-colors"
                     value={calcGoal}
                     onChange={(e) => setCalcGoal(e.target.value)}
                   >
@@ -582,11 +582,11 @@ export function FeedManagement() {
                       .map(k => <option key={k} value={k}>{k}</option>)}
                   </select>
                 </div>
-                <div>
+                <div className="sm:col-span-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2 block mb-1">Quantité (kg)</label>
                   <input 
                     type="number"
-                    className="w-full bg-gray-50 border border-transparent focus:border-orange-200 rounded-2xl p-4 font-bold text-babs-brown outline-none transition-colors"
+                    className="w-full bg-gray-50 border border-transparent focus:border-orange-200 rounded-2xl p-3 sm:p-4 font-bold text-babs-brown outline-none transition-colors"
                     value={calcAmount}
                     onChange={(e) => setCalcAmount(Math.max(1, Number(e.target.value)))}
                   />
@@ -748,46 +748,49 @@ export function FeedManagement() {
 
               <div className="space-y-4 mb-8">
                  {ingredients.map((ing, idx) => (
-                    <div key={ing.id} className="grid grid-cols-12 gap-2 items-center">
-                       <div className="col-span-5">
+                    <div key={ing.id} className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:items-center bg-gray-50/50 sm:bg-transparent p-3 sm:p-0 rounded-2xl sm:rounded-none">
+                       <div className="sm:col-span-5">
+                          <p className="text-[9px] font-bold text-gray-400 uppercase sm:hidden mb-1">Ingrédient</p>
                           <input 
-                            className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-bold text-babs-brown outline-none"
+                            className="w-full bg-white sm:bg-gray-50 border sm:border-none border-gray-100 rounded-xl p-2 text-xs font-bold text-babs-brown outline-none"
                             value={ing.name}
                             onChange={(e) => updateIngredient(ing.id, 'name', e.target.value)}
                           />
                        </div>
-                       <div className="col-span-3 flex items-center gap-1">
-                          <input 
-                            type="number"
-                            className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-black text-babs-brown outline-none text-center"
-                            value={ing.percentage}
-                            onChange={(e) => updateIngredient(ing.id, 'percentage', Number(e.target.value))}
-                          />
-                          <span className="text-[10px] font-black text-gray-400">%</span>
-                       </div>
-                       <div className="col-span-3 flex items-center gap-1">
-                          <input 
-                            type="number"
-                            className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-black text-babs-brown outline-none text-center"
-                            value={ing.protein}
-                            onChange={(e) => updateIngredient(ing.id, 'protein', Number(e.target.value))}
-                          />
-                          <span className="text-[10px] font-black text-gray-400">P</span>
-                       </div>
-                       <div className="col-span-1 flex justify-end">
-                          <button 
-                            onClick={() => setIngredients(ingredients.filter(i => i.id !== ing.id))}
-                            className="text-red-300 hover:text-red-500 transition-colors"
-                          >
-                             <Minus className="w-4 h-4" />
-                          </button>
+                       <div className="flex gap-2 sm:col-span-7">
+                          <div className="flex-1 flex items-center gap-1">
+                             <input 
+                               type="number"
+                               className="w-full bg-white sm:bg-gray-50 border sm:border-none border-gray-100 rounded-xl p-2 text-xs font-black text-babs-brown outline-none text-center"
+                               value={ing.percentage}
+                               onChange={(e) => updateIngredient(ing.id, 'percentage', Number(e.target.value))}
+                             />
+                             <span className="text-[9px] font-black text-gray-400">%</span>
+                          </div>
+                          <div className="flex-1 flex items-center gap-1">
+                             <input 
+                               type="number"
+                               className="w-full bg-white sm:bg-gray-50 border sm:border-none border-gray-100 rounded-xl p-2 text-xs font-black text-babs-brown outline-none text-center"
+                               value={ing.protein}
+                               onChange={(e) => updateIngredient(ing.id, 'protein', Number(e.target.value))}
+                             />
+                             <span className="text-[9px] font-black text-gray-400">P</span>
+                          </div>
+                          <div className="flex justify-end pt-1 sm:pt-0">
+                             <button 
+                               onClick={() => setIngredients(ingredients.filter(i => i.id !== ing.id))}
+                               className="p-1 px-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-50 sm:border-none"
+                             >
+                                <Minus className="w-4 h-4" />
+                             </button>
+                          </div>
                        </div>
                     </div>
                  ))}
                  
                  <button 
                    onClick={() => setIngredients([...ingredients, { id: Date.now().toString(), name: "Nouvel ingrédient", protein: 10, percentage: 0 }])}
-                   className="w-full py-2 border-2 border-dashed border-gray-100 rounded-xl text-[10px] font-black uppercase text-gray-400 hover:border-purple-200 hover:text-purple-400 transition-all"
+                   className="w-full py-3 border-2 border-dashed border-gray-100 rounded-xl text-[10px] font-black uppercase text-gray-400 hover:border-purple-200 hover:text-purple-400 transition-all"
                  >
                    + Ajouter un ingrédient
                  </button>

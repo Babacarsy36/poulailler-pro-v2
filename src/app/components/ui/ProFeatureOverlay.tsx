@@ -29,13 +29,13 @@ export function ProFeatureOverlay({ title, description, children, hasAccess }: P
 
       {/* Actual CTA Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-6 md:p-8 text-center animate-in fade-in zoom-in-95 duration-1000">
-        <div className="relative mb-6 md:mb-8 scale-75 md:scale-100">
-            <div className="absolute inset-0 bg-amber-500/30 blur-3xl rounded-full scale-150 animate-pulse"></div>
-            <div className="relative w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-[2rem] shadow-[0_20px_50px_rgba(245,158,11,0.3)] flex items-center justify-center rotate-3 border border-white/30 backdrop-blur-md">
-              <Crown className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" />
+        <div className="relative mb-6 md:mb-8 scale-75 md:scale-90">
+            <div className="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full scale-125 animate-pulse"></div>
+            <div className="relative w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-[2rem] shadow-[0_20px_50px_rgba(245,158,11,0.25)] flex items-center justify-center border border-white/40 backdrop-blur-md">
+              <Crown className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-md" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 bg-zinc-900 dark:bg-zinc-800 rounded-2xl flex items-center justify-center shadow-2xl border border-white/10 ring-4 ring-white dark:ring-zinc-900">
-              <Lock className="w-4 h-4 md:w-5 md:h-5 text-amber-400" />
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 bg-zinc-900 rounded-2xl flex items-center justify-center shadow-xl border border-white/20 ring-4 ring-white dark:ring-zinc-900">
+              <Lock className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />
             </div>
         </div>
 
@@ -74,7 +74,6 @@ export function ProFeatureOverlay({ title, description, children, hasAccess }: P
                 Analyses ROI
              </div>
         </div>
-      </div>
       </div>
 
       <UpgradeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
