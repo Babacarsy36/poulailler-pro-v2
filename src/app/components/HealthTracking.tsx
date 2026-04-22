@@ -34,7 +34,7 @@ interface HealthFormData {
 // Protocols moved to ProphylaxisService.ts
 
 export function HealthTracking() {
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, alerts } = useAuth();
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   // const [showRemedies, setShowRemedies] = useState(true);
@@ -192,6 +192,8 @@ export function HealthTracking() {
   };
 
   const filteredRecords = records.filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed));
+
+  const healthAlerts = alerts.filter(a => a.type === 'health-reminder');
 
   const remediesProtocols = [
     { title: "Gombo", desc: "Digestion & Vitamines.", usage: "Posologie: 3 gombos hachés dans 1L d'eau. Macérer 6h pour libérer le mucilage." },
@@ -425,6 +427,47 @@ export function HealthTracking() {
 
         {/* History & Remedies */}
         <div className="lg:col-span-5 space-y-6">
+          {healthAlerts.length > 0 && (
+            <div className="clean-card rounded-3xl p-4 md:p-5 border-l-4 border-l-amber-500 bg-amber-50/30 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex items-center gap-2 mb-4">
+                <iconify-icon icon="solar:bell-bing-bold-duotone" class="text-xl text-amber-500"></iconify-icon>
+                <h3 className="font-['Syne'] text-base font-medium tracking-tight text-amber-900">À faire Absolument</h3>
+              </div>
+              <div className="space-y-3">
+                {healthAlerts.map(alert => (
+                  <div key={alert.id} className="p-3 rounded-2xl bg-white border border-amber-100 shadow-sm">
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">
+                      {alert.severity === 'critical' ? 'Aujourd\'hui' : 'Demain'}
+                    </p>
+                    <p className="text-xs font-bold text-gray-900 mb-1">{alert.title}</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed font-medium mb-2">{alert.message}</p>
+                    <button 
+                      onClick={() => {
+                        // Quick add as completed
+                        const now = Date.now();
+                        const newRecord: HealthRecord = {
+                          id: now.toString(),
+                          date: new Date().toISOString().split('T')[0],
+                          type: "Vaccin",
+                          title: alert.title.replace(/AUJOURD'HUI ! |💉|📅|demain : /g, ''),
+                          target: alert.message.split('lot ')[1]?.split(' (')[0] || "Inconnu",
+                          status: "Complété",
+                          poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet',
+                          poultryBreed: selectedBreeds[0],
+                          updatedAt: now
+                        };
+                        saveRecords([newRecord, ...records]);
+                        toast.success("Soin validé et enregistré !");
+                      }}
+                      className="w-full py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-colors"
+                    >
+                      Marquer comme fait
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Graphique de Santé */}
           <div className="clean-card rounded-3xl p-4 md:p-5">
