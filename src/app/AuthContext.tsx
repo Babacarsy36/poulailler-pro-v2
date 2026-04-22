@@ -274,6 +274,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveBreedFilter(null);
         localStorage.removeItem('active_species_filter');
     };
+    const isItemActive = (itemType?: string, itemBreed?: string, ignoreSpecies = false) => {
+        const effectiveType = itemType?.toLowerCase() || 'poulet';
 
         // 1. Global Species Filter (Top Switcher)
         // If an item has NO explicit species (null/undefined), it's considered GLOBAL and visible in all species views.
