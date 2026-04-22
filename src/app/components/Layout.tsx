@@ -172,49 +172,51 @@ export function Layout() {
                          </div>
                      </div>
 
-                     {/* Species Switcher */}
-                     <div className="flex-1 overflow-x-auto no-scrollbar mx-0 select-none">
-                         <div className="flex gap-1.5 w-max">
-                            {showAllOption && (
-                                <button 
-                                    onClick={() => handleSpeciesSelect('all')} 
-                                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
-                                        activeSpeciesFilter === 'all'
-                                            ? `bg-zinc-800 border-zinc-700 text-white shadow-lg scale-105 font-bold`
-                                            : isDarkMode 
-                                                ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    🌍 Tous
-                                </button>
-                            )}
-                            {speciesList.map((s) => {
-                                const isActive = s.id === activeSpeciesFilter;
-                                const sAccent = s.id === 'caille' ? 'emerald' : 'orange';
-                                return (
+                     {/* Species Switcher - Hidden on global screens */}
+                     {!['/finances', '/feed', '/incubator', '/health', '/selection'].includes(location.pathname) && (
+                         <div className="flex-1 overflow-x-auto no-scrollbar mx-0 select-none">
+                             <div className="flex gap-1.5 w-max">
+                                {showAllOption && (
                                     <button 
-                                        key={s.id}
-                                        onClick={() => handleSpeciesSelect(s.id)} 
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
-                                            isActive 
-                                                ? `bg-${sAccent}-500 border-${sAccent}-500 text-white shadow-lg shadow-${sAccent}-500/20 scale-105`
+                                        onClick={() => handleSpeciesSelect('all')} 
+                                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
+                                            activeSpeciesFilter === 'all'
+                                                ? `bg-zinc-800 border-zinc-700 text-white shadow-lg scale-105 font-bold`
                                                 : isDarkMode 
                                                     ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
                                                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                         }`}
                                     >
-                                        <span className={`hidden sm:flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-['Syne'] font-bold ${
-                                            isActive ? 'bg-white/20 text-white' : isDarkMode ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                            {s.abbr}
-                                        </span>
-                                        <span className={isActive ? 'font-bold' : 'font-medium'}>{s.label}</span>
+                                        🌍 Tous
                                     </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                                )}
+                                {speciesList.map((s) => {
+                                    const isActive = s.id === activeSpeciesFilter;
+                                    const sAccent = s.id === 'caille' ? 'emerald' : 'orange';
+                                    return (
+                                        <button 
+                                            key={s.id}
+                                            onClick={() => handleSpeciesSelect(s.id)} 
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm ${
+                                                isActive 
+                                                    ? `bg-${sAccent}-500 border-${sAccent}-500 text-white shadow-lg shadow-${sAccent}-500/20 scale-105`
+                                                    : isDarkMode 
+                                                        ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                                                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <span className={`hidden sm:flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-['Syne'] font-bold ${
+                                                isActive ? 'bg-white/20 text-white' : isDarkMode ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                                {s.abbr}
+                                            </span>
+                                            <span className={isActive ? 'font-bold' : 'font-medium'}>{s.label}</span>
+                                        </button>
+                                    );
+                                })}
+                             </div>
+                         </div>
+                     )}
 
                      {/* Actions */}
                      <div className="flex items-center gap-1.5 shrink-0 ml-auto">
@@ -222,7 +224,7 @@ export function Layout() {
                     </div>
                 </div>
 
-                {/* Dynamic Breed Sub-switcher - Hidden on global screens (Finance, Feed, Incubator, Health) */}
+                {/* Dynamic Breed Sub-switcher - Hidden on global screens */}
                 {activeSpeciesFilter !== 'all' && 
                  breedList[activeSpeciesFilter]?.length > 0 && 
                  !['/finances', '/feed', '/incubator', '/health'].includes(location.pathname) && (

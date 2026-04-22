@@ -73,7 +73,6 @@ export function SelectionPage() {
                         <LogOut className="w-5 h-5" />
                     </button>
                 </div>
-            )}
 
             <div className="w-full max-w-xl space-y-12 animate-in fade-in zoom-in duration-700">
                 <div className="text-center space-y-4">
