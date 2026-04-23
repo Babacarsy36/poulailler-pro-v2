@@ -317,10 +317,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 3. User Preferences Filter (Onboarding Selection)
-        // If the user hasn't selected ANY breeds for this species, we show everything for that species
-        // If they have selected breeds, we only show those.
-        const isSpeciesSelected = poultryTypes.includes(effectiveType);
-        if (!isSpeciesSelected) return false;
+        // If we are in "Global View", we show everything.
+        if (activeSpeciesFilter !== 'all') {
+            const isSpeciesSelected = poultryTypes.includes(effectiveType);
+            if (!isSpeciesSelected) return false;
+        }
 
         // If the species has breeds defined in selectedBreeds, only show those breeds
         const speciesBreeds = breedList[effectiveType]?.map(b => b.id) || [];
