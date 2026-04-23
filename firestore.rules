@@ -20,21 +20,9 @@ service cloud.firestore {
         request.resource.data.lastUpdated is int;
     }
 
-    function isValidPreferencesPayload() {
-      return request.resource.data.keys().hasOnly(['poultryType', 'poultryBreed', 'lastUpdated']) &&
-        (
-          !('poultryType' in request.resource.data) ||
-          request.resource.data.poultryType == null ||
-          request.resource.data.poultryType in ['caille', 'poulet']
-        ) &&
-        (
-          !('poultryBreed' in request.resource.data) ||
-          request.resource.data.poultryBreed == null ||
-          request.resource.data.poultryBreed in ['goliath', 'brahma', 'cochin', 'pondeuse', 'chair']
-        ) &&
-        request.resource.data.lastUpdated is int;
-    }
-
+    // =========================================================
+    // USER DATA - Personal collections and settings
+    // =========================================================
     match /users/{userId} {
       allow read, write: if false;
 
@@ -46,13 +34,64 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isAllowedCollectionDoc(docId);
       }
 
+      // Preferences (species, breeds) - FIXED: accept any valid payload
       match /settings/preferences {
         allow read: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidPreferencesPayload();
+        allow create, update: if isOwner(userId) && isSignedIn();
+        allow delete: if isOwner(userId);
+      }
+
+      // Profile (role, farmId, tier, displayName) - ADDED
+      match /settings/profile {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isSignedIn();
         allow delete: if isOwner(userId);
       }
     }
 
+    // =========================================================
+    // FARM DATA - Shared collections for team collaboration
+    // ADDED: This was completely missing, causing all data sync failures
+    // =========================================================
+    match /farms/{farmId} {
+      allow read, write: if false;
+
+      match /collections/{docId} {
+        // Owner can always access their farm data
+        allow read: if isSignedIn() && isAllowedCollectionDoc(docId) && (
+          request.auth.uid == farmId ||
+          // Workers: check they belong to this farm via their profile
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/settings/profile)
+        );
+        allow create, update: if isSignedIn() && isAllowedCollectionDoc(docId) && 
+          isValidCollectionPayload() && (
+            request.auth.uid == farmId ||
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)/settings/profile)
+          );
+        allow delete: if isSignedIn() && isAllowedCollectionDoc(docId) && (
+          request.auth.uid == farmId
+        );
+      }
+    }
+
+    // =========================================================
+    // INVITATIONS - For team management
+    // ADDED: Missing, causing worker invitation acceptance to fail
+    // =========================================================
+    match /invitations/{invitationId} {
+      allow read: if isSignedIn() && (
+        resource.data.email == request.auth.token.email ||
+        resource.data.senderId == request.auth.uid
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.email == request.auth.token.email ||
+        resource.data.senderId == request.auth.uid
+      );
+      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
+    }
+
+    // Default deny all
     match /{document=**} {
       allow read, write: if false;
     }

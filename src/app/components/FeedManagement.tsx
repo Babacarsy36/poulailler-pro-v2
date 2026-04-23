@@ -5,7 +5,6 @@ import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
-import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
