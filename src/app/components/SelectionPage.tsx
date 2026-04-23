@@ -5,10 +5,17 @@ import { ChevronRight, Check, LogOut, Info, Star } from 'lucide-react';
 import { Logo } from './Logo';
 
 export function SelectionPage() {
-    const { updatePoultrySelection, user, logout, poultryTypes, isPreferencesLoaded, isInitialPullDone } = useAuth();
+    const { updatePoultrySelection, user, logout, poultryTypes, selectedBreeds, isPreferencesLoaded, isInitialPullDone } = useAuth();
     const navigate = useNavigate();
  
-    // Removed auto-redirect to allow users to return and change settings
+    useEffect(() => {
+        if (poultryTypes.length > 0) {
+            setSelectedTypes(poultryTypes);
+        }
+        if (selectedBreeds.length > 0) {
+            setBreeds(selectedBreeds);
+        }
+    }, [poultryTypes, selectedBreeds]);
  
     const [selectedTypes, setSelectedTypes] = useState<PoultryType[]>([]);
     const [breeds, setBreeds] = useState<string[]>([]);

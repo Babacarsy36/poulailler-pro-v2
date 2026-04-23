@@ -87,9 +87,13 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
-  const [entries, setEntries] = useState<FeedEntry[]>([]);
-  const [allChickens, setAllChickens] = useState<Chicken[]>([]);
+    const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
+    const [entries, setEntries] = useState<FeedEntry[]>([]);
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    });
+    const [allChickens, setAllChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FeedFormData>({
@@ -337,8 +341,12 @@ export function FeedManagement() {
     setIsAddOpen(false);
   };
 
-  // Alimentation globale (toutes races confondues)
-  const filteredEntries = entries.filter(e => !e._deleted);
+  // Alimentation globale filtrée par mois
+  const filteredEntries = entries.filter(e => {
+      if (e._deleted) return false;
+      const transMonth = e.date.substring(0, 7);
+      return transMonth === selectedMonth;
+  });
 
   const totalFeed = filteredEntries.reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
@@ -407,6 +415,33 @@ export function FeedManagement() {
           <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Alimentation</h1>
           <p className="text-xs font-light text-gray-500 mt-1">Stock & programme nutritionnel</p>
         </div>
+        
+        <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm no-print">
+            <button 
+              onClick={() => {
+                const [y, m] = selectedMonth.split('-').map(Number);
+                const d = new Date(y, m - 2, 1);
+                setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+              }}
+              className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+            >
+              <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
+            </button>
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[100px] text-center text-gray-700">
+              {new Date(selectedMonth + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            </span>
+            <button 
+              onClick={() => {
+                const [y, m] = selectedMonth.split('-').map(Number);
+                const d = new Date(y, m, 1);
+                setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+              }}
+              className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+            >
+              <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
+            </button>
+        </div>
+
         <button
           onClick={() => setIsAddOpen(true)}
           className={`h-10 px-3 rounded-xl ${customColors.bgBtn} text-white flex items-center justify-center shadow-md transition-colors no-print outline-none`}

@@ -6,13 +6,13 @@ import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { UpgradeModal } from "./ui/UpgradeModal";
-import { Chicken, EggRecord, FeedEntry, HealthRecord } from "../types";
+import { Chicken, EggRecord, FeedEntry, HealthRecord, Transaction, PoultryType } from "../types";
 import { toast } from "sonner";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts, user } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -33,10 +33,14 @@ export function Dashboard() {
     globalBreakdown: [] as { type: string, count: number, eggs: number }[]
   });
   const [isRecovering, setIsRecovering] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   const isCaille = activeSpeciesFilter === 'caille';
   const isMixed = activeSpeciesFilter === 'all';
-  const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
   const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
   const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
 
@@ -47,11 +51,40 @@ export function Dashboard() {
     return 0.12;
   };
 
+  const handleDeepSync = async () => {
+    setIsRecovering(true);
+    toast.promise(
+        async () => {
+            const uid = user!.uid;
+            await SyncService.recoverLegacyData(uid);
+            await SyncService.pullCloudToLocal(uid, true);
+            await SyncService.pushLocalToCloud(uid, true);
+            setTimeout(() => window.location.reload(), 1000);
+        },
+        {
+          loading: 'Synchronisation profonde en cours...',
+          success: 'Données synchronisées et unifiées !',
+          error: 'Échec de la synchronisation.',
+        }
+    );
+  };
+
   useEffect(() => {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
     const eggs = StorageService.getItem<EggRecord[]>("eggs") || [];
     const feed = StorageService.getItem<FeedEntry[]>("feed") || [];
-    // const health = StorageService.getItem<HealthRecord[]>("health") || [];
+    const transactions = StorageService.getItem<Transaction[]>("transactions") || [];
+
+    const filteredTransactions = transactions.filter(t => {
+      if (t._deleted) return false;
+      const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
+      const transMonth = t.date.substring(0, 7);
+      const isCorrectMonth = transMonth === selectedMonth;
+      if (!isCorrectMonth) return false;
+      if (activeSpeciesFilter === 'all' && !activeBreedFilter) return typeFilterMatch;
+      if (!t.poultryBreed && !t.poultryType) return true;
+      return (activeSpeciesFilter === 'all' || isItemActive(t.poultryType, t.poultryBreed)) && typeFilterMatch;
+    });
 
     const filteredChickens = chickens.filter((c) => !c._deleted && isItemActive(c.poultryType, c.breed));
     const filteredEggs = eggs.filter((e) => !e._deleted && isItemActive(e.poultryType, e.poultryBreed));
@@ -81,7 +114,6 @@ export function Dashboard() {
     }
 
     const activeLots = filteredChickens.filter((c) => c.status === 'active');
-    
     const nowTime = new Date().getTime();
     const activeLayersLots = activeLots.filter((c) => {
         const arrival = c.arrivalDate ? new Date(c.arrivalDate).getTime() : nowTime;
@@ -148,7 +180,7 @@ export function Dashboard() {
       lastFeedText,
       globalBreakdown
     });
-  }, [selectedDate, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger]);
+  }, [selectedDate, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, activeFilter, selectedMonth]);
 
   const [chartData, setChartData] = useState<{name: string, production: number}[]>([]);
   useEffect(() => {
@@ -169,7 +201,7 @@ export function Dashboard() {
   const handleRecover = async () => {
     setIsRecovering(true);
     try {
-      const result = await SyncService.recoverLegacyData();
+      const result = await SyncService.recoverLegacyData(user!.uid);
       if (result.success) {
         toast.success(result.message);
         setTimeout(() => window.location.reload(), 1500);
@@ -186,13 +218,12 @@ export function Dashboard() {
   const handleTestNotification = async () => {
     try {
       const { NotificationService } = await import("../services/NotificationService");
-      // Use standard browser notification for test
       if (Notification.permission === 'granted') {
           NotificationService.showLocalNotification("Test Réussi ! 🔔", "Vos notifications sont bien configurées sur cet appareil.");
           toast.success("Notification de test envoyée !");
       } else {
           toast.warning("Les notifications ne sont pas autorisées. Vérifiez vos paramètres.");
-          await NotificationService.requestPermission(useAuth().user!.uid);
+          await NotificationService.requestPermission(user!.uid);
       }
     } catch (e) {
       toast.error("Échec du test.");
@@ -202,7 +233,6 @@ export function Dashboard() {
   return (
     <section id="screen-dashboard" className="space-y-6">
       
-      {/* Alert Banner (Critical Alerts) */}
       {alerts.filter(a => a.severity === 'critical').map(alert => (
         <div key={alert.id} className="bg-red-50 rounded-2xl p-4 border-l-4 border-l-red-500 flex gap-3 items-start relative group">
           <iconify-icon icon="solar:danger-triangle-linear" stroke-width="1.5" className="text-2xl text-red-500 shrink-0 mt-0.5 z-10"></iconify-icon>
@@ -216,7 +246,6 @@ export function Dashboard() {
         </div>
       ))}
 
-      {/* Recovery Banner (Only if no chickens) */}
       {stats.totalChickens === 0 && (
         <div className="clean-card rounded-2xl p-4 border-l-4 border-l-blue-500 flex flex-col gap-2 relative overflow-hidden">
           <div className="flex items-center gap-2">
@@ -234,7 +263,6 @@ export function Dashboard() {
         </div>
       )}
  
-      {/* Test Notifications / Sync Shortcuts */}
       <div className="grid grid-cols-2 gap-3">
           <button 
             onClick={handleTestNotification}
@@ -244,17 +272,16 @@ export function Dashboard() {
             <span className="text-xs font-medium text-gray-700">Tester Notifications</span>
           </button>
           <button 
-            onClick={() => window.location.reload()}
-            className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all group"
+            onClick={handleDeepSync}
+            disabled={isRecovering}
+            className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all group disabled:opacity-50"
           >
-            <iconify-icon icon="solar:refresh-linear" class="text-lg text-indigo-500 group-hover:rotate-180 transition-transform duration-500"></iconify-icon>
+            <iconify-icon icon="solar:refresh-linear" class={`text-lg text-indigo-500 group-hover:rotate-180 transition-transform duration-500 ${isRecovering ? 'animate-spin' : ''}`}></iconify-icon>
             <span className="text-xs font-medium text-gray-700">Forcer Synchro</span>
           </button>
       </div>
 
-      {/* KPIs Section */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {/* KPI 1 : Effectif Global */}
           <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-indigo-500 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/inventory')}>
               <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
                   <iconify-icon icon="solar:users-group-rounded-linear" stroke-width="1.5" className="text-xl text-indigo-500"></iconify-icon>
@@ -268,7 +295,6 @@ export function Dashboard() {
               </div>
           </div>
 
-          {/* KPI 2 : Ponte / Récolte */}
           {activeSpeciesFilter !== 'lapin' && activeSpeciesFilter !== 'pigeon' && (
             <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-emerald-500 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/eggs')}>
                 <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
@@ -284,7 +310,6 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* KPI 3 : Stock Aliment */}
           <div className="clean-card rounded-2xl h-[116px] p-3 flex flex-col justify-between border-l-4 border-l-orange-500 hover:scale-105 transition-transform cursor-pointer col-span-2 md:col-span-1" onClick={() => navigate('/feed')}>
               <div className="flex items-center gap-2 text-xs text-gray-500 font-['DM_Sans']">
                   <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" className="text-xl text-orange-500"></iconify-icon>
@@ -299,7 +324,6 @@ export function Dashboard() {
           </div>
       </div>
 
-      {/* Global Breakdown (Only if no specific poultryType selected) */}
       {activeSpeciesFilter === 'all' && stats.globalBreakdown && stats.globalBreakdown.length > 0 && (
         <div className="clean-card rounded-3xl p-5 select-none">
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Répartition Globale</h2>
@@ -341,7 +365,6 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Chart */}
       {activeSpeciesFilter !== 'lapin' && activeSpeciesFilter !== 'pigeon' && (
         <div className="clean-card rounded-3xl p-5 select-none relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
@@ -381,7 +404,6 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Guide de Gestion */}
       <div>
           <h2 className="font-['Syne'] text-base font-medium tracking-tight text-gray-900 mb-4 ml-1">Raccourcis</h2>
           <div className="space-y-3">
@@ -397,6 +419,41 @@ export function Dashboard() {
                     <iconify-icon icon="solar:alt-arrow-right-linear" className="text-gray-400"></iconify-icon>
                 </button>
               )}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                    <p className="text-xs font-light text-gray-500">Rentabilité & suivi détaillé</p>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-bold animate-pulse">
+                        <iconify-icon icon="solar:check-read-linear"></iconify-icon>
+                        <span>Synchronisé</span>
+                    </div>
+                </div>
+                <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm">
+                    <button 
+                      onClick={() => {
+                        const [y, m] = selectedMonth.split('-').map(Number);
+                        const d = new Date(y, m - 2, 1);
+                        setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+                      }}
+                      className="p-1 hover:bg-gray-50 rounded text-gray-400"
+                    >
+                      <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
+                    </button>
+                    <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[100px] text-center">
+                      {new Date(selectedMonth + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button 
+                      onClick={() => {
+                        const [y, m] = selectedMonth.split('-').map(Number);
+                        const d = new Date(y, m, 1);
+                        setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+                      }}
+                      className="p-1 hover:bg-gray-50 rounded text-gray-400"
+                    >
+                      <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
+                    </button>
+                </div>
+              </div>
               <button onClick={() => navigate("/feed")} className="w-full clean-card rounded-2xl p-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center shrink-0 border border-orange-100">
                       <iconify-icon icon="solar:leaf-linear" stroke-width="1.5" className="text-xl text-orange-500"></iconify-icon>

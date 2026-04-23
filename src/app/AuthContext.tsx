@@ -97,12 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // RUN MIGRATION ON LOG IN / LOAD
                 StorageService.migrateAll();
 
-                // Background cloud pull
+                // Deep cloud pull: consolidate legacy and farm data
                 setIsSyncing(true);
-                // Owners should pull from both legacy user store and farm store to avoid data loss
                 const pullId = currentUser.uid;
-                await SyncService.pullCloudToLocal(pullId, false); // Try legacy
-                await SyncService.pullCloudToLocal(pullId, true);  // Try farm
+                // 1. Pull everything from cloud to local
+                await SyncService.pullCloudToLocal(pullId, false); // Legacy user store
+                await SyncService.pullCloudToLocal(pullId, true);  // Shared farm store
+                
+                // 2. IMPORTANT: If current user is owner, push local back to farm store to unify
+                // This ensures that if Web had 'A' and Mobile had 'B', after both pull/push, both have 'A+B'
+                await SyncService.pushLocalToCloud(pullId, true);
                 
                 setIsSyncing(false);
                 setIsInitialPullDone(true);
@@ -424,8 +428,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             await signOut(auth);
-            // StorageService.clear(); // Disabled to prevent losing offline data!
-            clearSelection();
+            // DO NOT clearSelection() here anymore to avoid re-onboarding loop
             setSyncTrigger(prev => prev + 1);
             toast.success("Déconnexion réussie.");
         } catch (err) {

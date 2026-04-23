@@ -43,6 +43,10 @@ export function FinanceManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
   const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
@@ -157,6 +161,12 @@ export function FinanceManagement() {
   const filteredTransactions = transactions.filter(t => {
       if (t._deleted) return false;
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
+      
+      // Monthly Filter
+      const transMonth = t.date.substring(0, 7);
+      const isCorrectMonth = transMonth === selectedMonth;
+      if (!isCorrectMonth) return false;
+
       if (activeSpeciesFilter === 'all' && !activeBreedFilter) return typeFilterMatch;
       if (!t.poultryBreed && !t.poultryType) return true;
       return (activeSpeciesFilter === 'all' || isItemActive(t.poultryType, t.poultryBreed)) && typeFilterMatch;
@@ -221,6 +231,33 @@ export function FinanceManagement() {
             </div>
           </div>
         </div>
+        
+        <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm">
+            <button 
+              onClick={() => {
+                const [y, m] = selectedMonth.split('-').map(Number);
+                const d = new Date(y, m - 2, 1);
+                setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+              }}
+              className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+            >
+              <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
+            </button>
+            <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[100px] text-center text-gray-700">
+              {new Date(selectedMonth + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            </span>
+            <button 
+              onClick={() => {
+                const [y, m] = selectedMonth.split('-').map(Number);
+                const d = new Date(y, m, 1);
+                setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+              }}
+              className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+            >
+              <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
+            </button>
+        </div>
+
         <div className="flex gap-2">
           <button onClick={() => window.print()} className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none">
             <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
