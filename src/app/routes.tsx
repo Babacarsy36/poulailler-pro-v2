@@ -28,26 +28,35 @@ function AuthGuard() {
 }
 
 // Guard to ensure species is selected
+// CRITICAL FIX: Never redirect if local storage says user has already configured.
+// Firebase sync can be slow, and we must not interrupt the user during that.
 function SelectionGuard() {
   const { poultryTypes, isPreferencesLoaded, isInitialPullDone } = useAuth();
   
+  // PRIMARY CHECK: Trust localStorage immediately - no waiting
   const hasSelectedLocal = localStorage.getItem('has_selected_species') === 'true';
-  const hasTypes = poultryTypes && poultryTypes.length > 0;
   
-  // If we have data (local or cloud), we are good
-  if (hasTypes || (hasSelectedLocal && !isInitialPullDone)) return <Outlet />;
+  // If the user has ever configured their farm, let them through immediately
+  // This prevents the re-onboarding loop on every reconnection
+  if (hasSelectedLocal) return <Outlet />;
 
-  // If sync is totally done and we still have nothing, then redirect
+  // SECONDARY CHECK: Live React state (from Firebase or real-time updates)
+  const hasTypes = poultryTypes && poultryTypes.length > 0;
+  if (hasTypes) return <Outlet />;
+
+  // Only redirect to selection if:
+  // 1. No local flag (brand new user)
+  // 2. Firebase has fully loaded and confirmed no preferences exist
   if (isInitialPullDone && isPreferencesLoaded && !hasTypes) {
     return <Navigate to="/selection" replace />;
   }
 
-  // Otherwise, stay on loading
+  // Otherwise show loading spinner while waiting for Firebase
   return (
-    <div className="min-h-screen bg-babs-cream flex flex-col items-center justify-center gap-6 animate-pulse">
+    <div className="min-h-screen bg-babs-cream flex flex-col items-center justify-center gap-6">
       <Logo className="w-20 h-20 opacity-50" />
       <div className="w-12 h-12 border-4 border-babs-orange border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Synchro de vos données...</p>
+      <p className="text-[10px] font-black text-babs-brown/40 uppercase tracking-[0.3em]">Chargement de votre ferme...</p>
     </div>
   );
 }

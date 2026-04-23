@@ -263,8 +263,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPoultryTypes(cleanTypes);
         setSelectedBreeds(cleanBreeds);
         
+        // CRITICAL: Always save to localStorage FIRST, before Firebase.
+        // This ensures the SelectionGuard never redirects to /selection
+        // even if the user reconnects before Firebase responds.
         localStorage.setItem('has_selected_species', 'true');
-        if (cleanTypes.length > 0) localStorage.setItem('poultry_types', JSON.stringify(cleanTypes));
+        localStorage.setItem('poultry_types', JSON.stringify(cleanTypes));
         localStorage.setItem('selected_breeds', JSON.stringify(cleanBreeds));
         localStorage.removeItem('poultry_breed'); // Clean legacy
 
@@ -278,11 +281,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const clearSelection = () => {
+        // NOTE: We intentionally do NOT remove 'has_selected_species' here.
+        // This flag must survive logout/login cycles to prevent the re-onboarding loop.
+        // It is only removed if the user explicitly goes to /selection and saves new empty settings.
         setPoultryTypes([]);
         setSelectedBreeds([]);
         setActiveSpeciesFilterState('all');
         setActiveBreedFilter(null);
         localStorage.removeItem('active_species_filter');
+        // DO NOT: localStorage.removeItem('has_selected_species'); 
+        // DO NOT: localStorage.removeItem('poultry_types');
     };
     const isItemActive = (itemType?: string, itemBreed?: string, ignoreSpecies = false) => {
         const effectiveType = itemType?.toLowerCase() || 'poulet';
@@ -428,8 +436,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             await signOut(auth);
-            // DO NOT clearSelection() here anymore to avoid re-onboarding loop
-            setSyncTrigger(prev => prev + 1);
+            // CRITICAL: Do NOT clearSelection() or remove any localStorage preferences.
+            // The user's poultry_types and has_selected_species must survive logout.
+            // Without this, the user will be forced to reconfigure on every login.
             toast.success("Déconnexion réussie.");
         } catch (err) {
             toast.error("Erreur lors de la déconnexion.");
