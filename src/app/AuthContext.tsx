@@ -97,13 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // RUN MIGRATION ON LOG IN / LOAD
                 StorageService.migrateAll();
 
-                // Background cloud pull - pass UID explicitly to avoid race conditions
+                // Background cloud pull
                 setIsSyncing(true);
-                SyncService.pullCloudToLocal(currentUser.uid).finally(() => {
-                    setIsSyncing(false);
-                    setIsInitialPullDone(true);
-                    setSyncTrigger(prev => prev + 1);
-                });
+                // Owners should pull from both legacy user store and farm store to avoid data loss
+                const pullId = currentUser.uid;
+                await SyncService.pullCloudToLocal(pullId, false); // Try legacy
+                await SyncService.pullCloudToLocal(pullId, true);  // Try farm
+                
+                setIsSyncing(false);
+                setIsInitialPullDone(true);
+                setSyncTrigger(prev => prev + 1);
 
                 // Check for pending invitations
                 const checkInvitations = async () => {
@@ -224,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user && farmId) {
             const stopSync = SyncService.startRealtimeSync(() => {
                 setSyncTrigger(prev => prev + 1);
-            }, farmId, farmId !== user.uid);
+            }, farmId, true); // Everyone uses farm store if farmId exists
             return () => stopSync();
         }
     }, [user, farmId]);
@@ -317,11 +320,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 3. User Preferences Filter (Onboarding Selection)
-        // If we are in "Global View", we show everything.
-        if (activeSpeciesFilter !== 'all') {
-            const isSpeciesSelected = poultryTypes.includes(effectiveType);
-            if (!isSpeciesSelected) return false;
-        }
+        // If we are in "Global View", we show everything to maintain full farm transparency.
+        if (activeSpeciesFilter === 'all') return true;
+
+        const isSpeciesSelected = poultryTypes.includes(effectiveType);
+        if (!isSpeciesSelected) return false;
 
         // If the species has breeds defined in selectedBreeds, only show those breeds
         const speciesBreeds = breedList[effectiveType]?.map(b => b.id) || [];
@@ -385,8 +388,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [syncTrigger, poultryTypes, selectedBreeds, user, activeSpeciesFilter]);
 
     const saveData = async <T extends SyncItem>(key: string, data: T[]) => {
-        const isFarm = !!farmId && farmId !== user?.uid;
         const targetId = farmId || user?.uid;
+        const isFarm = !!farmId; // Owner or worker, if there's a farmId, use farm store
         if (targetId) {
             await SyncService.saveCollection(key, data, targetId, isFarm);
             setSyncTrigger(prev => prev + 1);
