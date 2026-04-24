@@ -158,18 +158,13 @@ export function FinanceManagement() {
     }
   };
 
+  // Finances are GLOBAL: show all transactions for the month, regardless of species filter
   const filteredTransactions = transactions.filter(t => {
       if (t._deleted) return false;
       const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
-      
-      // Monthly Filter
       const transMonth = t.date.substring(0, 7);
-      const isCorrectMonth = transMonth === selectedMonth;
-      if (!isCorrectMonth) return false;
-
-      if (activeSpeciesFilter === 'all' && !activeBreedFilter) return typeFilterMatch;
-      if (!t.poultryBreed && !t.poultryType) return true;
-      return (activeSpeciesFilter === 'all' || isItemActive(t.poultryType, t.poultryBreed)) && typeFilterMatch;
+      if (transMonth !== selectedMonth) return false;
+      return typeFilterMatch;
   });
 
   const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);

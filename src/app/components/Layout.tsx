@@ -82,7 +82,7 @@ export function Layout() {
   const breedInfo = activeBreedFilter ? [...breedList.poulet, ...breedList.caille].find(b => b.id === activeBreedFilter) : null;
 
   const dynamicTitle = activeSpeciesFilter === 'all' 
-    ? 'Vue Globale'
+    ? 'P-Pro'
     : breedInfo 
         ? `${activeSpeciesInfo?.label}s : ${breedInfo.label}`
         : `Mes ${activeSpeciesInfo?.label}s`;

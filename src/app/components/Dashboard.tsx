@@ -116,10 +116,12 @@ export function Dashboard() {
     const activeLots = filteredChickens.filter((c) => c.status === 'active');
     const nowTime = new Date().getTime();
     const activeLayersLots = activeLots.filter((c) => {
-        const arrival = c.arrivalDate ? new Date(c.arrivalDate).getTime() : nowTime;
+        // If no arrivalDate recorded, assume the animal is mature enough to lay
+        if (!c.arrivalDate) return true;
+        const arrival = new Date(c.arrivalDate).getTime();
         const ageDays = Math.ceil(Math.abs(nowTime - arrival) / (1000 * 60 * 60 * 24));
-        let minAge = 140; 
-        if (c.poultryType === 'caille') minAge = 42; 
+        let minAge = 140;
+        if (c.poultryType === 'caille') minAge = 42;
         else if (c.breed?.toLowerCase().includes('fermier')) minAge = 150;
         else if (c.breed?.toLowerCase().includes('ornement')) minAge = 160;
         return ageDays >= minAge;
