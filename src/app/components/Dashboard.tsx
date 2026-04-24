@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts, user } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts, user, isInitialPullDone } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -180,7 +180,7 @@ export function Dashboard() {
       lastFeedText,
       globalBreakdown
     });
-  }, [selectedDate, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, activeFilter, selectedMonth]);
+  }, [selectedDate, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, activeFilter, selectedMonth, isInitialPullDone]);
 
   const [chartData, setChartData] = useState<{name: string, production: number}[]>([]);
   useEffect(() => {
@@ -196,7 +196,7 @@ export function Dashboard() {
       };
     });
     setChartData(last15Days);
-  }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
+  }, [syncTrigger, activeSpeciesFilter, selectedBreeds, isInitialPullDone]);
 
   const handleRecover = async () => {
     setIsRecovering(true);
