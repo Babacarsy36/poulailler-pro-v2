@@ -290,7 +290,7 @@ export function Layout() {
 
         {/* Bottom Navigation - Mobile Only */}
         <nav className={`md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-md border-t pb-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]' : 'bg-white/90 border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]'}`}>
-            <div className="flex justify-around items-center h-20 px-2 pb-2">
+            <div className="flex justify-around items-center h-24 px-4 pb-4">
                 {[
                   { id: 'dashboard', label: 'Home', icon: 'solar:widget-linear', path: '/' },
                   { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
@@ -303,15 +303,15 @@ export function Layout() {
                         <button 
                             key={item.id}
                             onClick={() => navigate(item.path)} 
-                            className="flex flex-col items-center gap-1 w-14 p-2 rounded-xl transition-all relative"
+                            className="flex flex-col items-center gap-1.5 w-16 p-1 rounded-2xl transition-all relative"
                         >
-                            <div className={`p-2 rounded-xl transition-all ${isActive ? isDarkMode ? 'bg-zinc-800' : `bg-${accentColorClass}-50` : ''}`}>
+                            <div className={`p-2.5 rounded-2xl transition-all ${isActive ? isDarkMode ? 'bg-zinc-800' : `bg-${accentColorClass}-500 text-white shadow-sm` : ''}`}>
                                 <iconify-icon 
                                 icon={item.icon} 
-                                className={`text-2xl ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}
+                                className={`text-2xl ${isActive ? 'text-white' : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}
                                 ></iconify-icon>
                             </div>
-                            <span className={`text-[9px] font-bold ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}>
+                            <span className={`text-[10px] font-bold tracking-tight ${isActive ? `text-${accentColorClass}-500` : isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`}>
                               {item.label}
                             </span>
                         </button>

@@ -73,17 +73,13 @@ export function Dashboard() {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
     const eggs = StorageService.getItem<EggRecord[]>("eggs") || [];
     const feed = StorageService.getItem<FeedEntry[]>("feed") || [];
-    const transactions = StorageService.getItem<Transaction[]>("transactions") || [];
+    const transactions = StorageService.getItem<Transaction[]>("finances") || [];
 
+    // Finances are GLOBAL on dashboard too
     const filteredTransactions = transactions.filter(t => {
       if (t._deleted) return false;
-      const typeFilterMatch = activeFilter === 'all' || t.type === activeFilter;
       const transMonth = t.date.substring(0, 7);
-      const isCorrectMonth = transMonth === selectedMonth;
-      if (!isCorrectMonth) return false;
-      if (activeSpeciesFilter === 'all' && !activeBreedFilter) return typeFilterMatch;
-      if (!t.poultryBreed && !t.poultryType) return true;
-      return (activeSpeciesFilter === 'all' || isItemActive(t.poultryType, t.poultryBreed)) && typeFilterMatch;
+      return transMonth === selectedMonth;
     });
 
     const filteredChickens = chickens.filter((c) => !c._deleted && isItemActive(c.poultryType, c.breed));
@@ -155,13 +151,16 @@ export function Dashboard() {
       });
     }
 
-    const totalFeedKg = filteredFeed.reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
-    const dailyFeedCons = activeLots.reduce((acc: number, c) => {
+    const totalFeedKg = feed.filter(f => !f._deleted).reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
+    
+    // Autonomy should be based on GLOBAL consumption if stock is global
+    const globalActiveLots = chickens.filter(c => !c._deleted && c.status === 'active');
+    const dailyFeedCons = globalActiveLots.reduce((acc: number, c) => {
       const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet');
       return acc + (getDailyRateForBreed(breed) * (Number(c.count) || 1));
     }, 0);
 
-    const sortedFeed = [...filteredFeed].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedFeed = [...feed.filter(f => !f._deleted)].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const lastFeedText = sortedFeed.length > 0 ? `${sortedFeed[0].type === 'achat' ? 'Achat: ' : 'Consommé: '} ${sortedFeed[0].quantity}kg` : '';
     const lastEggText = sortedEggs.length > 0 ? `Dernier: ${sortedEggs[0].quantity} œufs` : '';
 

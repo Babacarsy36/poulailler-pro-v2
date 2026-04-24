@@ -37,7 +37,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role, farmId, user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -71,19 +71,28 @@ export function FinanceManagement() {
   const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
   const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
 
-  useEffect(() => {
-    const data = StorageService.getItem<Transaction[]>("finances") || [];
-    setTransactions(data);
-    const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
-    const activeLots = chickens
-      .filter((c: Chicken) => {
-          return (c.status === 'active' || Number(c.count) > 0) && isItemActive(c.poultryType, c.breed);
-      })
-      .map((c: Chicken) => ({
-        id: c.id,
-        name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
-      }));
-    setBatches(activeLots);
+    const loadData = async () => {
+      const targetId = farmId || user?.uid;
+      const isFarm = !!farmId;
+      if (targetId) {
+        await SyncService.pullCloudToLocal(targetId, isFarm);
+      }
+      const data = StorageService.getItem<Transaction[]>("finances") || [];
+      setTransactions(data);
+      
+      const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
+      const activeLots = chickens
+        .filter((c: Chicken) => {
+            return (c.status === 'active' || Number(c.count) > 0) && isItemActive(c.poultryType, c.breed);
+        })
+        .map((c: Chicken) => ({
+          id: c.id,
+          name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
+        }));
+      setBatches(activeLots);
+    };
+
+    loadData();
   }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
@@ -214,7 +223,7 @@ export function FinanceManagement() {
       hasAccess={hasAccess('PRO')}
     >
     <section id="screen-finance" className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Finances</h1>
           <div className="flex items-center gap-2 mt-1">
@@ -227,40 +236,42 @@ export function FinanceManagement() {
           </div>
         </div>
         
-        <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm">
-            <button 
-              onClick={() => {
-                const [y, m] = selectedMonth.split('-').map(Number);
-                const d = new Date(y, m - 2, 1);
-                setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-              }}
-              className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
-            >
-              <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
-            </button>
-            <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[100px] text-center text-gray-700">
-              {new Date(selectedMonth + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-            </span>
-            <button 
-              onClick={() => {
-                const [y, m] = selectedMonth.split('-').map(Number);
-                const d = new Date(y, m, 1);
-                setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-              }}
-              className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
-            >
-              <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
-            </button>
-        </div>
+        <div className="flex flex-row justify-between items-center sm:gap-4 w-full sm:w-auto">
+            <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm">
+                <button 
+                  onClick={() => {
+                    const [y, m] = selectedMonth.split('-').map(Number);
+                    const d = new Date(y, m - 2, 1);
+                    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+                  }}
+                  className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+                >
+                  <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
+                </button>
+                <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[80px] sm:min-w-[100px] text-center text-gray-700">
+                  {new Date(selectedMonth + '-01').toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
+                </span>
+                <button 
+                  onClick={() => {
+                    const [y, m] = selectedMonth.split('-').map(Number);
+                    const d = new Date(y, m, 1);
+                    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+                  }}
+                  className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+                >
+                  <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
+                </button>
+            </div>
 
-        <div className="flex gap-2">
-          <button onClick={() => window.print()} className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none">
-            <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
-          </button>
-          <button onClick={() => { setEditingTransaction(null); reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" }); setIsAddOpen(true); }} className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none">
-            <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
-            <span className="font-medium text-sm hidden sm:inline">Transaction</span>
-          </button>
+            <div className="flex gap-2 ml-auto">
+              <button onClick={() => window.print()} className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none">
+                <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
+              </button>
+              <button onClick={() => { setEditingTransaction(null); reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" }); setIsAddOpen(true); }} className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none">
+                <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
+                <span className="font-medium text-sm hidden sm:inline">Transaction</span>
+              </button>
+            </div>
         </div>
       </div>
 
