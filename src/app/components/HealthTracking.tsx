@@ -159,24 +159,24 @@ export function HealthTracking() {
     const id = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
     
     if (!reminders.some(r => r.id === id && r.date === dateStr)) {
-        reminders.push({
+        const newReminders = [...reminders, {
             id,
             date: dateStr,
             title: step.title,
             description: step.description,
             breed: selectedBreed
-        });
-        StorageService.setItem('vaccine_reminders', reminders);
-        setActiveReminders([...reminders]);
+        }];
+        saveData('vaccine_reminders', newReminders);
+        setActiveReminders(newReminders);
         toast.success(`Rappel activé pour le ${new Date(dateStr).toLocaleDateString('fr-FR')} !`);
         
         if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
              Notification.requestPermission();
         }
     } else {
-        reminders = reminders.filter(r => !(r.id === id && r.date === dateStr));
-        StorageService.setItem('vaccine_reminders', reminders);
-        setActiveReminders([...reminders]);
+        const newReminders = reminders.filter(r => !(r.id === id && r.date === dateStr));
+        saveData('vaccine_reminders', newReminders);
+        setActiveReminders(newReminders);
         toast.info("Rappel désactivé.");
     }
   };
@@ -370,7 +370,7 @@ export function HealthTracking() {
                       stepDateObj.setDate(stepDateObj.getDate() + (step.day - initialAge));
                       const stepDateStr = stepDateObj.toISOString().split("T")[0];
                       const isPast = currentAgeDays > step.day;
-                      const isDone = filteredRecords.some(r => r.date === stepDateStr && r.title === step.title);
+                      const isDone = filteredRecords.some(r => r.title === step.title && (r.date === stepDateStr || r.poultryBreed === selectedBreed));
                       const isCommonBase = step.day <= 24;
                       const reminderId = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
                       const isReminderActive = activeReminders.some(r => r.id === reminderId && r.date === stepDateStr);

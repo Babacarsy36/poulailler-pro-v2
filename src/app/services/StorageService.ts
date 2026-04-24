@@ -93,7 +93,17 @@ export const StorageService = {
    * Migrates all legacy keys to the new format.
    */
   migrateAll(): void {
-    const legacyKeys = ["chickens", "eggs", "feed", "health", "finances", "incubation"];
+    // 1. Map 'transactions' to 'finances' if needed
+    const oldTransactions = this.getItem<any[]>("transactions");
+    if (oldTransactions && oldTransactions.length > 0) {
+      const currentFinances = this.getItem<any[]>("finances") || [];
+      if (currentFinances.length === 0) {
+        this.setItem("finances", oldTransactions);
+        console.log("Migrated transactions to finances successfully.");
+      }
+    }
+
+    const legacyKeys = ["chickens", "eggs", "feed", "health", "finances", "incubation", "vaccine_reminders"];
     legacyKeys.forEach(key => {
       this.getItem(key); // Calling getItem will trigger the internal persistence migration
     });

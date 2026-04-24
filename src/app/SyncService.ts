@@ -2,7 +2,7 @@ import { db, auth } from "./firebaseConfig";
 import { doc, getDoc, setDoc, onSnapshot, DocumentReference } from "firebase/firestore";
 import { StorageService } from "./services/StorageService";
 
-const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation"];
+const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation", "vaccine_reminders"];
 
 export interface SyncItem {
   id: string;
@@ -82,7 +82,14 @@ export const SyncService = {
     await Promise.all(keys.map(async (key) => {
       try {
         const docRef = this.getDocRef(key, targetId, isFarm);
-        const docSnap = await getDoc(docRef);
+        let docSnap = await getDoc(docRef);
+        
+        // Fallback for 'finances' -> try 'transactions' legacy document
+        if (!docSnap.exists() && key === 'finances') {
+          const legacyRef = this.getDocRef('transactions', targetId, isFarm);
+          docSnap = await getDoc(legacyRef);
+        }
+
         if (docSnap.exists()) {
           const cloudData = docSnap.data().data as SyncItem[];
           const localData = StorageService.getItem<SyncItem[]>(key) || [];
