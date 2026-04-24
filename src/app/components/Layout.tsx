@@ -65,9 +65,9 @@ export function Layout() {
     { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
     { id: 'eggs', label: 'Production', icon: 'ph:egg-bold', path: '/eggs' },
     { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
-    { id: 'incubator', label: 'Couvaison', icon: 'solar:fire-linear', path: '/incubator' },
-    { id: 'finance', label: 'Finances', icon: 'solar:wallet-linear', path: '/finances' },
     { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
+    { id: 'finances', label: 'Finances', icon: 'solar:bill-list-linear', path: '/finances' },
+    { id: 'incubator', label: 'Incubation', icon: 'solar:thermometer-linear', path: '/incubator' },
     { id: 'selection', label: 'Configuration', icon: 'solar:settings-bold-duotone', path: '/selection' },
     { id: 'settings', label: 'Équipe', icon: 'solar:users-group-two-rounded-linear', path: '/team' },
   ];

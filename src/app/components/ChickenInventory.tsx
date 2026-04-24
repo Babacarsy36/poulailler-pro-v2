@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Edit, Bird, Calendar, Activity, Users, FileWarning, ShoppingCart, Printer } from "lucide-react";
-import { useAuth } from "../AuthContext";
+import { useAuth, PoultryType } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { useForm } from "react-hook-form";
@@ -8,7 +7,7 @@ import { useForm } from "react-hook-form";
 interface Chicken {
   id: string;
   name: string;
-  poultryType: "caille" | "poulet";
+  poultryType: PoultryType;
   breed: string;
   age: number;
   ageUnit: "weeks" | "months";
@@ -22,12 +21,13 @@ interface Chicken {
   birthYear?: number;
   club?: string;
   updatedAt?: number;
+  _deleted?: boolean;
 }
 
 interface ChickenFormData {
   name: string;
   breed: string;
-  poultryType: "poulet" | "caille";
+  poultryType: PoultryType;
   age: string;
   ageUnit: "weeks" | "months";
   count: string;
@@ -100,6 +100,9 @@ export function ChickenInventory() {
     const ageDays = ageUnit === 'weeks' ? val * 7 : val * 30;
     if (ageDays <= 0) return "Âge non défini";
 
+    if (type === 'pigeon') return "Mélange spécial Pigeon / Graines";
+    if (type === 'lapin') return "Granulés Lapin / Foin";
+    
     if (type === 'caille') {
        if (ageDays <= 14) return "Démarrage Cailles (Très riche)";
        if (ageDays <= 42) return "Croissance Cailles";
@@ -202,7 +205,7 @@ export function ChickenInventory() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">
-            Inventaire {isCaille ? "Cailles" : (selectedBreeds.length > 0 ? selectedBreeds.join(' & ').toUpperCase() : "Poulets")}
+            Inventaire {isMixed ? "Global" : activeSpeciesFilter === 'caille' ? 'Cailles' : activeSpeciesFilter === 'pigeon' ? 'Pigeons' : activeSpeciesFilter === 'lapin' ? 'Lapins' : (selectedBreeds.length > 0 ? selectedBreeds.join(' & ').toUpperCase() : "Poulets")}
           </h1>
           <p className="text-xs font-light text-gray-500 mt-1">Gestion par lots & sujets</p>
         </div>
@@ -449,7 +452,7 @@ export function ChickenInventory() {
                       {...register("poultryType")}
                     >
                       {poultryTypes.map(t => (
-                          <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
+                          <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
                       ))}
                     </select>
                 </div>

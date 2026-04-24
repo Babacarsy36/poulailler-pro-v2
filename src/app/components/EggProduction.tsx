@@ -41,7 +41,7 @@ export function EggProduction() {
   const isCaille = activeSpeciesFilter === 'caille';
   const isMixed = activeSpeciesFilter === 'all';
   const accentColorClass = isMixed ? 'indigo' : isCaille ? 'emerald' : 'orange';
-  const accentIcon = isCaille ? "solar:egg-bold-duotone" : "solar:record-circle-bold-duotone";
+  const accentIcon = isCaille ? "solar:egg-bold-duotone" : activeSpeciesFilter === 'pigeon' ? 'game-icons:pigeon' : "solar:record-circle-bold-duotone";
   const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
   const accentBg = isMixed ? "bg-indigo-600 hover:bg-indigo-700" : isCaille ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-600 hover:bg-orange-700";
   const accentBgLight = isMixed ? "bg-indigo-50" : isCaille ? "bg-emerald-50" : "bg-orange-50";
@@ -67,6 +67,7 @@ export function EggProduction() {
         // Minimum laying age
         let minAge = 140; // Default Pondeuse (20 weeks)
         if (c.poultryType === 'caille') minAge = 42; // 6 weeks
+        else if (c.poultryType === 'pigeon') minAge = 180; // 6 months
         else if (c.breed?.toLowerCase().includes('fermier')) minAge = 150;
         else if (c.breed?.toLowerCase().includes('ornement')) minAge = 160;
 
@@ -335,7 +336,7 @@ export function EggProduction() {
                     {...register("poultryType")}
                     >
                     {poultryTypes.map(t => (
-                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
+                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
                     ))}
                     </select>
                 </div>

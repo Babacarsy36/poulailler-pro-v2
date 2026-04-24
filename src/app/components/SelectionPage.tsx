@@ -44,6 +44,8 @@ export function SelectionPage() {
         if (selectedTypes.length > 0) {
             let allBreeds = [...breeds];
             if (selectedTypes.includes('caille')) allBreeds.push('caille');
+            if (selectedTypes.includes('pigeon')) allBreeds.push('pigeon');
+            if (selectedTypes.includes('lapin')) allBreeds.push('lapin');
             await updatePoultrySelection(selectedTypes, allBreeds);
             navigate('/');
         }
@@ -158,9 +160,55 @@ export function SelectionPage() {
                                 <img src="/assets/icons/caille.png" alt="Caille" className={`w-full h-full object-cover scale-110 ${!selectedTypes.includes('caille') ? 'mix-blend-multiply opacity-80' : ''}`} />
                             </div>
                             <h2 className="text-lg font-black text-babs-brown mb-1">Cailles</h2>
-                            <p className="text-[10px] text-gray-400 font-bold">Production d'œufs et chair</p>
+                            <p className="text-[10px] text-gray-400 font-bold">Œufs & chair</p>
                             {selectedTypes.includes('caille') && (
                                 <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-babs-emerald text-white flex items-center justify-center animate-in zoom-in">
+                                    <Check className="w-3.5 h-3.5" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pigeon */}
+                        <div
+                            onClick={() => toggleType('pigeon')}
+                            className={`group relative bg-white rounded-[2rem] p-5 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
+                                selectedTypes.includes('pigeon')
+                                    ? 'border-blue-500 shadow-xl ring-4 ring-blue-50'
+                                    : 'border-transparent shadow-sm hover:shadow-lg'
+                            }`}
+                        >
+                            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 transition-all overflow-hidden border-2 ${
+                                selectedTypes.includes('pigeon') ? 'border-blue-500 shadow-lg scale-110' : 'border-transparent bg-blue-50/50'
+                            }`}>
+                                <iconify-icon icon="game-icons:pigeon" class="text-4xl text-blue-500"></iconify-icon>
+                            </div>
+                            <h2 className="text-lg font-black text-babs-brown mb-1">Pigeons</h2>
+                            <p className="text-[10px] text-gray-400 font-bold">Élevage spécialisé</p>
+                            {selectedTypes.includes('pigeon') && (
+                                <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center animate-in zoom-in">
+                                    <Check className="w-3.5 h-3.5" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Lapin */}
+                        <div
+                            onClick={() => toggleType('lapin')}
+                            className={`group relative bg-white rounded-[2rem] p-5 cursor-pointer transition-all duration-500 border-2 flex flex-col items-center text-center ${
+                                selectedTypes.includes('lapin')
+                                    ? 'border-indigo-500 shadow-xl ring-4 ring-indigo-50'
+                                    : 'border-transparent shadow-sm hover:shadow-lg'
+                            }`}
+                        >
+                            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 transition-all overflow-hidden border-2 ${
+                                selectedTypes.includes('lapin') ? 'border-indigo-500 shadow-lg scale-110' : 'border-transparent bg-indigo-50/50'
+                            }`}>
+                                <iconify-icon icon="game-icons:rabbit" class="text-4xl text-indigo-500"></iconify-icon>
+                            </div>
+                            <h2 className="text-lg font-black text-babs-brown mb-1">Lapins</h2>
+                            <p className="text-[10px] text-gray-400 font-bold">Cuniculture</p>
+                            {selectedTypes.includes('lapin') && (
+                                <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center animate-in zoom-in">
                                     <Check className="w-3.5 h-3.5" />
                                 </div>
                             )}
