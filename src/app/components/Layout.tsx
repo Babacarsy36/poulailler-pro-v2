@@ -153,23 +153,20 @@ export function Layout() {
         <header className={`fixed top-0 inset-x-0 md:left-64 z-40 backdrop-blur-md border-b pt-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
             <div className="max-w-5xl mx-auto w-full flex flex-col px-4">
                 <div className="flex items-center justify-between h-16">
-                     {/* Mobile Burger & Logo */}
-                     <div className="flex items-center gap-3 md:hidden shrink-0">
+                     {/* Mobile Burger & Title only (no logo) */}
+                     <div className="flex items-center gap-2 md:hidden shrink-0">
                          <button 
                             onClick={() => setIsDrawerOpen(true)}
                             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'}`}
                          >
                             <iconify-icon icon="solar:hamburger-menu-linear" class="text-xl"></iconify-icon>
                          </button>
-                         <div className="flex items-center gap-2" onClick={() => navigate('/')}>
-                             <Logo className="w-8 h-8 rounded-xl" />
-                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 leading-none">P-Pro</span>
-                                <span className={`font-['Syne'] font-bold text-[10px] ${isDarkMode ? 'text-zinc-100' : 'text-gray-900'} leading-none truncate max-w-[80px]`}>
-                                    {dynamicTitle}
-                                </span>
-                             </div>
-                         </div>
+                         <span
+                            onClick={() => navigate('/')}
+                            className={`font-['Syne'] font-bold text-sm cursor-pointer ${isDarkMode ? 'text-zinc-100' : 'text-gray-900'}`}
+                         >
+                            {dynamicTitle}
+                         </span>
                      </div>
 
                      {/* Species Switcher - Hidden on global screens or if single species */}

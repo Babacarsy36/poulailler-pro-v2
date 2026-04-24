@@ -263,7 +263,7 @@ export function Dashboard() {
         </div>
       )}
  
-      <div className="grid grid-cols-2 gap-3">
+      <div className="hidden md:grid grid-cols-2 gap-3">
           <button 
             onClick={handleTestNotification}
             className="flex items-center justify-center gap-2 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-gray-50 transition-all group"
