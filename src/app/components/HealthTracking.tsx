@@ -567,12 +567,6 @@ export function HealthTracking() {
           </div>
 
           {/* Natural Remedies Section - HIDDEN TO SIMPLIFY APPLICATION */}
-          {/* 
-          {showRemedies && (
-            <div className="clean-card rounded-3xl p-4 md:p-5 relative animate-in fade-in slide-in-from-bottom-4 duration-500">
-              ...
-            </div>
-          )}
         </div>
       </div>
 
