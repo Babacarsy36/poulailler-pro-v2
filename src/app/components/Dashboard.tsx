@@ -44,11 +44,26 @@ export function Dashboard() {
   const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
   const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
 
-  const getDailyRateForBreed = (breed: string) => {
-    if (breed.toLowerCase().includes('caille')) return 0.03;
-    if (breed.toLowerCase().includes('goliath')) return 0.125;
-    if (breed.toLowerCase().includes('pondeuse')) return 0.115;
-    return 0.12;
+  const getDailyRateForLot = (c: Chicken) => {
+    const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
+    
+    // Exact same phases as FeedManagement.tsx
+    const getPhases = (b: string) => {
+        if (b === 'Pondeuse') return [{d: [1, 28], c: [15, 30]}, {d: [29, 126], c: [40, 80]}, {d: [127, 999], c: [110, 120]}];
+        if (b === 'Caille') return [{d: [1, 14], c: [5, 10]}, {d: [15, 42], c: [15, 20]}, {d: [43, 999], c: [25, 30]}];
+        if (['Poulet Fermier', 'Poule d\'Ornement', 'Goliath', 'Brahma', 'Cochin'].includes(b)) return [{d: [1, 28], c: [20, 40]}, {d: [29, 60], c: [50, 100]}, {d: [61, 999], c: [120, 160]}];
+        return [{d: [1, 21], c: [30, 60]}, {d: [22, 35], c: [80, 120]}, {d: [36, 999], c: [150, 180]}];
+    };
+
+    const phases = getPhases(breed);
+    const arrDate = new Date(c.arrivalDate || c.startDate || c.date || Date.now());
+    const ageDays = Math.ceil(Math.abs(Date.now() - arrDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    let phase = phases.find(p => ageDays >= p.d[0] && ageDays <= p.d[1]);
+    if (!phase) phase = phases[phases.length - 1];
+    
+    const avgGrams = (phase.c[0] + phase.c[1]) / 2;
+    return avgGrams / 1000; // in Kg
   };
 
   const handleDeepSync = async () => {
@@ -151,13 +166,13 @@ export function Dashboard() {
       });
     }
 
-    const totalFeedKg = feed.filter(f => !f._deleted).reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
+    // Correct Feed Stock Calculation to match FeedManagement.tsx
+    const filteredFeedForStock = feed.filter(f => !f._deleted && isItemActive(f.poultryType, f.poultryBreed));
+    const totalFeedKg = filteredFeedForStock.reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
     
-    // Autonomy should be based on GLOBAL consumption if stock is global
-    const globalActiveLots = chickens.filter(c => !c._deleted && c.status === 'active');
-    const dailyFeedCons = globalActiveLots.reduce((acc: number, c) => {
-      const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet');
-      return acc + (getDailyRateForBreed(breed) * (Number(c.count) || 1));
+    // Autonomy calculation matching FeedManagement's logic
+    const dailyFeedCons = activeLots.reduce((acc: number, c) => {
+      return acc + (getDailyRateForLot(c) * (Number(c.count) || 1));
     }, 0);
 
     const sortedFeed = [...feed.filter(f => !f._deleted)].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());

@@ -16,14 +16,6 @@ export function SelectionPage() {
         if (poultryTypes.length > 0 && isInitialPullDone) {
             setSelectedTypes(poultryTypes);
             if (selectedBreeds.length > 0) setBreeds(selectedBreeds);
-            // If they were redirected here by mistake (e.g. slow Firebase on new browser),
-            // go back to dashboard automatically after a short delay
-            const hasLocal = localStorage.getItem('has_selected_species') === 'true';
-            if (hasLocal) {
-                setAutoRedirecting(true);
-                const t = setTimeout(() => navigate('/'), 1500);
-                return () => clearTimeout(t);
-            }
         }
     }, [poultryTypes, selectedBreeds, isInitialPullDone]);
 

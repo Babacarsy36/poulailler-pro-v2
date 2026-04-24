@@ -55,14 +55,21 @@ export const SyncService = {
       try {
         const localData = StorageService.getItem<SyncItem[]>(key) || [];
         const docRef = this.getDocRef(key, targetId, isFarm);
-        const docSnap = await getDoc(docRef);
+        let docSnap = await getDoc(docRef);
         
-        let finalData = localData;
+        let cloudData: SyncItem[] = [];
         if (docSnap.exists()) {
-          const cloudData = docSnap.data().data as SyncItem[];
-          finalData = this.mergeData(localData, cloudData);
+          cloudData = docSnap.data().data as SyncItem[];
+        } else if (key === 'finances') {
+          // Fallback check cloud legacy transactions
+          const legacyRef = this.getDocRef('transactions', targetId, isFarm);
+          const legacySnap = await getDoc(legacyRef);
+          if (legacySnap.exists()) {
+            cloudData = legacySnap.data().data as SyncItem[];
+          }
         }
 
+        const finalData = this.mergeData(localData, cloudData);
         await setDoc(docRef, { data: finalData, lastUpdated: Date.now() });
         StorageService.setItem(key, finalData);
       } catch (err) {
@@ -88,6 +95,12 @@ export const SyncService = {
         if (!docSnap.exists() && key === 'finances') {
           const legacyRef = this.getDocRef('transactions', targetId, isFarm);
           docSnap = await getDoc(legacyRef);
+          
+          // If legacy exists, we should probably "migrate" it in cloud by pushing it to 'finances'
+          if (docSnap.exists()) {
+             const legacyData = docSnap.data().data as SyncItem[];
+             await setDoc(docRef, { data: legacyData, lastUpdated: Date.now() });
+          }
         }
 
         if (docSnap.exists()) {
@@ -158,14 +171,17 @@ export const SyncService = {
     if (!targetId) return { success: false, message: "Non connecté" };
 
     let recoveredCount = 0;
-    for (const key of STORAGE_KEYS) {
+    const keysToRecover = [...STORAGE_KEYS, 'transactions'];
+    
+    for (const key of keysToRecover) {
         // 1. Try local legacy key
         const legacyData = localStorage.getItem(key);
         if (legacyData) {
             try {
                 const parsed = JSON.parse(legacyData);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    StorageService.setItem(key, parsed);
+                    const targetKey = key === 'transactions' ? 'finances' : key;
+                    StorageService.setItem(targetKey, parsed);
                     recoveredCount += parsed.length;
                 }
             } catch (e) {}
@@ -177,9 +193,10 @@ export const SyncService = {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const cloudData = docSnap.data().data as SyncItem[];
-                const localData = StorageService.getItem<SyncItem[]>(key) || [];
+                const targetKey = key === 'transactions' ? 'finances' : key;
+                const localData = StorageService.getItem<SyncItem[]>(targetKey) || [];
                 const merged = this.mergeData(localData, cloudData);
-                StorageService.setItem(key, merged);
+                StorageService.setItem(targetKey, merged);
                 recoveredCount += cloudData.length;
             }
         } catch (e) {}
