@@ -72,11 +72,14 @@ export const SyncService = {
   },
 
   // Pulls cloud data to local storage with merging
-  async pullCloudToLocal(id?: string, isFarm = false) {
+  async pullCloudToLocal(id?: string, isFarm = false, specificKey?: string) {
     const targetId = id || auth.currentUser?.uid;
     if (!targetId) return;
 
-    for (const key of STORAGE_KEYS) {
+    const keys = specificKey ? [specificKey] : STORAGE_KEYS;
+    
+    // Pull in parallel for better performance
+    await Promise.all(keys.map(async (key) => {
       try {
         const docRef = this.getDocRef(key, targetId, isFarm);
         const docSnap = await getDoc(docRef);
@@ -89,7 +92,7 @@ export const SyncService = {
       } catch (err) {
         console.error(`Failed to pull ${key} from cloud:`, err);
       }
-    }
+    }));
   },
 
   // Subscribes to cloud changes

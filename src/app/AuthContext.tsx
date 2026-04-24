@@ -228,9 +228,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (user && farmId) {
+            // Explicitly pull farm data when farmId is known
+            const isFarmStore = farmId !== user.uid;
+            SyncService.pullCloudToLocal(farmId, isFarmStore);
+
             const stopSync = SyncService.startRealtimeSync(() => {
                 setSyncTrigger(prev => prev + 1);
-            }, farmId, true); // Everyone uses farm store if farmId exists
+            }, farmId, isFarmStore);
             return () => stopSync();
         }
     }, [user, farmId]);

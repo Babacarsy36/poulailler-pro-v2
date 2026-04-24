@@ -75,7 +75,7 @@ export function FinanceManagement() {
       const targetId = farmId || user?.uid;
       const isFarm = !!farmId;
       if (targetId) {
-        await SyncService.pullCloudToLocal(targetId, isFarm);
+        await SyncService.pullCloudToLocal(targetId, isFarm, "finances");
       }
       const data = StorageService.getItem<Transaction[]>("finances") || [];
       setTransactions(data);
@@ -224,31 +224,38 @@ export function FinanceManagement() {
     >
     <section id="screen-finance" className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Finances</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-xs font-light text-gray-500">Rentabilité & suivi détaillé</p>
-            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-            <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-bold animate-pulse">
-                <iconify-icon icon="solar:check-read-linear"></iconify-icon>
-                <span>Synchronisé</span>
+        <div className="flex justify-between items-start w-full sm:w-auto">
+          <div>
+            <h1 className="font-['Syne'] text-xl font-semibold text-gray-900 tracking-tight">Finances</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <p className="text-xs font-light text-gray-500">Suivi détaillé</p>
+              <div className="flex items-center gap-1 text-[9px] text-emerald-500 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                  <iconify-icon icon="solar:check-read-linear"></iconify-icon>
+                  <span>Synchronisé</span>
+              </div>
             </div>
           </div>
+          <button 
+            onClick={() => loadData()}
+            className="sm:hidden p-2 text-gray-400 hover:text-gray-600 bg-white border border-gray-100 rounded-xl shadow-sm"
+          >
+            <iconify-icon icon="solar:refresh-linear" className={isSyncing ? "animate-spin" : ""}></iconify-icon>
+          </button>
         </div>
         
-        <div className="flex flex-row justify-between items-center sm:gap-4 w-full sm:w-auto">
-            <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm">
+        <div className="flex flex-col xs:flex-row justify-between items-center gap-3 sm:gap-4 w-full sm:w-auto">
+            <div className="flex items-center bg-white border border-gray-100 rounded-xl px-2 py-1 shadow-sm w-full xs:w-auto justify-between xs:justify-center">
                 <button 
                   onClick={() => {
                     const [y, m] = selectedMonth.split('-').map(Number);
                     const d = new Date(y, m - 2, 1);
                     setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
                   }}
-                  className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+                  className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 outline-none"
                 >
                   <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
                 </button>
-                <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[80px] sm:min-w-[100px] text-center text-gray-700">
+                <span className="text-[11px] font-black uppercase tracking-wider px-2 min-w-[90px] sm:min-w-[100px] text-center text-gray-700">
                   {new Date(selectedMonth + '-01').toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
                 </span>
                 <button 
@@ -257,19 +264,19 @@ export function FinanceManagement() {
                     const d = new Date(y, m, 1);
                     setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
                   }}
-                  className="p-1 hover:bg-gray-50 rounded text-gray-400 outline-none"
+                  className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 outline-none"
                 >
                   <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
                 </button>
             </div>
 
-            <div className="flex gap-2 ml-auto">
-              <button onClick={() => window.print()} className="h-10 w-10 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none">
+            <div className="flex gap-2 w-full xs:w-auto">
+              <button onClick={() => window.print()} className="flex-1 xs:flex-none h-11 px-3 bg-white border border-gray-200 text-gray-600 rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors no-print outline-none">
                 <iconify-icon icon="solar:printer-linear" class="text-xl"></iconify-icon>
               </button>
-              <button onClick={() => { setEditingTransaction(null); reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" }); setIsAddOpen(true); }} className="h-10 px-3 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none">
+              <button onClick={() => { setEditingTransaction(null); reset({ type: 'expense', amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" }); setIsAddOpen(true); }} className="flex-[2] xs:flex-none h-11 px-4 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-md transition-colors no-print outline-none">
                 <iconify-icon icon="solar:add-circle-linear" class="text-xl sm:mr-2"></iconify-icon>
-                <span className="font-medium text-sm hidden sm:inline">Transaction</span>
+                <span className="font-medium text-sm">Transaction</span>
               </button>
             </div>
         </div>
@@ -284,15 +291,15 @@ export function FinanceManagement() {
               {balance >= 0 ? '+' : ''}{balance.toLocaleString()} <span className="text-sm sm:text-base text-gray-400 font-normal">F</span>
             </p>
           </div>
-          <div className="flex justify-between sm:justify-start gap-8 mt-6 pt-6 border-t border-gray-100/50 relative z-10">
-            <div>
+          <div className="flex flex-row sm:flex-row gap-4 sm:gap-8 mt-6 pt-6 border-t border-gray-100/50 relative z-10 overflow-x-auto no-scrollbar">
+            <div className="shrink-0">
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Recettes</p>
-              <p className="font-['JetBrains_Mono'] text-base font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
+              <p className="font-['JetBrains_Mono'] text-sm sm:text-base font-medium text-emerald-600">+{totalIncome.toLocaleString()}</p>
             </div>
             <div className="w-px bg-gray-100 hidden sm:block"></div>
-            <div>
+            <div className="shrink-0">
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dépenses</p>
-              <p className="font-['JetBrains_Mono'] text-base font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
+              <p className="font-['JetBrains_Mono'] text-sm sm:text-base font-medium text-red-500">-{totalExpense.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
