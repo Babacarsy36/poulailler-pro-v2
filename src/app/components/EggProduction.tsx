@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
 import { StorageService } from "../services/StorageService";
 import { useForm } from "react-hook-form";
+import { BottomSheet } from "./ui/BottomSheet";
+import { toast } from "sonner";
 import { Chicken } from "../types";
 
 interface EggRecord {
@@ -310,95 +312,83 @@ export function EggProduction() {
       </div>
 
       {/* Add Modal */}
-      {isAddOpen && (
-        <div className="fixed inset-0 bg-white dark:bg-zinc-950 z-[100] flex flex-col animate-in slide-in-from-bottom duration-300 md:bg-black/40 md:backdrop-blur-sm md:items-center md:justify-center md:p-4">
-          <div className="flex-1 bg-white dark:bg-zinc-900 w-full md:max-w-lg md:rounded-3xl md:h-auto md:max-h-[90vh] flex flex-col shadow-2xl">
-            {/* Mobile Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-zinc-800 md:hidden">
-                <button onClick={() => setIsAddOpen(false)} className="p-2 text-gray-500">
-                    <iconify-icon icon="solar:alt-arrow-left-linear" class="text-2xl"></iconify-icon>
-                </button>
-                <h3 className="font-['Syne'] font-bold text-gray-900 dark:text-white">Nouvelle Récolte</h3>
-                <div className="w-10"></div>
+      <BottomSheet 
+        isOpen={isAddOpen} 
+        onClose={() => setIsAddOpen(false)}
+        title="Nouvelle Récolte"
+      >
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left py-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
+              <input type="date" className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500" {...register("date", { required: true })} />
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-              <h3 className="hidden md:block font-['Syne'] text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-zinc-800 pb-4">Nouvelle Récolte</h3>
-            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
-                  <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("date", { required: true })} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Quantité</label>
-                  <input type="number" step="1" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" placeholder="0" {...register("quantity", { required: true })} />
-                </div>
-              </div>
-
-              {isMixed && (
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
-                    <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                    {...register("poultryType")}
-                    >
-                    {poultryTypes.map(t => (
-                        <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
-                    ))}
-                    </select>
-                </div>
-              )}
-
-              {(formData.poultryType === 'caille' || (activeSpeciesFilter === 'caille' && !formData.poultryType)) ? (
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
-                    <div className="w-full bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-sm font-bold text-emerald-700 flex items-center gap-2">
-                        <iconify-icon icon="solar:egg-bold-duotone"></iconify-icon>
-                        Caille
-                    </div>
-                    <input type="hidden" value="caille" {...register("breed")} />
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
-                    <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("breed")}>
-                        {selectedBreeds.filter(b => b === 'fermier' || b === 'ornement').map(b => (
-                            <option key={b} value={b}>{b === 'fermier' ? 'Poulet Fermier' : "Poule d'Ornement"}</option>
-                        ))}
-                    </select>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Notes particulières</label>
-                <input
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                  placeholder="Ex: Quelques œufs fêlés..."
-                  {...register("notes")}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAddOpen(false)}
-                  className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className={`flex-1 py-3 ${accentBg} text-white rounded-xl text-sm font-medium shadow-md transition-colors`}
-                >
-                  Confirmer
-                </button>
-              </div>
-              </form>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Quantité</label>
+              <input type="number" step="1" className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500" placeholder="0" {...register("quantity", { required: true })} />
             </div>
           </div>
-        </div>
-      )}
+
+          {isMixed && (
+            <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
+                <select 
+                className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-all"
+                {...register("poultryType")}
+                >
+                {poultryTypes.map(t => (
+                    <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
+                ))}
+                </select>
+            </div>
+          )}
+
+          {(formData.poultryType === 'caille' || (activeSpeciesFilter === 'caille' && !formData.poultryType)) ? (
+            <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
+                <div className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl p-3 text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                    <iconify-icon icon="solar:egg-bold-duotone"></iconify-icon>
+                    Caille
+                </div>
+                <input type="hidden" value="caille" {...register("breed")} />
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race associée</label>
+                <select className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500" {...register("breed")}>
+                    {selectedBreeds.filter(b => b === 'fermier' || b === 'ornement').map(b => (
+                        <option key={b} value={b}>{b === 'fermier' ? 'Poulet Fermier' : "Poule d'Ornement"}</option>
+                    ))}
+                </select>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Notes particulières</label>
+            <input
+              className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-colors"
+              placeholder="Ex: Quelques œufs fêlés..."
+              {...register("notes")}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-6 border-t border-gray-100 dark:border-zinc-800 mt-4">
+            <button
+              type="button"
+              onClick={() => setIsAddOpen(false)}
+              className="flex-1 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className={`flex-1 py-3 ${accentBg} text-white rounded-xl text-sm font-medium shadow-md transition-colors`}
+            >
+              Confirmer
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
     </section>
   );
 }

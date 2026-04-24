@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth, PoultryType } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
+import { BottomSheet } from "./ui/BottomSheet";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 
 interface Chicken {
@@ -426,179 +428,137 @@ export function ChickenInventory() {
         ))}
       </div>
 
-      {isAddOpen && (
-        <div className="fixed inset-0 bg-white dark:bg-zinc-950 z-[100] flex flex-col animate-in slide-in-from-bottom duration-300 md:bg-black/40 md:backdrop-blur-sm md:items-center md:justify-center md:p-4">
-          <div className="flex-1 bg-white dark:bg-zinc-900 w-full md:max-w-lg md:rounded-3xl md:h-auto md:max-h-[90vh] flex flex-col shadow-2xl">
-            {/* Mobile Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-zinc-800 md:hidden">
-                <button onClick={() => setIsAddOpen(false)} className="p-2 text-gray-500">
-                    <iconify-icon icon="solar:alt-arrow-left-linear" class="text-2xl"></iconify-icon>
-                </button>
-                <h3 className="font-['Syne'] font-bold text-gray-900 dark:text-white">{editingChicken ? "Modifier le lot" : "Nouveau lot"}</h3>
-                <div className="w-10"></div>
+       <BottomSheet 
+        isOpen={isAddOpen} 
+        onClose={() => setIsAddOpen(false)}
+        title={editingChicken ? "Modifier le lot" : "Nouveau lot"}
+      >
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left py-2">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Nom du Lot / Identifiant</label>
+            <input 
+              className={`w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none transition-all ${errors.name ? 'border-red-300 focus:border-red-400' : 'focus:border-gray-400'}`}
+              placeholder="Ex: Arrivage Janvier..."
+              {...register("name", { required: "Nom requis" })}
+            />
+            {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
+          </div>
+
+          {poultryTypes.length > 1 && (
+            <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
+                <select 
+                  className={`w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 transition-all`}
+                  {...register("poultryType")}
+                >
+                  {poultryTypes.map(t => (
+                      <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
+                  ))}
+                </select>
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-              <h3 className="hidden md:block font-['Syne'] text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-zinc-800 pb-4">
-                {editingChicken ? "Modifier le lot" : "Nouveau lot"}
-              </h3>
-            <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Nom du Lot / Identifiant</label>
-                <input 
-                  className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none transition-all ${errors.name ? 'border-red-300 focus:border-red-400' : 'focus:border-gray-400'}`}
-                  placeholder="Ex: Arrivage Janvier..."
-                  {...register("name", { required: "Nom requis" })}
-                />
-                {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
+          )}
+
+          {formData.poultryType === 'caille' && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+              <span className="text-3xl">🥚</span>
+              <div>
+                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Lot de Cailles</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-500">Sélectionnez la race ci-dessous.</p>
+              </div>
+            </div>
+          )}
+
+          {formData.poultryType === 'poulet' && (
+            <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie de race</label>
+                <select 
+                className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 transition-all"
+                {...register("breed")}
+                >
+                {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).map(b => (
+                    <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b}</option>
+                ))}
+                </select>
+            </div>
+          )}
+
+          {formData.poultryType === 'caille' && (
+            <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de Caille</label>
+                <select 
+                  className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-emerald-400 transition-all"
+                  {...register("breed")}
+                >
+                  <option value="japon">Caille du Japon</option>
+                  <option value="chine">Caille de Chine</option>
+                  <option value="commune">Caille Commune</option>
+                </select>
+            </div>
+          )}
+
+          {formData.poultryType === 'caille' && (
+            <div className="space-y-1.5 animate-in slide-in-from-top-2">
+              <label className="text-[10px] font-medium uppercase tracking-widest text-emerald-600">Souche / Mutation (Cailles)</label>
+              <select 
+                className="w-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl p-3 text-sm font-medium text-emerald-900 dark:text-emerald-300 outline-none focus:border-emerald-400 transition-all"
+                defaultValue="Pharaon"
+                onChange={(e) => setValue('name', `Caille ${e.target.value} ${new Date().getFullYear()}`)}
+              >
+                <option value="Pharaon">Pharaon (Classique / Sauvage)</option>
+                <option value="Jumbo">Jumbo (Chair lourde)</option>
+                <option value="Isabelle">Isabelle</option>
+                <option value="Tuxedo">Tuxedo (Bicolore)</option>
+                <option value="Blanc">Blanc Anglais</option>
+                <option value="Manchourie">Manchourie (Dorée)</option>
+                <option value="Rosetta">Rosetta</option>
+                <option value="Autre">Autre mutation</option>
+              </select>
+            </div>
+          )}
+
+          {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
+            <>
+              <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
+                <select 
+                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 transition-all"
+                  onChange={(e) => setValue('name', `${e.target.value} ${new Date().getFullYear()}`)}
+                >
+                  <option value="Ornement">Autre ornement</option>
+                  <option value="Brahma">Brahma</option>
+                  <option value="Cochin">Cochin</option>
+                  <option value="Cochin Nain (Pékin)">Cochin Nain (Pékin)</option>
+                  <option value="Orpington">Orpington</option>
+                  <option value="Poule-Soie">Poule-Soie</option>
+                </select>
               </div>
 
-              {/* Espèce sélecteur - Toujours visible si plusieurs espèces sont activées */}
-              {poultryTypes.length > 1 && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Espèce</label>
-                    <select 
-                      className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all ${formData.poultryType === 'caille' ? 'border-emerald-200 bg-emerald-50/30' : ''}`}
-                      {...register("poultryType")}
-                    >
-                      {poultryTypes.map(t => (
-                          <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
-                      ))}
-                    </select>
-                </div>
-              )}
-
-              {/* Bloc Info Caille si sélectionné */}
-              {formData.poultryType === 'caille' && (
-                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in zoom-in duration-300">
-                  <span className="text-3xl">🥚</span>
-                  <div>
-                    <p className="text-xs font-bold text-emerald-700">Lot de Cailles</p>
-                    <p className="text-[10px] text-emerald-600">Sélectionnez la race ci-dessous.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Catégorie de race - seulement pour les poulets */}
-              {formData.poultryType === 'poulet' && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Catégorie de race</label>
-                    <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                    {...register("breed")}
-                    >
-                    {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).map(b => (
-                        <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b}</option>
-                    ))}
-                    </select>
-                </div>
-              )}
-
-              {/* Races de Cailles */}
-              {formData.poultryType === 'caille' && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de Caille</label>
-                    <select 
-                      className="w-full bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-emerald-400 transition-all"
-                      {...register("breed")}
-                    >
-                      <option value="japon">Caille du Japon</option>
-                      <option value="chine">Caille de Chine</option>
-                      <option value="commune">Caille Commune</option>
-                    </select>
-                </div>
-              )}
-
-
-
-              {formData.poultryType === 'caille' && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-emerald-600">Souche / Mutation (Cailles)</label>
-                  <select 
-                    className="w-full bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-sm font-medium text-emerald-900 outline-none focus:border-emerald-400 transition-all"
-                    defaultValue="Pharaon"
-                    onChange={(e) => setValue('name', `Caille ${e.target.value} ${new Date().getFullYear()}`)}
-                  >
-                    <option value="Pharaon">Pharaon (Classique / Sauvage)</option>
-                    <option value="Jumbo">Jumbo (Chair lourde)</option>
-                    <option value="Isabelle">Isabelle</option>
-                    <option value="Tuxedo">Tuxedo (Bicolore)</option>
-                    <option value="Blanc">Blanc Anglais</option>
-                    <option value="Manchourie">Manchourie (Dorée)</option>
-                    <option value="Rosetta">Rosetta</option>
-                    <option value="Autre">Autre mutation</option>
-                  </select>
-                </div>
-              )}
-
-              {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
-                <>
-                  <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
-                    <select 
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                      onChange={(e) => setValue('name', `${e.target.value} ${new Date().getFullYear()}`)}
-                    >
-                      <option value="Ornement">Autre ornement</option>
-                      <option value="Brahma">Brahma</option>
-                      <option value="Cochin">Cochin</option>
-                      <option value="Cochin Nain (Pékin)">Cochin Nain (Pékin)</option>
-                      <option value="Orpington">Orpington</option>
-                      <option value="Poule-Soie">Poule-Soie</option>
-                    </select>
-                  </div>
-
-                  {['Brahma', 'Cochin', 'Cochin Nain (Pékin)', 'Orpington'].some(r => formData.name?.includes(r)) && (
-                    <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
-                      
-                      {[
-                        { group: "Unies", items: ["Noir", "Blanc", "Bleu", "Fauve"] },
-                        { group: "Herminées", items: ["Blanc herminé noir", "Fauve herminé noir", "Blanc herminé bleu", "Fauve herminé bleu"] },
-                        { group: "Maillées", items: ["Perdrix doré maillé", "Perdrix argenté maillé", "Perdrix bleu doré maillé"] },
-                        { group: "Autres", items: ["Coucou", "Splash", "Caillouté"] }
-                      ].map(g => (
-                        <div key={g.group} className="mt-2 text-left">
-                          <p className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 ml-1">{g.group}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {g.items.map(v => {
-                               const isSelected = formData.variety?.includes(v);
-                               return (
-                                 <label key={v} className={`px-3 py-1.5 rounded-xl border text-[11px] cursor-pointer select-none transition-all duration-200 flex items-center gap-1.5 ${isSelected ? 'bg-orange-50 border-orange-200 text-orange-700 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                                   <input type="checkbox" className="hidden" value={v} {...register("variety")} />
-                                   {isSelected && <iconify-icon icon="solar:check-circle-bold" class="text-orange-500"></iconify-icon>}
-                                   {v}
-                                 </label>
-                               );
-                            })}
-                          </div>
-                        </div>
-                      ))}
+              {['Brahma', 'Cochin', 'Cochin Nain (Pékin)', 'Orpington'].some(r => formData.name?.includes(r)) && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
+                  
+                  {[
+                    { group: "Unies", items: ["Noir", "Blanc", "Bleu", "Fauve"] },
+                    { group: "Herminées", items: ["Blanc herminé noir", "Fauve herminé noir", "Blanc herminé bleu", "Fauve herminé bleu"] },
+                    { group: "Maillées", items: ["Perdrix doré maillé", "Perdrix argenté maillé", "Perdrix bleu doré maillé"] },
+                    { group: "Autres", items: ["Coucou", "Splash", "Caillouté"] }
+                  ].map(g => (
+                    <div key={g.group} className="mt-2 text-left">
+                      <p className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 ml-1">{g.group}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {g.items.map(v => {
+                           const isSelected = formData.variety?.includes(v);
+                           return (
+                             <label key={v} className={`px-3 py-1.5 rounded-xl border text-[11px] cursor-pointer select-none transition-all duration-200 flex items-center gap-1.5 ${isSelected ? 'bg-orange-50 border-orange-200 text-orange-700 font-bold shadow-sm' : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:bg-gray-50'}`}>
+                               <input type="checkbox" className="hidden" value={v} {...register("variety")} />
+                               {isSelected && <iconify-icon icon="solar:check-circle-bold" class="text-orange-500"></iconify-icon>}
+                               {v}
+                             </label>
+                           );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </>
-              )}
-
-              {(formData.breed === 'ornement' || formData.breed === 'pondeuse') && (
-                <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année Naissance</label>
-                    <input 
-                      type="number"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-all"
-                      placeholder="Ex: 2023"
-                      {...register("birthYear")}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Association</label>
-                    <input 
-                      type="text"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
-                      placeholder="Ex: BCF..."
-                      {...register("club")}
-                    />
-                  </div>
+                  ))}
                 </div>
               )}
 
@@ -607,14 +567,15 @@ export function ChickenInventory() {
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
                     Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
                   </label>
-                  <input 
-                    className="w-full bg-orange-50/30 border border-orange-100 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-orange-300 transition-all"
-                    placeholder="Ex: FR-2023-XYZ..."
+                  <textarea 
+                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-['JetBrains_Mono'] text-gray-900 dark:text-white outline-none focus:border-gray-400 min-h-[60px]"
+                    placeholder="Ex: 23-AA123, 23-AA124..."
                     {...register("ringNumber")}
                   />
-                  <p className="text-[9px] text-gray-400 italic">Identifiant unique pour les sujets de valeur.</p>
                 </div>
               )}
+            </>
+          )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -721,11 +682,8 @@ export function ChickenInventory() {
                   {editingChicken ? "Mettre à jour" : "Confirmer l'ajout"}
                 </button>
               </div>
-            </form>
-            </div>
-          </div>
-        </div>
-      )}
+        </form>
+      </BottomSheet>
 
       {chickens.length === 0 && (
         <div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200">

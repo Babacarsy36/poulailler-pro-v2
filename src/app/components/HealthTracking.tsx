@@ -3,6 +3,7 @@ import { Heart, Plus, Leaf, History, Trash2, Calendar, CheckCircle, X } from "lu
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
+import { BottomSheet } from "./ui/BottomSheet";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { ProphylaxisService, ProphylaxisStep } from "../services/ProphylaxisService";
@@ -570,129 +571,114 @@ export function HealthTracking() {
         </div>
       </div>
 
-      {showAdd && (
-        <div className="fixed inset-0 bg-white dark:bg-zinc-950 z-[100] flex flex-col animate-in slide-in-from-bottom duration-300 md:bg-black/40 md:backdrop-blur-sm md:items-center md:justify-center md:p-4">
-          <div className="flex-1 bg-white dark:bg-zinc-900 w-full md:max-w-lg md:rounded-3xl md:h-auto md:max-h-[90vh] flex flex-col shadow-2xl">
-            {/* Mobile Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-zinc-800 md:hidden">
-                <button onClick={() => setShowAdd(false)} className="p-2 text-gray-500">
-                    <iconify-icon icon="solar:alt-arrow-left-linear" class="text-2xl"></iconify-icon>
-                </button>
-                <h3 className="font-['Syne'] font-bold text-gray-900 dark:text-white">Nouveau Soin</h3>
-                <div className="w-10"></div>
+      <BottomSheet 
+        isOpen={showAdd} 
+        onClose={() => setShowAdd(false)}
+        title="Nouveau Soin"
+      >
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 py-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
+              <input 
+                type="date"
+                className="w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100 outline-none"
+                {...register("date", { required: true })}
+              />
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-              <h3 className="hidden md:block font-['Syne'] text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-zinc-800 pb-4">Nouveau Soin</h3>
-              <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
-                    <input 
-                      type="date"
-                      className="w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100"
-                      {...register("date", { required: true })}
-                    />
-                  </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type de soin</label>
-                  <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
-                    {...register("type")}
-                  >
-                    <option value="Vaccin">Vaccination</option>
-                    <option value="Traitement">Traitement Curatif</option>
-                    <option value="Prévention">Prévention / Naturel</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Espèce sélecteur - Toujours visible si plusieurs espèces sont activées */}
-              {poultryTypes.length > 1 && (
-                <div className="space-y-2 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Espèce concernée</label>
-                  <select 
-                    className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none ${watch("poultryType" as any) === 'caille' ? 'ring-2 ring-emerald-100' : ''}`}
-                    {...register("poultryType" as any)}
-                  >
-                    {poultryTypes.map(t => (
-                      <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Race concernée (Poulet) */}
-              {(!watch("poultryType" as any) || watch("poultryType" as any) === 'poulet') && (
-                <div className="space-y-2 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de Poulet</label>
-                  <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none"
-                    {...register("breed", { required: true })}
-                  >
-                    {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).map(b => (
-                      <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b}</option>
-                    ))}
-                    {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).length === 0 && (
-                      <option value="Standard">Standard / Autre</option>
-                    )}
-                  </select>
-                </div>
-              )}
-
-              {/* Race concernée (Caille) */}
-              {watch("poultryType" as any) === 'caille' && (
-                <div className="space-y-2 animate-in slide-in-from-top-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de Caille</label>
-                  <select 
-                    className="w-full bg-emerald-50 border-none rounded-2xl p-4 font-bold text-emerald-900 appearance-none"
-                    {...register("breed", { required: true })}
-                   >
-                    <option value="japon">Caille du Japon</option>
-                    <option value="chine">Caille de Chine</option>
-                    <option value="commune">Caille Commune</option>
-                  </select>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Libellé du soin</label>
-                <input 
-                  className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 outline-none ${errors.title ? 'ring-2 ring-red-500' : ''}`}
-                  placeholder="Ex: Vitamine A..."
-                  {...register("title", { required: "Libellé requis" })}
-                />
-                {errors.title && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.title.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Lot cible</label>
-                <input 
-                  className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown focus:ring-2 focus:ring-orange-200 outline-none ${errors.target ? 'ring-2 ring-red-500' : ''}`}
-                  placeholder="Ex: Goliath de Janvier..."
-                  {...register("target", { required: "Lot cible requis" })}
-                />
-                {errors.target && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.target.message}</p>}
-              </div>
-              <div className="flex gap-4 pt-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowAdd(false)}
-                  className="flex-1 p-4 rounded-2xl font-black text-gray-400 hover:bg-gray-50 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit"
-                  className={`flex-1 text-white p-4 rounded-2xl font-black shadow-lg ${btnBg}`}
-                >
-                  Enregistrer
-                </button>
-              </div>
-              </form>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type de soin</label>
+              <select 
+                className="w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100 appearance-none outline-none"
+                {...register("type")}
+              >
+                <option value="Vaccin">Vaccination</option>
+                <option value="Traitement">Traitement Curatif</option>
+                <option value="Prévention">Prévention / Naturel</option>
+              </select>
             </div>
           </div>
-        </div>
-      )}
+          
+          {poultryTypes.length > 1 && (
+            <div className="space-y-2 animate-in slide-in-from-top-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Espèce concernée</label>
+              <select 
+                className={`w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100 appearance-none outline-none ${watch("poultryType" as any) === 'caille' ? 'ring-2 ring-emerald-100' : ''}`}
+                {...register("poultryType" as any)}
+              >
+                {poultryTypes.map(t => (
+                  <option key={t} value={t!}>{t === 'poulet' ? '🐓 Poulet' : t === 'caille' ? '🥚 Caille' : t === 'pigeon' ? '🕊️ Pigeon' : '🐇 Lapin'}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(!watch("poultryType" as any) || watch("poultryType" as any) === 'poulet') && (
+            <div className="space-y-2 animate-in slide-in-from-top-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de Poulet</label>
+              <select 
+                className="w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100 appearance-none outline-none"
+                {...register("breed", { required: true })}
+              >
+                {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).map(b => (
+                  <option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b === 'pondeuse' ? 'Pondeuse' : b}</option>
+                ))}
+                {selectedBreeds.filter(b => ['chair', 'fermier', 'ornement', 'pondeuse'].includes(b)).length === 0 && (
+                  <option value="Standard">Standard / Autre</option>
+                )}
+              </select>
+            </div>
+          )}
+
+          {watch("poultryType" as any) === 'caille' && (
+            <div className="space-y-2 animate-in slide-in-from-top-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Race de Caille</label>
+              <select 
+                className="w-full bg-emerald-50 dark:bg-emerald-900/20 border-none rounded-2xl p-4 font-bold text-emerald-900 dark:text-emerald-300 appearance-none outline-none"
+                {...register("breed", { required: true })}
+               >
+                <option value="japon">Caille du Japon</option>
+                <option value="chine">Caille de Chine</option>
+                <option value="commune">Caille Commune</option>
+              </select>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Libellé du soin</label>
+            <input 
+              className={`w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100 focus:ring-2 focus:ring-orange-200 outline-none ${errors.title ? 'ring-2 ring-red-500' : ''}`}
+              placeholder="Ex: Vitamine A..."
+              {...register("title", { required: "Libellé requis" })}
+            />
+            {errors.title && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.title.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Lot cible</label>
+            <input 
+              className={`w-full bg-gray-50 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold text-babs-brown dark:text-zinc-100 focus:ring-2 focus:ring-orange-200 outline-none ${errors.target ? 'ring-2 ring-red-500' : ''}`}
+              placeholder="Ex: Goliath de Janvier..."
+              {...register("target", { required: "Lot cible requis" })}
+            />
+            {errors.target && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.target.message}</p>}
+          </div>
+          <div className="flex gap-4 pt-6 border-t border-gray-100 dark:border-zinc-800">
+            <button 
+              type="button"
+              onClick={() => setShowAdd(false)}
+              className="flex-1 p-4 rounded-2xl font-black text-gray-400 hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button 
+              type="submit"
+              className={`flex-1 text-white p-4 rounded-2xl font-black shadow-lg ${btnBg}`}
+            >
+              Enregistrer
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
     </section>
   );
 }
