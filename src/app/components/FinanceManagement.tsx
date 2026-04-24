@@ -404,9 +404,19 @@ export function FinanceManagement() {
       </div>
 
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">{editingTransaction ? "Modifier la Transaction" : "Nouvelle Transaction"}</h3>
+        <div className="fixed inset-0 bg-white dark:bg-zinc-950 z-[100] flex flex-col animate-in slide-in-from-bottom duration-300 md:bg-black/40 md:backdrop-blur-sm md:items-center md:justify-center md:p-4">
+          <div className="flex-1 bg-white dark:bg-zinc-900 w-full md:max-w-lg md:rounded-3xl md:h-auto md:max-h-[90vh] flex flex-col shadow-2xl">
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-zinc-800 md:hidden">
+                <button onClick={() => setIsAddOpen(false)} className="p-2 text-gray-500">
+                    <iconify-icon icon="solar:alt-arrow-left-linear" class="text-2xl"></iconify-icon>
+                </button>
+                <h3 className="font-['Syne'] font-bold text-gray-900 dark:text-white">Transaction</h3>
+                <div className="w-10"></div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+              <h3 className="hidden md:block font-['Syne'] text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-zinc-800 pb-4">{editingTransaction ? "Modifier la Transaction" : "Nouvelle Transaction"}</h3>
             <div className="flex bg-gray-100 p-1 rounded-2xl mb-5 gap-1">
               <button type="button" onClick={() => { setValue('type', 'expense'); setValue('category', ''); }} className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'expense' ? 'bg-white shadow-sm text-red-500' : 'text-gray-400 hover:text-gray-600'}`}>Dépense</button>
               <button type="button" onClick={() => { setValue('type', 'income'); setValue('category', ''); }} className={`flex-1 py-2.5 text-xs font-medium rounded-xl transition-all ${formType === 'income' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}>Recette</button>
@@ -428,7 +438,8 @@ export function FinanceManagement() {
                 <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label><select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 appearance-none" {...register("selectedBatchId")}><option value="none">Hors lot</option>{batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
               </div>
               <div className="flex gap-3 pt-4 border-t border-gray-100"><button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Annuler</button><button type="submit" className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>{editingTransaction ? "Appliquer les modifications" : "Ajouter"}</button></div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}

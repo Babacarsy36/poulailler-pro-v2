@@ -427,11 +427,21 @@ export function ChickenInventory() {
       </div>
 
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">
-              {editingChicken ? "Modifier le lot" : "Nouveau lot"}
-            </h3>
+        <div className="fixed inset-0 bg-white dark:bg-zinc-950 z-[100] flex flex-col animate-in slide-in-from-bottom duration-300 md:bg-black/40 md:backdrop-blur-sm md:items-center md:justify-center md:p-4">
+          <div className="flex-1 bg-white dark:bg-zinc-900 w-full md:max-w-lg md:rounded-3xl md:h-auto md:max-h-[90vh] flex flex-col shadow-2xl">
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-zinc-800 md:hidden">
+                <button onClick={() => setIsAddOpen(false)} className="p-2 text-gray-500">
+                    <iconify-icon icon="solar:alt-arrow-left-linear" class="text-2xl"></iconify-icon>
+                </button>
+                <h3 className="font-['Syne'] font-bold text-gray-900 dark:text-white">{editingChicken ? "Modifier le lot" : "Nouveau lot"}</h3>
+                <div className="w-10"></div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+              <h3 className="hidden md:block font-['Syne'] text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-zinc-800 pb-4">
+                {editingChicken ? "Modifier le lot" : "Nouveau lot"}
+              </h3>
             <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Nom du Lot / Identifiant</label>
@@ -712,6 +722,7 @@ export function ChickenInventory() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
