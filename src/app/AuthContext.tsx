@@ -152,7 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             role: 'owner',
                             farmId: currentUser.uid,
                             displayName: currentUser.displayName || currentUser.email?.split('@')[0],
-                            updatedAt: Date.now()
+                            updatedAt: Date.now(),
+                            tier: 'PRO', // Grant PRO access by default for evaluation as requested
+                            trialEndsAt: Date.now() + (7 * 24 * 60 * 60 * 1000) 
                         });
                     }
                 });
@@ -430,10 +432,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const hasAccess = (requiredTier: SubscriptionTier): boolean => {
-        if (requiredTier === 'FREE') return true;
-        if (requiredTier === 'PRO') return tier === 'PRO' || tier === 'BUSINESS';
-        if (requiredTier === 'BUSINESS') return tier === 'BUSINESS';
-        return false;
+        if (role === 'admin') return true;
+        
+        const tiers: SubscriptionTier[] = ['FREE', 'PREMIUM', 'PRO', 'BUSINESS', 'ADMIN'];
+        const userTierIndex = tiers.indexOf(tier || 'FREE');
+        const requiredTierIndex = tiers.indexOf(requiredTier);
+        
+        return userTierIndex >= requiredTierIndex;
     };
 
     const logout = async () => {
