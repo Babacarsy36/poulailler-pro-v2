@@ -40,9 +40,12 @@ export function Dashboard() {
   });
 
   const isCaille = activeSpeciesFilter === 'caille';
+  const isPigeon = activeSpeciesFilter === 'pigeon';
+  const isLapin = activeSpeciesFilter === 'lapin';
   const isMixed = activeSpeciesFilter === 'all';
-  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
-  const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : "bg-orange-500 text-white";
+  
+  const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : isPigeon ? "text-sky-500" : isLapin ? "text-purple-500" : "text-orange-500";
+  const iconBg = isMixed ? "bg-indigo-500 text-white" : isCaille ? "bg-emerald-500 text-white" : isPigeon ? "bg-sky-500 text-white" : isLapin ? "bg-purple-500 text-white" : "bg-orange-500 text-white";
 
   const getDailyRateForLot = (c: Chicken) => {
     const breed = c.breed || (c.poultryType === 'caille' ? 'Caille' : 'Poulet de chair');
@@ -357,7 +360,11 @@ export function Dashboard() {
                         const parent = e.currentTarget.parentElement;
                         if (parent) {
                           const icon = document.createElement('iconify-icon');
-                          icon.setAttribute('icon', item.type === 'poulet' ? 'fluent-emoji:chicken' : 'fluent-emoji:egg');
+                          let iconName = 'fluent-emoji:chicken';
+                          if (item.type === 'caille') iconName = 'fluent-emoji:egg';
+                          else if (item.type === 'pigeon') iconName = 'fluent-emoji:pigeon';
+                          else if (item.type === 'lapin') iconName = 'fluent-emoji:rabbit';
+                          icon.setAttribute('icon', iconName);
                           icon.className = 'text-3xl';
                           parent.appendChild(icon);
                         }
@@ -397,13 +404,13 @@ export function Dashboard() {
                   <AreaChart data={chartData}>
                     <defs>
                         <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={isCaille ? "#10B981" : "#F59E0B"} stopOpacity={0.2}></stop>
-                            <stop offset="100%" stopColor={isCaille ? "#10B981" : "#F59E0B"} stopOpacity={0.0}></stop>
+                            <stop offset="0%" stopColor={isCaille ? "#10B981" : isPigeon ? "#0EA5E9" : isLapin ? "#8B5CF6" : "#F59E0B"} stopOpacity={0.2}></stop>
+                            <stop offset="100%" stopColor={isCaille ? "#10B981" : isPigeon ? "#0EA5E9" : isLapin ? "#8B5CF6" : "#F59E0B"} stopOpacity={0.0}></stop>
                         </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" horizontalPoints={[25, 50, 75]} />
                     <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #F3F4F6', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontSize: '10px', fontWeight: '500', fontFamily: 'DM Sans' }} />
-                    <Area type="monotone" dataKey="production" stroke={isCaille ? "#10B981" : "#F59E0B"} strokeWidth={2} fill="url(#chartGrad)" />
+                    <Area type="monotone" dataKey="production" stroke={isCaille ? "#10B981" : isPigeon ? "#0EA5E9" : isLapin ? "#8B5CF6" : "#F59E0B"} strokeWidth={2} fill="url(#chartGrad)" />
                   </AreaChart>
                </ResponsiveContainer>
             </div>

@@ -25,6 +25,8 @@ export function Layout() {
   const speciesList = [
     { id: 'poulet' as PoultryType, abbr: 'PL', label: 'Poulet' },
     { id: 'caille' as PoultryType, abbr: 'CL', label: 'Caille' },
+    { id: 'pigeon' as PoultryType, abbr: 'PG', label: 'Pigeon' },
+    { id: 'lapin' as PoultryType, abbr: 'LP', label: 'Lapin' },
   ].filter(s => poultryTypes.some(pt => pt?.toLowerCase() === s.id));
 
   const showAllOption = poultryTypes.length > 1;
@@ -75,8 +77,12 @@ export function Layout() {
   const safePoultryTypes = poultryTypes && poultryTypes.length > 0 ? poultryTypes : ['poulet'];
   const primaryType = activeSpeciesFilter === 'all' ? safePoultryTypes[0] : activeSpeciesFilter;
   const isMixed = activeSpeciesFilter === 'all';
-  const accentColorClass = isMixed ? 'indigo' : primaryType === 'caille' ? 'emerald' : 'orange';
-  const accentHex = isMixed ? '#6366F1' : primaryType === 'caille' ? '#10B981' : '#F59E0B';
+  const accentColorClass = isMixed 
+    ? 'indigo' 
+    : primaryType === 'caille' ? 'emerald' 
+    : primaryType === 'pigeon' ? 'sky'
+    : primaryType === 'lapin' ? 'purple'
+    : 'orange';
 
   const activeSpeciesInfo = speciesList.find(s => s.id === activeSpeciesFilter);
   const breedInfo = activeBreedFilter ? [...breedList.poulet, ...breedList.caille].find(b => b.id === activeBreedFilter) : null;
@@ -102,10 +108,10 @@ export function Layout() {
                         : `bg-${accentColorClass}-500 text-white shadow-${accentColorClass}-500/20`
                 }`}>
                     <div className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px] font-bold">
-                        {isMixed ? '🌍' : activeSpeciesFilter === 'caille' ? '🥚' : '🐓'}
+                        {isMixed ? '🌍' : activeSpeciesFilter === 'caille' ? '🥚' : activeSpeciesFilter === 'pigeon' ? '🕊️' : activeSpeciesFilter === 'lapin' ? '🐇' : '🐓'}
                     </div>
                     <span className="text-xs font-bold uppercase tracking-wider">
-                        {isMixed ? 'Élevage' : activeSpeciesFilter === 'caille' ? 'Caille' : 'Poulet'}
+                        {isMixed ? 'Élevage' : activeSpeciesFilter === 'caille' ? 'Caille' : activeSpeciesFilter === 'pigeon' ? 'Pigeon' : activeSpeciesFilter === 'lapin' ? 'Lapin' : 'Poulet'}
                     </span>
                 </div>
             </div>
@@ -163,9 +169,9 @@ export function Layout() {
                          </button>
                          <span
                             onClick={() => navigate('/')}
-                            className={`font-['Syne'] font-bold text-sm cursor-pointer ${isDarkMode ? 'text-zinc-100' : 'text-gray-900'}`}
+                            className={`font-['Syne'] font-bold text-xs uppercase tracking-tighter cursor-pointer ${isDarkMode ? 'text-zinc-100' : 'text-gray-900'}`}
                          >
-                            {dynamicTitle}
+                            P-PRO
                          </span>
                      </div>
 
@@ -189,7 +195,7 @@ export function Layout() {
                                 )}
                                 {speciesList.map((s) => {
                                     const isActive = s.id === activeSpeciesFilter;
-                                    const sAccent = s.id === 'caille' ? 'emerald' : 'orange';
+                                    const sAccent = s.id === 'caille' ? 'emerald' : s.id === 'pigeon' ? 'sky' : s.id === 'lapin' ? 'purple' : 'orange';
                                     return (
                                         <button 
                                             key={s.id}
