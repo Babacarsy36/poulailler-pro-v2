@@ -40,7 +40,8 @@ export function FinanceManagement() {
   const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role, farmId, user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
-  const [isAddOpen, setIsAddOpen] = useState(false);
+   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -71,7 +72,9 @@ export function FinanceManagement() {
   const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
   const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
 
+  useEffect(() => {
     const loadData = async () => {
+      setIsSyncing(true);
       const targetId = farmId || user?.uid;
       const isFarm = !!farmId;
       if (targetId) {
@@ -90,6 +93,7 @@ export function FinanceManagement() {
           name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
         }));
       setBatches(activeLots);
+      setIsSyncing(false);
     };
 
     loadData();
