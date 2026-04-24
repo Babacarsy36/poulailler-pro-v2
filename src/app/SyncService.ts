@@ -2,7 +2,7 @@ import { db, auth } from "./firebaseConfig";
 import { doc, getDoc, setDoc, onSnapshot, DocumentReference } from "firebase/firestore";
 import { StorageService } from "./services/StorageService";
 
-const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation", "vaccine_reminders"];
+const STORAGE_KEYS = ["chickens", "eggs", "feed", "health", "finances", "incubation", "vaccine_reminders", "health_settings"];
 
 export interface SyncItem {
   id: string;

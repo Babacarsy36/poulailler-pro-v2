@@ -73,17 +73,26 @@ export function HealthTracking() {
       setRecords(saved);
     }
     setActiveReminders(StorageService.getItem<any[]>('vaccine_reminders') || []);
+    
+    // Load health settings (arrival date, breed) to sync timeline across devices
+    const settings = StorageService.getItem<any>('health_settings');
+    if (settings) {
+      if (settings.arrivalDate) setArrivalDate(settings.arrivalDate);
+      if (settings.selectedBreed) setSelectedBreed(settings.selectedBreed);
+      if (settings.initialAge !== undefined) setInitialAge(settings.initialAge);
+    }
   }, [syncTrigger]);
 
   useEffect(() => {
+    // Only auto-switch breed if no manual setting exists or when species changes
     if (activeSpeciesFilter === "caille") {
-      setSelectedBreed("Caille"); return;
+      updateHealthSettings({ selectedBreed: "Caille" }); return;
     }
     if (activeSpeciesFilter === "pigeon") {
-      setSelectedBreed("Pigeon"); return;
+      updateHealthSettings({ selectedBreed: "Pigeon" }); return;
     }
     if (activeSpeciesFilter === "lapin") {
-      setSelectedBreed("Lapin"); return;
+      updateHealthSettings({ selectedBreed: "Lapin" }); return;
     }
 
     if (selectedBreeds.length > 0) {
@@ -94,12 +103,24 @@ export function HealthTracking() {
         chair: "Poulet de chair",
         reproducteur: "Reproducteur",
       };
-      setSelectedBreed(breedLabelMap[selectedBreeds[0].toLowerCase()] || "Poulet de chair");
+      const newBreed = breedLabelMap[selectedBreeds[0].toLowerCase()] || "Poulet de chair";
+      if (newBreed !== selectedBreed) {
+         updateHealthSettings({ selectedBreed: newBreed });
+      }
       return;
     }
-
-    setSelectedBreed("Poulet de chair");
   }, [activeSpeciesFilter, selectedBreeds]);
+
+  const updateHealthSettings = (newSettings: any) => {
+    const current = StorageService.getItem<any>('health_settings') || { id: 'current_lot' };
+    const updated = { ...current, ...newSettings };
+    StorageService.setItem('health_settings', updated); // Local immediate
+    saveData('health_settings', [updated as any]); // Sync (wrapped in array for SyncService)
+    
+    if (newSettings.arrivalDate) setArrivalDate(newSettings.arrivalDate);
+    if (newSettings.selectedBreed) setSelectedBreed(newSettings.selectedBreed);
+    if (newSettings.initialAge !== undefined) setInitialAge(newSettings.initialAge);
+  };
 
   const saveRecords = (newRecords: HealthRecord[]) => {
     setRecords(newRecords);
@@ -301,7 +322,7 @@ export function HealthTracking() {
                   <select 
                     className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown appearance-none mt-1 outline-none text-sm`}
                     value={selectedBreed}
-                    onChange={(e) => setSelectedBreed(e.target.value)}
+                    onChange={(e) => updateHealthSettings({ selectedBreed: e.target.value })}
                   >
                     {selectedBreeds.includes('chair') && <option value="Poulet de chair">Poulet de chair</option>}
                     {selectedBreeds.includes('pondeuse') && <option value="Pondeuse">Pondeuse</option>}
@@ -319,7 +340,7 @@ export function HealthTracking() {
                     type="date"
                     className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
                     value={arrivalDate}
-                    onChange={e => setArrivalDate(e.target.value)}
+                    onChange={e => updateHealthSettings({ arrivalDate: e.target.value })}
                   />
                 </div>
                 <div>
@@ -329,7 +350,7 @@ export function HealthTracking() {
                       type="number"
                       className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
                       value={initialAge}
-                      onChange={e => setInitialAge(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={e => updateHealthSettings({ initialAge: Math.max(1, parseInt(e.target.value) || 1) })}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">jours</span>
                   </div>
