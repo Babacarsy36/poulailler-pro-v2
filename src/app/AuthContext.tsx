@@ -181,12 +181,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (data.poultryType) {
                     const types = Array.isArray(data.poultryType) ? (data.poultryType as PoultryType[]) : [data.poultryType as PoultryType];
                     setPoultryTypes(prev => {
-                        // MERGE LOGIC: Never remove a species that we currently have
-                        // unless it's an explicit clear. This prevents sync-back wipes.
                         const combined = [...new Set([...prev.map(t => t?.toLowerCase()), ...types.map(t => t?.toLowerCase())])];
                         return combined.filter(Boolean) as PoultryType[];
                     });
                     if (types.length > 0) {
+                        // CRITICAL: Always persist to localStorage so SelectionGuard works on any browser/device
                         localStorage.setItem('has_selected_species', 'true');
                         localStorage.setItem('poultry_types', JSON.stringify(types));
                     }

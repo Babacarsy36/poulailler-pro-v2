@@ -27,6 +27,7 @@ export const SPECIES_CONFIG = {
   canard:  { label: 'Canard', emoji: '🦆', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '58-62%', humidityHatch: '70-75%' },
   oie:     { label: 'Oie', emoji: '🪿', totalDays: 30, tempC: 37.4, tempF: 99.3, humidity: '55-60%', humidityHatch: '70-75%' },
   dinde:   { label: 'Dinde', emoji: '🦃', totalDays: 28, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '70-75%' },
+  pigeon:  { label: 'Pigeon', emoji: '🕊️', totalDays: 18, tempC: 37.5, tempF: 99.5, humidity: '50-55%', humidityHatch: '65-70%' },
 } as const;
 
 export type SpeciesKey = keyof typeof SPECIES_CONFIG;

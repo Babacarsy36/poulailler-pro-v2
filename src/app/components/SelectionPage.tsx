@@ -4,16 +4,28 @@ import { useNavigate } from 'react-router';
 import { ChevronRight, Check, LogOut, X } from 'lucide-react';
 
 export function SelectionPage() {
-    const { updatePoultrySelection, user, logout, poultryTypes, selectedBreeds } = useAuth();
+    const { updatePoultrySelection, user, logout, poultryTypes, selectedBreeds, isPreferencesLoaded, isInitialPullDone } = useAuth();
     const navigate = useNavigate();
 
     const [selectedTypes, setSelectedTypes] = useState<PoultryType[]>([]);
     const [breeds, setBreeds] = useState<string[]>([]);
+    const [autoRedirecting, setAutoRedirecting] = useState(false);
 
+    // Auto-redirect if user already has config loaded from Firebase
     useEffect(() => {
-        if (poultryTypes.length > 0) setSelectedTypes(poultryTypes);
-        if (selectedBreeds.length > 0) setBreeds(selectedBreeds);
-    }, [poultryTypes, selectedBreeds]);
+        if (poultryTypes.length > 0 && isInitialPullDone) {
+            setSelectedTypes(poultryTypes);
+            if (selectedBreeds.length > 0) setBreeds(selectedBreeds);
+            // If they were redirected here by mistake (e.g. slow Firebase on new browser),
+            // go back to dashboard automatically after a short delay
+            const hasLocal = localStorage.getItem('has_selected_species') === 'true';
+            if (hasLocal) {
+                setAutoRedirecting(true);
+                const t = setTimeout(() => navigate('/'), 1500);
+                return () => clearTimeout(t);
+            }
+        }
+    }, [poultryTypes, selectedBreeds, isInitialPullDone]);
 
     const toggleType = (type: PoultryType) => {
         if (!type) return;
@@ -46,6 +58,14 @@ export function SelectionPage() {
 
     return (
         <div className="min-h-screen bg-babs-cream flex flex-col">
+
+            {/* Auto-redirect banner */}
+            {autoRedirecting && (
+                <div className="fixed inset-0 z-50 bg-babs-cream flex flex-col items-center justify-center gap-4">
+                    <div className="w-12 h-12 border-4 border-babs-orange border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-babs-brown font-black text-sm">Configuration détectée, redirection...</p>
+                </div>
+            )}
 
             {/* ── Top Bar ── */}
             <header className="w-full flex items-center justify-between px-4 sm:px-6 py-4 shrink-0">
