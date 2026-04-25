@@ -12,7 +12,7 @@ interface Chicken {
   poultryType: PoultryType;
   breed: string;
   age: number;
-  ageUnit: "weeks" | "months";
+  ageUnit: "weeks" | "months" | "days";
   count: number;
   femaleCount?: number;
   maleCount?: number;
@@ -31,7 +31,7 @@ interface ChickenFormData {
   breed: string;
   poultryType: PoultryType;
   age: string;
-  ageUnit: "weeks" | "months";
+  ageUnit: "weeks" | "months" | "days";
   count: string;
   femaleCount: string;
   maleCount: string;
@@ -99,7 +99,7 @@ export function ChickenInventory() {
 
   const getRecommendedFeed = (ageValue: string, ageUnit: string, breed: string, type: string) => {
     const val = parseFloat(ageValue) || 0;
-    const ageDays = ageUnit === 'weeks' ? val * 7 : val * 30;
+    const ageDays = ageUnit === 'weeks' ? val * 7 : ageUnit === 'days' ? val : val * 30;
     if (ageDays <= 0) return "Âge non défini";
 
     if (type === 'pigeon') return "Mélange spécial Pigeon / Graines";
@@ -345,7 +345,7 @@ export function ChickenInventory() {
                 <div className="flex items-center gap-2">
                   <iconify-icon icon="solar:calendar-linear" class="text-gray-400"></iconify-icon>
                   <p className="text-xs font-light text-gray-600 truncate">
-                    {chicken.age} {chicken.ageUnit === 'weeks' ? 'semaines' : 'mois'}
+                    {chicken.age} {chicken.ageUnit === 'weeks' ? 'semaines' : chicken.ageUnit === 'days' ? 'jours' : 'mois'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -594,6 +594,7 @@ export function ChickenInventory() {
                     >
                       <option value="months">Mois</option>
                       <option value="weeks">Semaines</option>
+                      <option value="days">Jours</option>
                     </select>
                   </div>
                 </div>

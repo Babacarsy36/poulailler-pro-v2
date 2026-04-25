@@ -120,7 +120,7 @@ export function FeedManagement() {
 
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedBreed, setSelectedBreed] = useState("Poulet de chair");
-  const [initialAge, setInitialAge] = useState(1);
+  const [initialAge, setInitialAge] = useState<string>("1");
   const [activeSection, setActiveSection] = useState<'priority' | 'other'>('priority');
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [weather, setWeather] = useState<"normal" | "hot" | "cold">("normal");
@@ -399,7 +399,7 @@ export function FeedManagement() {
   const currentDate = new Date();
   const arrDate = new Date(arrivalDate);
   const diffTime = Math.abs(currentDate.getTime() - arrDate.getTime());
-  const currentAgeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + initialAge;
+  const currentAgeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + (parseInt(initialAge) || 0);
 
   let currentPhaseIndex = phases.findIndex(p => currentAgeDays >= p.duration[0] && currentAgeDays <= p.duration[1]);
   if(currentPhaseIndex === -1 && currentAgeDays > 0) currentPhaseIndex = phases.length - 1;
@@ -547,7 +547,7 @@ export function FeedManagement() {
                       type="number"
                       className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-xs sm:text-sm h-[42px] sm:h-auto`}
                       value={initialAge}
-                      onChange={e => setInitialAge(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={e => setInitialAge(e.target.value)}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-gray-400 mt-0.5">j</span>
                   </div>

@@ -91,23 +91,28 @@ export const SyncService = {
         const docRef = this.getDocRef(key, targetId, isFarm);
         let docSnap = await getDoc(docRef);
         
-        // Fallback for 'finances' -> try 'transactions' legacy document
-        if (!docSnap.exists() && key === 'finances') {
-          const legacyRef = this.getDocRef('transactions', targetId, isFarm);
-          docSnap = await getDoc(legacyRef);
-          
-          // If legacy exists, we should probably "migrate" it in cloud by pushing it to 'finances'
-          if (docSnap.exists()) {
-             const legacyData = docSnap.data().data as SyncItem[];
-             await setDoc(docRef, { data: legacyData, lastUpdated: Date.now() });
-          }
-        }
-
+        // Merge cloud data with local data
         if (docSnap.exists()) {
           const cloudData = docSnap.data().data as SyncItem[];
           const localData = StorageService.getItem<SyncItem[]>(key) || [];
           const mergedData = this.mergeData(localData, cloudData);
           StorageService.setItem(key, mergedData);
+        }
+
+        // Always check 'transactions' legacy document if syncing 'finances'
+        if (key === 'finances') {
+          const legacyRef = this.getDocRef('transactions', targetId, isFarm);
+          const legacySnap = await getDoc(legacyRef);
+          
+          if (legacySnap.exists()) {
+             const legacyData = legacySnap.data().data as SyncItem[];
+             const localData = StorageService.getItem<SyncItem[]>(key) || [];
+             const mergedData = this.mergeData(localData, legacyData);
+             StorageService.setItem(key, mergedData);
+             
+             // Migrate legacy to new finances doc to avoid repeating this eventually
+             await setDoc(docRef, { data: mergedData, lastUpdated: Date.now() });
+          }
         }
       } catch (err) {
         console.error(`Failed to pull ${key} from cloud:`, err);
