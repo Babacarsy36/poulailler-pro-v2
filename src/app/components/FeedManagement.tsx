@@ -228,8 +228,9 @@ export function FeedManagement() {
   };
 
   useEffect(() => {
+    let newBreed = 'Poulet de chair';
     if (activeSpeciesFilter === 'caille') {
-      setSelectedBreed('Caille');
+      newBreed = 'Caille';
     } else if (selectedBreeds.length > 0) {
       const breedMap: Record<string, string> = {
         fermier: 'Poulet Fermier',
@@ -237,7 +238,17 @@ export function FeedManagement() {
         pondeuse: 'Pondeuse',
         chair: 'Poulet de chair'
       };
-      setSelectedBreed(breedMap[selectedBreeds[0]] || 'Poulet de chair');
+      newBreed = breedMap[selectedBreeds[0]] || 'Poulet de chair';
+    }
+    setSelectedBreed(newBreed);
+
+    // Auto-select correct formulation based on breed
+    if (newBreed === 'Pondeuse') {
+      setCalcGoal("Pondeuse Démarrage (Ponte 5%)");
+    } else if (newBreed === 'Poule d\'Ornement') {
+      setCalcGoal("Poulet Brahma herminé en ponte");
+    } else {
+      setCalcGoal("Poulet de chair Démarrage (Concentré 10%)");
     }
   }, [activeSpeciesFilter, selectedBreeds]);
 
@@ -340,14 +351,15 @@ export function FeedManagement() {
     setIsAddOpen(false);
   };
 
-  // Alimentation globale filtrée par mois
+  // Alimentation globale filtrée par mois pour l'affichage de la liste
   const filteredEntries = entries.filter(e => {
       if (e._deleted) return false;
       const transMonth = e.date.substring(0, 7);
       return transMonth === selectedMonth;
   });
 
-  const totalFeed = filteredEntries.reduce((sum, entry) => {
+  // Le stock total doit être global sur toutes les périodes
+  const totalFeed = entries.filter(e => !e._deleted).reduce((sum, entry) => {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
 
