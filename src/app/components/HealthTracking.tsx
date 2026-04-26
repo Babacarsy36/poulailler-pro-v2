@@ -22,6 +22,17 @@ interface HealthRecord {
   updatedAt?: number;
 }
 
+const BREED_LABEL_MAP: Record<string, string> = {
+  fermier: "Poulet Fermier",
+  ornement: "Poule d'Ornement",
+  pondeuse: "Pondeuse",
+  chair: "Poulet de chair",
+  reproducteur: "Reproducteur",
+  caille: "Caille",
+  pigeon: "Pigeon",
+  lapin: "Lapin"
+};
+
 interface HealthFormData {
   date: string;
   type: "Vaccin" | "Traitement" | "Prévention";
@@ -97,14 +108,7 @@ export function HealthTracking() {
     }
 
     if (selectedBreeds.length > 0) {
-      const breedLabelMap: Record<string, string> = {
-        fermier: "Poulet Fermier",
-        ornement: "Poule d'Ornement",
-        pondeuse: "Pondeuse",
-        chair: "Poulet de chair",
-        reproducteur: "Reproducteur",
-      };
-      const newBreed = breedLabelMap[selectedBreeds[0].toLowerCase()] || "Poulet de chair";
+      const newBreed = BREED_LABEL_MAP[selectedBreeds[0].toLowerCase()] || "Poulet de chair";
       if (newBreed !== selectedBreed) {
          updateHealthSettings({ selectedBreed: newBreed });
       }
@@ -161,14 +165,7 @@ export function HealthTracking() {
       status: "Complété",
       poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (selectedBreed === 'Caille' ? 'caille' : 'poulet'),
       poultryBreed: selectedBreeds.find(sb => {
-          const breedLabelMap: Record<string, string> = {
-            fermier: "Poulet Fermier",
-            ornement: "Poule d'Ornement",
-            pondeuse: "Pondeuse",
-            chair: "Poulet de chair",
-            reproducteur: "Reproducteur",
-          };
-          return breedLabelMap[sb?.toLowerCase()] === selectedBreed;
+          return BREED_LABEL_MAP[sb?.toLowerCase()] === selectedBreed;
       }) || selectedBreeds[0] || undefined,
       updatedAt: now
     };
@@ -348,10 +345,14 @@ export function HealthTracking() {
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Âge à l'arrivée</label>
                   <div className="relative">
                     <input 
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       className={`w-full ${bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-sm`}
                       value={initialAge}
-                      onChange={e => updateHealthSettings({ initialAge: Math.max(1, parseInt(e.target.value) || 1) })}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        updateHealthSettings({ initialAge: val ? parseInt(val) : 0 });
+                      }}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">jours</span>
                   </div>
@@ -392,7 +393,13 @@ export function HealthTracking() {
                       stepDateObj.setDate(stepDateObj.getDate() + (step.day - initialAge));
                       const stepDateStr = stepDateObj.toISOString().split("T")[0];
                       const isPast = currentAgeDays > step.day;
-                      const isDone = filteredRecords.some(r => r.title === step.title && (r.date === stepDateStr || r.poultryBreed === selectedBreed));
+                      const isDone = filteredRecords.some(r => {
+                        const matchesTitle = r.title === step.title;
+                        const matchesBreed = r.target === selectedBreed || 
+                                           r.poultryBreed === selectedBreed || 
+                                           (r.poultryBreed && BREED_LABEL_MAP[r.poultryBreed.toLowerCase()] === selectedBreed);
+                        return matchesTitle && matchesBreed;
+                      });
                       const isCommonBase = step.day <= 24;
                       const reminderId = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
                       const isReminderActive = activeReminders.some(r => r.id === reminderId && r.date === stepDateStr);

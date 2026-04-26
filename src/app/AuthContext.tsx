@@ -181,13 +181,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     localStorage.setItem('selected_breeds', JSON.stringify(validBreeds));
                 }
                 if (data.poultryType) {
-                    const types = Array.isArray(data.poultryType) ? (data.poultryType as PoultryType[]) : [data.poultryType as PoultryType];
-                    setPoultryTypes(prev => {
-                        const combined = [...new Set([...prev.map(t => t?.toLowerCase()), ...types.map(t => t?.toLowerCase())])];
-                        return combined.filter(Boolean) as PoultryType[];
-                    });
+                    const types = (Array.isArray(data.poultryType) ? data.poultryType : [data.poultryType])
+                        .map(t => t?.toLowerCase())
+                        .filter(Boolean) as PoultryType[];
+                    
+                    setPoultryTypes(types);
                     if (types.length > 0) {
-                        // CRITICAL: Always persist to localStorage so SelectionGuard works on any browser/device
                         localStorage.setItem('has_selected_species', 'true');
                         localStorage.setItem('poultry_types', JSON.stringify(types));
                     }
@@ -232,7 +231,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user && farmId) {
             // Explicitly pull farm data when farmId is known
             const isFarmStore = farmId !== user.uid;
-            SyncService.pullCloudToLocal(farmId, isFarmStore);
+            SyncService.pullCloudToLocal(farmId, isFarmStore).then(() => {
+                setSyncTrigger(prev => prev + 1);
+            });
 
             const stopSync = SyncService.startRealtimeSync(() => {
                 setSyncTrigger(prev => prev + 1);

@@ -34,10 +34,17 @@ export function Dashboard() {
   });
   const [isRecovering, setIsRecovering] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [selectedMonth, setSelectedMonth] = useState(() => {
+  const [selectedMonth, setSelectedMonthState] = useState(() => {
+      const saved = localStorage.getItem('dashboard_selected_month');
+      if (saved) return saved;
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const setSelectedMonth = (m: string) => {
+    setSelectedMonthState(m);
+    localStorage.setItem('dashboard_selected_month', m);
+  };
 
   const isCaille = activeSpeciesFilter === 'caille';
   const isPigeon = activeSpeciesFilter === 'pigeon';

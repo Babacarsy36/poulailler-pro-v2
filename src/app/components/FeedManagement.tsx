@@ -3,6 +3,7 @@ import { Plus, Minus, ShoppingCart, Calendar, History, Package, Info, ArrowRight
 import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
+import { BottomSheet } from "./ui/BottomSheet";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { Chicken } from "../types";
@@ -556,10 +557,14 @@ export function FeedManagement() {
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-2">Âge</label>
                   <div className="relative">
                     <input 
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       className={`w-full ${customColors.bgLight} border-none rounded-2xl p-3 font-bold text-babs-brown mt-1 outline-none text-xs sm:text-sm h-[42px] sm:h-auto`}
                       value={initialAge}
-                      onChange={e => setInitialAge(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setInitialAge(val);
+                      }}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-gray-400 mt-0.5">j</span>
                   </div>
@@ -1056,114 +1061,117 @@ export function FeedManagement() {
         </div>
       )}
 
-      {isAddOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="font-['Syne'] text-xl font-semibold text-gray-900 mb-6 border-b border-gray-100 pb-4">Nouvelle Opération</h3>
-            <form onSubmit={handleSubmit(onEntrySubmit)} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
-                  <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("date", { required: true })} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Action</label>
-                  <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400" {...register("type")}>
-                    <option value="achat">📦 Achat de stock</option>
-                    <option value="utilisation">🍴 Utilisation / Service</option>
-                  </select>
-                </div>
-              </div>
-
-
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quantité (kg)</label>
-                  <input 
-                    type="number"
-                    step="0.1"
-                    className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.quantity ? 'ring-2 ring-red-500' : ''}`}
-                    {...register("quantity", { required: "Quantité requise", min: 0.1 })}
-                  />
-                  {errors.quantity && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.quantity.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type d'Aliment</label>
-                  <select 
-                    className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.feedType ? 'ring-2 ring-red-500' : ''}`}
-                    {...register("feedType", { required: "Type d'aliment requis" })}
-                  >
-                    <option value="" disabled>Choisir l'aliment...</option>
-                    <option value="Démarrage">Démarrage</option>
-                    <option value="Croissance">Croissance</option>
-                    <option value="Finition">Finition</option>
-                    <option value="Pondeuse">Pondeuse</option>
-                    <option value="Mélange Maison">Mélange Maison</option>
-                    <option value="Autre">Autre</option>
-                  </select>
-                  {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
-                </div>
-              </div>
-
-              {watch("type") === 'achat' && (
-                <div className="space-y-2 animate-in slide-in-from-top-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Prix Total de l'achat (FCFA)</label>
-                    <div className="relative">
-                        <input 
-                            type="number"
-                            className="w-full bg-emerald-50/30 border border-emerald-100 rounded-2xl p-4 font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-200 transition-all"
-                            placeholder="Ex: 15000 (Saisie auto en Finance)"
-                            {...register("totalPrice")}
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600">FCFA</span>
-                    </div>
-                    <p className="text-[9px] text-gray-400 font-medium px-2 italic">Si renseigné, cette dépense sera ajoutée automatiquement à vos finances.</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Température Ambiante (°C)</label>
-                 <div className="flex bg-gray-50 border-none rounded-2xl p-1 items-stretch focus-within:ring-2 focus-within:ring-orange-100 transition-all">
-                    <input 
-                      type="number"
-                      className="flex-1 bg-transparent border-none p-4 font-bold text-babs-brown outline-none text-center"
-                      placeholder="Ex: 28"
-                      {...register("temperature")}
-                    />
-                    <div className="w-12 flex items-center justify-center bg-orange-100 text-orange-600 rounded-xl mr-1 my-1">
-                       <Thermometer className="w-5 h-5" />
-                    </div>
-                 </div>
-              </div>
-
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>
-                <input 
-                  className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
-                  placeholder="Facultatif"
-                  {...register("notes")}
-                />
-              </div>
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                 <button 
-                   type="button"
-                   onClick={() => setIsAddOpen(false)}
-                   className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
-                 >
-                   Annuler
-                 </button>
-                 <button 
-                   type="submit"
-                   className={`flex-1 py-3 ${customColors.bgBtn} text-white rounded-xl text-sm font-medium shadow-md transition-colors`}
-                 >
-                   Confirmer
-                 </button>
-               </div>
-            </form>
+      <BottomSheet 
+        isOpen={isAddOpen} 
+        onClose={() => setIsAddOpen(false)}
+        title="Nouvelle Opération"
+      >
+        <form onSubmit={handleSubmit(onEntrySubmit)} className="space-y-6 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</label>
+              <input 
+                type="date"
+                className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
+                {...register("date", { required: true })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Action</label>
+              <select 
+                className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
+                {...register("type")}
+              >
+                <option value="achat">📦 Achat de stock</option>
+                <option value="utilisation">🍴 Utilisation / Service</option>
+              </select>
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Quantité (kg)</label>
+              <input 
+                type="number"
+                step="0.1"
+                className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.quantity ? 'ring-2 ring-red-500' : ''}`}
+                {...register("quantity", { required: "Quantité requise", min: 0.1 })}
+              />
+              {errors.quantity && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.quantity.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Type d'Aliment</label>
+              <select 
+                className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.feedType ? 'ring-2 ring-red-500' : ''}`}
+                {...register("feedType", { required: "Type d'aliment requis" })}
+              >
+                <option value="" disabled>Choisir l'aliment...</option>
+                <option value="Démarrage">Démarrage</option>
+                <option value="Croissance">Croissance</option>
+                <option value="Finition">Finition</option>
+                <option value="Pondeuse">Pondeuse</option>
+                <option value="Mélange Maison">Mélange Maison</option>
+                <option value="Autre">Autre</option>
+              </select>
+              {errors.feedType && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.feedType.message}</p>}
+            </div>
+          </div>
+
+          {watch("type") === 'achat' && (
+            <div className="space-y-2 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Prix Total de l'achat (FCFA)</label>
+                <div className="relative">
+                    <input 
+                        type="number"
+                        className="w-full bg-emerald-50/30 border border-emerald-100 rounded-2xl p-4 font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-200 transition-all"
+                        placeholder="Ex: 15000 (Saisie auto en Finance)"
+                        {...register("totalPrice")}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600">FCFA</span>
+                </div>
+                <p className="text-[9px] text-gray-400 font-medium px-2 italic">Si renseigné, cette dépense sera ajoutée automatiquement à vos finances.</p>
+            </div>
+          )}
+          <div className="space-y-2">
+             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Température Ambiante (°C)</label>
+             <div className="flex bg-gray-50 border-none rounded-2xl p-1 items-stretch focus-within:ring-2 focus-within:ring-orange-100 transition-all">
+                <input 
+                  type="number"
+                  className="flex-1 bg-transparent border-none p-4 font-bold text-babs-brown outline-none text-center"
+                  placeholder="Ex: 28"
+                  {...register("temperature")}
+                />
+                <div className="w-12 flex items-center justify-center bg-orange-100 text-orange-600 rounded-xl mr-1 my-1">
+                   <Thermometer className="w-5 h-5" />
+                </div>
+             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Notes & Informations</label>
+            <input 
+              className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100"
+              placeholder="Facultatif"
+              {...register("notes")}
+            />
+          </div>
+          <div className="flex gap-4 pt-6 border-t border-gray-100">
+             <button 
+               type="button"
+               onClick={() => setIsAddOpen(false)}
+               className="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-gray-100 transition-colors"
+             >
+               Annuler
+             </button>
+             <button 
+               type="submit"
+               className={`flex-1 py-4 ${customColors.bgBtn} text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-lg transition-colors`}
+             >
+               Confirmer
+             </button>
+           </div>
+        </form>
+      </BottomSheet>
     </section>
   );
 }

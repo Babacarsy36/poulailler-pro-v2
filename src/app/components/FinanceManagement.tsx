@@ -45,10 +45,17 @@ export function FinanceManagement() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [selectedMonth, setSelectedMonth] = useState(() => {
+  const [selectedMonth, setSelectedMonthState] = useState(() => {
+      const saved = localStorage.getItem('finance_selected_month');
+      if (saved) return saved;
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const setSelectedMonth = (m: string) => {
+    setSelectedMonthState(m);
+    localStorage.setItem('finance_selected_month', m);
+  };
 
   const expenseCategories = ["Alimentation", "Santé/Vaccins", "Matériel", "Achat Sujets", "Mortalité (Perte)", "Autre"];
   const incomeCategories = ["Vente d'œufs", "Vente de poulets/cailles", "Vente de fientes", "Autre"];
@@ -98,7 +105,7 @@ export function FinanceManagement() {
     };
 
     loadData();
-  }, [syncTrigger, activeSpeciesFilter, selectedBreeds]);
+  }, [syncTrigger, activeSpeciesFilter, selectedBreeds, farmId, user?.uid, isInitialPullDone]);
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
     setTransactions(newTransactions);
