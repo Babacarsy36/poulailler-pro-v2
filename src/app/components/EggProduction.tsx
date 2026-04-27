@@ -26,8 +26,8 @@ interface EggFormData {
 export function EggProduction() {
   const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
-  const [isAddOpen, setIsAddOpen] = useState(false);
   const [totalFemales, setTotalFemales] = useState(0);
+  const [editingRecord, setEditingRecord] = useState<EggRecord | null>(null);
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<EggFormData & { breed: string; poultryType?: string }>({
     defaultValues: {
@@ -87,18 +87,53 @@ export function EggProduction() {
 
   const onFormSubmit = (data: EggFormData & { breed: string; poultryType?: string }) => {
     const now = Date.now();
-    const newRecord: EggRecord = {
-      id: now.toString(),
-      date: data.date,
-      quantity: Number(data.quantity),
-      notes: data.notes,
-      poultryType: data.poultryType || (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet'),
-      poultryBreed: data.breed || selectedBreeds[0] || "",
-      updatedAt: now
-    };
-    saveRecords([newRecord, ...records]);
-    reset({ date: new Date().toISOString().split("T")[0], quantity: "", notes: "", breed: selectedBreeds[0] || "" });
+    if (editingRecord) {
+      const updated: EggRecord = {
+        ...editingRecord,
+        date: data.date,
+        quantity: Number(data.quantity),
+        notes: data.notes,
+        poultryType: data.poultryType || editingRecord.poultryType,
+        poultryBreed: data.breed || editingRecord.poultryBreed,
+        updatedAt: now
+      };
+      saveRecords(records.map(r => r.id === editingRecord.id ? updated : r));
+      setEditingRecord(null);
+      toast.success("Récolte mise à jour !");
+    } else {
+      const newRecord: EggRecord = {
+        id: now.toString(),
+        date: data.date,
+        quantity: Number(data.quantity),
+        notes: data.notes,
+        poultryType: data.poultryType || (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet'),
+        poultryBreed: data.breed || selectedBreeds[0] || "",
+        updatedAt: now
+      };
+      saveRecords([newRecord, ...records]);
+      toast.success("Récolte enregistrée !");
+    }
     setIsAddOpen(false);
+    reset({ date: new Date().toISOString().split("T")[0], quantity: "", notes: "", breed: selectedBreeds[0] || "" });
+  };
+
+  const handleEdit = (r: EggRecord) => {
+    setEditingRecord(r);
+    reset({
+      date: r.date,
+      quantity: r.quantity.toString(),
+      notes: r.notes || "",
+      breed: r.poultryBreed || selectedBreeds[0] || "",
+      poultryType: r.poultryType
+    });
+    setIsAddOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Supprimer cette récolte ?")) {
+      saveRecords(records.filter(r => r.id !== id));
+      toast.info("Récolte supprimée.");
+    }
   };
 
   const filteredRecords = records.filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed));
@@ -273,31 +308,19 @@ export function EggProduction() {
                   {record.poultryBreed && <span className="ml-4 px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-bold text-gray-600 uppercase tracking-wider">{record.poultryBreed}</span>}
                 </p>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => {
-                    const newVal = window.prompt(`Modifier la quantité d'œufs pour le ${new Date(record.date).toLocaleDateString()}:`, record.quantity.toString());
-                    if (newVal !== null) {
-                      const parsed = parseInt(newVal);
-                      if (!isNaN(parsed) && parsed >= 0) {
-                        saveRecords(records.map(r => r.id === record.id ? { ...r, quantity: parsed, updatedAt: Date.now() } : r));
-                      }
-                    }
-                  }}
-                  className="p-2 bg-gray-50 hover:bg-blue-50 rounded-xl text-gray-400 hover:text-blue-500 transition-colors"
-                >
-                  <iconify-icon icon="solar:pen-linear" class="text-base"></iconify-icon>
-                </button>
-                <button
-                  onClick={() => { 
-                    if (window.confirm("Supprimer cette récolte ?")) {
-                      saveRecords(records.map(r => r.id === record.id ? { ...r, _deleted: true, updatedAt: Date.now() } : r)); 
-                    }
-                  }}
-                  className="p-2 bg-gray-50 hover:bg-red-50 rounded-xl text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <iconify-icon icon="solar:trash-bin-trash-linear" class="text-base"></iconify-icon>
-                </button>
+              <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleEdit(record)}
+                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
+                  >
+                    <iconify-icon icon="solar:pen-new-square-linear"></iconify-icon>
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(record.id)}
+                    className="p-2 hover:bg-red-50 rounded-lg text-red-300 hover:text-red-500 transition-colors"
+                  >
+                    <iconify-icon icon="solar:trash-bin-minimalistic-linear"></iconify-icon>
+                  </button>
               </div>
             </div>
           ))}
@@ -314,8 +337,8 @@ export function EggProduction() {
       {/* Add Modal */}
       <BottomSheet 
         isOpen={isAddOpen} 
-        onClose={() => setIsAddOpen(false)}
-        title="Nouvelle Récolte"
+        onClose={() => { setIsAddOpen(false); setEditingRecord(null); }}
+        title={editingRecord ? "Modifier la Récolte" : "Nouvelle Récolte"}
       >
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left py-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

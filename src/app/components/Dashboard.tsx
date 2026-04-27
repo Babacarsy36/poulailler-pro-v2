@@ -176,9 +176,8 @@ export function Dashboard() {
       });
     }
 
-    // Correct Feed Stock Calculation to match FeedManagement.tsx
-    const filteredFeedForStock = feed.filter(f => !f._deleted && isItemActive(f.poultryType, f.poultryBreed));
-    const totalFeedKg = filteredFeedForStock.reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
+    // Feed Stock is always GLOBAL to avoid negative values when filtering
+    const totalFeedKg = feed.filter(f => !f._deleted).reduce((acc: number, f) => acc + (f.type === 'achat' ? (f.quantity || 0) : -(f.quantity || 0)), 0);
     
     // Autonomy calculation matching FeedManagement's logic
     const dailyFeedCons = activeLots.reduce((acc: number, c) => {
