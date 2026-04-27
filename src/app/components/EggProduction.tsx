@@ -61,7 +61,7 @@ export function EggProduction() {
     
     const females = chickens
       .filter((c: Chicken) => {
-        if (c._deleted || !isItemActive(c.poultryType, c.breed) || c.status !== 'active') return false;
+        if (!c || c._deleted || !isItemActive(c.poultryType, c.breed) || c.status !== 'active') return false;
         
         // Calculate age
         const arrival = c.arrivalDate ? new Date(c.arrivalDate).getTime() : now;
@@ -138,8 +138,12 @@ export function EggProduction() {
   };
 
   const filteredRecords = records
-    .filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .filter(r => r && !r._deleted && isItemActive(r.poultryType, r.poultryBreed))
+    .sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      return timeB - timeA;
+    });
 
   const totalEggs = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
 
@@ -158,10 +162,13 @@ export function EggProduction() {
   let eggsThisYear = 0;
 
   filteredRecords.forEach(r => {
+    if (!r.date || isNaN(r.quantity)) return;
     const recordDate = new Date(r.date);
-    if (recordDate >= startOfWeek) eggsThisWeek += r.quantity;
-    if (recordDate >= startOfMonth) eggsThisMonth += r.quantity;
-    if (recordDate >= startOfYear) eggsThisYear += r.quantity;
+    if (isNaN(recordDate.getTime())) return;
+    
+    if (recordDate >= startOfWeek) eggsThisWeek += Number(r.quantity);
+    if (recordDate >= startOfMonth) eggsThisMonth += Number(r.quantity);
+    if (recordDate >= startOfYear) eggsThisYear += Number(r.quantity);
   });
 
   const lastRecord = filteredRecords[0];
