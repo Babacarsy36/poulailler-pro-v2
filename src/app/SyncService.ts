@@ -99,21 +99,7 @@ export const SyncService = {
           StorageService.setItem(key, mergedData);
         }
 
-        // Always check 'transactions' legacy document if syncing 'finances'
-        if (key === 'finances') {
-          const legacyRef = this.getDocRef('transactions', targetId, isFarm);
-          const legacySnap = await getDoc(legacyRef);
-          
-          if (legacySnap.exists()) {
-             const legacyData = legacySnap.data().data as SyncItem[];
-             const localData = StorageService.getItem<SyncItem[]>(key) || [];
-             const mergedData = this.mergeData(localData, legacyData);
-             StorageService.setItem(key, mergedData);
-             
-             // Migrate legacy to new finances doc to avoid repeating this eventually
-             await setDoc(docRef, { data: mergedData, lastUpdated: Date.now() });
-          }
-        }
+        // Legacy migration handled in recoverLegacyData
       } catch (err) {
         console.error(`Failed to pull ${key} from cloud:`, err);
       }

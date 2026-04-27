@@ -33,7 +33,6 @@ interface FinanceFormData {
   category: string;
   description: string;
   date: string;
-  selectedBatchId: string;
 }
 
 export function FinanceManagement() {
@@ -81,31 +80,20 @@ export function FinanceManagement() {
   const accentColor = isMixed ? "text-indigo-500" : isCaille ? "text-emerald-500" : "text-orange-500";
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!isInitialPullDone) return;
-      setIsSyncing(true);
-      const targetId = farmId || user?.uid;
-      const isFarm = !!farmId;
-      if (targetId) {
-        await SyncService.pullCloudToLocal(targetId, isFarm, "finances");
-      }
-      const data = StorageService.getItem<Transaction[]>("finances") || [];
-      setTransactions(data);
-      
-      const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
-      const activeLots = chickens
-        .filter((c: Chicken) => {
-            return (c.status === 'active' || Number(c.count) > 0) && isItemActive(c.poultryType, c.breed);
-        })
-        .map((c: Chicken) => ({
-          id: c.id,
-          name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
-        }));
-      setBatches(activeLots);
-      setIsSyncing(false);
-    };
-
-    loadData();
+    const data = StorageService.getItem<Transaction[]>("finances") || [];
+    setTransactions(data);
+    
+    const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
+    const activeLots = chickens
+      .filter((c: Chicken) => {
+          return (c.status === 'active' || Number(c.count) > 0) && isItemActive(c.poultryType, c.breed);
+      })
+      .map((c: Chicken) => ({
+        id: c.id,
+        name: c.breed ? `${c.breed} (${c.count}u)` : `Lot #${c.id.slice(-4)} (${c.count}u)`
+      }));
+    setBatches(activeLots);
+    setIsSyncing(false);
   }, [syncTrigger, activeSpeciesFilter, selectedBreeds, farmId, user?.uid, isInitialPullDone]);
 
   const saveTransactions = async (newTransactions: Transaction[]) => {
@@ -125,8 +113,6 @@ export function FinanceManagement() {
         category: finalCategory,
         description: data.description,
         date: data.date,
-        batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
-        batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
         poultryBreed: data.breed || selectedBreeds[0] || undefined,
         updatedAt: now
       };
@@ -144,8 +130,6 @@ export function FinanceManagement() {
         category: finalCategory,
         description: data.description,
         date: data.date,
-        batchId: data.selectedBatchId === 'none' ? undefined : data.selectedBatchId,
-        batchName: data.selectedBatchId === 'none' ? undefined : batches.find(b => b.id === data.selectedBatchId)?.name,
         poultryType: isExpense ? 'global' : (activeSpeciesFilter !== 'all' ? activeSpeciesFilter : (data.breed?.toLowerCase() === 'caille' || breedList.caille.some(b => b.id === data.breed) ? 'caille' : 'poulet')),
         poultryBreed: isExpense ? 'global' : (data.breed || selectedBreeds[0] || undefined),
         updatedAt: now
@@ -155,7 +139,7 @@ export function FinanceManagement() {
       toast.success("Transaction enregistrée !");
     }
     
-    reset({ type: data.type, amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], selectedBatchId: 'none', breed: selectedBreeds[0] || "" });
+    reset({ type: data.type, amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0], breed: selectedBreeds[0] || "" });
     setIsAddOpen(false);
   };
 
@@ -167,7 +151,6 @@ export function FinanceManagement() {
       category: t.category,
       description: t.description || "",
       date: t.date,
-      selectedBatchId: t.batchId || 'none',
       breed: t.poultryBreed || selectedBreeds[0] || ""
     });
     setIsAddOpen(true);
@@ -433,9 +416,15 @@ export function FinanceManagement() {
           </div>
           <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Description / Note</label><input type="text" className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-colors" placeholder="Facultatif" {...register("description")} /></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label><input type="date" className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-colors" {...register("date", { required: true })} /></div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date</label>
+              <input 
+                type="date" 
+                className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 transition-colors"
+                {...register("date", { required: true })}
+              />
+            </div>
             {formType === 'income' && (<div className="space-y-1.5 animate-in slide-in-from-top-2"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label><select className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 appearance-none" {...register("breed", { required: true })}>{selectedBreeds.map(b => (<option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>))}</select></div>)}
-            <div className="space-y-1.5"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Lier à un lot</label><select className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 appearance-none" {...register("selectedBatchId")}><option value="none">Hors lot</option>{batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
           </div>
           <div className="flex gap-3 pt-6 border-t border-gray-100 dark:border-zinc-800 mt-4"><button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Annuler</button><button type="submit" className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>{editingTransaction ? "Appliquer les modifications" : "Ajouter"}</button></div>
         </form>
