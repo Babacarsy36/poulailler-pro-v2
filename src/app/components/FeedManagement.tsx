@@ -87,7 +87,7 @@ const getPhasesForBreed = (breed: string): FeedPhase[] => {
 };
 
 export function FeedManagement() {
-    const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
+    const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, isInitialPullDone } = useAuth();
     const [entries, setEntries] = useState<FeedEntry[]>([]);
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const d = new Date();
@@ -272,6 +272,7 @@ export function FeedManagement() {
   }
 
   useEffect(() => {
+    if (!isInitialPullDone) return;
     const saved = StorageService.getItem<FeedEntry[]>("feed");
     if (saved) {
       setEntries(saved);
@@ -282,7 +283,7 @@ export function FeedManagement() {
     }
     const savedRecipes = StorageService.getItem<FeedRecipe[]>("feed_recipes");
     if (savedRecipes) setSavedRecipes(savedRecipes);
-  }, [syncTrigger]);
+  }, [syncTrigger, isInitialPullDone]);
 
   const saveEntries = (newEntries: FeedEntry[]) => {
     setEntries(newEntries);
