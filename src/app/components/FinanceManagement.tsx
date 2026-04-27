@@ -38,7 +38,7 @@ interface FinanceFormData {
 
 export function FinanceManagement() {
   const navigate = useNavigate();
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role, farmId, user } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, hasAccess, role, farmId, user, isInitialPullDone } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [batches, setBatches] = useState<{id: string, name: string}[]>([]);
    const [isAddOpen, setIsAddOpen] = useState(false);
@@ -82,6 +82,7 @@ export function FinanceManagement() {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!isInitialPullDone) return;
       setIsSyncing(true);
       const targetId = farmId || user?.uid;
       const isFarm = !!farmId;
