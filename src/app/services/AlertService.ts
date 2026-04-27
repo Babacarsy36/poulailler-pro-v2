@@ -178,6 +178,16 @@ export const AlertService = {
             
             if (daysRemaining === 0 || daysRemaining === 1) {
                 const isDueToday = daysRemaining === 0;
+                
+                // Check if already done
+                const isAlreadyDone = health.some(h => 
+                    !h._deleted &&
+                    h.date === rem.date && 
+                    h.title.toLowerCase().includes(rem.title.toLowerCase())
+                );
+                
+                if (isAlreadyDone) return;
+
                 alerts.push({
                     id: `rem-u-${rem.id}`,
                     type: 'health-reminder',

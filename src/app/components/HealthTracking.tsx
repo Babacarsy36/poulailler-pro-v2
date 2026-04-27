@@ -491,8 +491,9 @@ export function HealthTracking() {
                           id: now.toString(),
                           date: new Date().toISOString().split('T')[0],
                           type: "Vaccin",
-                          title: alert.title.replace(/AUJOURD'HUI ! |💉|📅|demain : /g, ''),
-                          target: alert.message.split('lot ')[1]?.split(' (')[0] || "Inconnu",
+                          title: alert.title.replace(/AUJOURD'HUI ! |💉|📅|demain : |Rappel : /g, '').split(' AUJOURD\'HUI !')[0],
+                          target: alert.message.includes('pour le lot ') ? alert.message.split('lot ')[1]?.split(' (')[0] : 
+                                 alert.message.includes('Soin programmé pour: ') ? alert.message.split('pour: ')[1]?.split('. ')[0] : "Inconnu",
                           status: "Complété",
                           poultryType: activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet',
                           poultryBreed: selectedBreeds[0],
