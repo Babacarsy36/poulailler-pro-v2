@@ -385,14 +385,8 @@ export function HealthTracking() {
             <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar relative border-t border-gray-100 pt-6">
                 <div className="absolute left-5 md:left-6 top-6 bottom-0 w-0.5 bg-gray-100"></div>
                 <div className="space-y-6 relative z-10">
-                  {currentProphylaxis.map((step, idx) => {
-                      const stepDateObj = new Date(arrivalDate);
-                      const diffTime = Math.abs(new Date().getTime() - stepDateObj.getTime());
-                      const currentAgeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + initialAge;
-                      
-                      stepDateObj.setDate(stepDateObj.getDate() + (step.day - initialAge));
-                      const stepDateStr = stepDateObj.toISOString().split("T")[0];
-                      const isPast = currentAgeDays > step.day;
+                  {(() => {
+                    const steps = currentProphylaxis.filter(step => {
                       const isDone = filteredRecords.some(r => {
                         const matchesTitle = r.title === step.title;
                         const matchesBreed = r.target === selectedBreed || 
@@ -400,55 +394,74 @@ export function HealthTracking() {
                                            (r.poultryBreed && BREED_LABEL_MAP[r.poultryBreed.toLowerCase()] === selectedBreed);
                         return matchesTitle && matchesBreed;
                       });
-                      const isCommonBase = step.day <= 24;
-                      const reminderId = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
-                      const isReminderActive = activeReminders.some(r => r.id === reminderId && r.date === stepDateStr);
+                      return !isDone;
+                    });
 
+                    if (steps.length === 0) {
                       return (
-                        <div key={idx} className="relative flex items-start gap-4 md:gap-6 group">
-                          <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 z-10 transition-colors ${isDone ? 'bg-emerald-400 text-white' : (isPast ? 'bg-red-400 text-white shadow-md' : 'bg-gray-200 text-gray-500')}`}>
-                              <span className="text-[10px] md:text-xs font-black">J{step.day}</span>
+                        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                          <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                            <iconify-icon icon="solar:check-circle-bold-duotone" class="text-3xl text-emerald-500"></iconify-icon>
                           </div>
-                          <div className={`flex-1 p-4 md:p-5 rounded-3xl border-2 transition-all ${isDone ? 'bg-emerald-50/30 border-emerald-100 opacity-60' : 'bg-white border-gray-50 hover:border-gray-200 shadow-sm hover:shadow-md'}`}>
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <p className="font-black text-babs-brown text-sm md:text-base leading-tight flex flex-wrap items-center gap-2">
-                                      {step.title}
-                                      {isCommonBase ? (
-                                        <span className="text-[7px] md:text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Socle Commun</span>
-                                      ) : (
-                                        <span className={`text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${bgLight} ${accentColor}`}>{selectedBreed}</span>
-                                      )}
-                                    </p>
-                                    <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 mt-1 flex items-center gap-2">
-                                      {stepDateObj.toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
-                                      <span className={`px-2 py-0.5 rounded-full ${step.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>{step.type}</span>
-                                    </p>
-                                </div>
-                                {!isDone ? (
-                                    <div className="flex gap-2 items-center">
-                                      <button 
-                                        onClick={() => scheduleReminder(step, stepDateStr)} 
-                                        className={`p-1 flex items-center justify-center rounded-lg transition-colors ${isReminderActive ? 'text-blue-500 bg-blue-50 shadow-sm' : 'text-gray-300 hover:text-blue-500 bg-gray-50 hover:bg-blue-50'}`} 
-                                        title={isReminderActive ? "Désactiver le rappel push" : "Activer un rappel push"}
-                                      >
-                                        <iconify-icon icon={isReminderActive ? "solar:bell-bing-bold-duotone" : "solar:bell-bing-linear"} class="text-lg md:text-xl"></iconify-icon>
-                                      </button>
-                                      <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
-                                        <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button onClick={() => unmarkStepAsDone(step, stepDateStr)} className="text-emerald-500 hover:text-red-500 transition-colors p-1" title="Décocher">
+                          <p className="font-['Syne'] text-sm font-bold text-gray-900">Programme terminé !</p>
+                          <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-widest">Tous les soins prévus pour ce lot ont été effectués.</p>
+                        </div>
+                      );
+                    }
+
+                    return steps.map((step, idx) => {
+                        const stepDateObj = new Date(arrivalDate);
+                        const diffTime = Math.abs(new Date().getTime() - stepDateObj.getTime());
+                        const currentAgeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + initialAge;
+                        
+                        stepDateObj.setDate(stepDateObj.getDate() + (step.day - initialAge));
+                        const stepDateStr = stepDateObj.toISOString().split("T")[0];
+                        const isPast = currentAgeDays > step.day;
+                        
+                        const isCommonBase = step.day <= 24;
+                        const reminderId = `${selectedBreed}-${step.title.replace(/\s+/g, '-')}`;
+                        const isReminderActive = activeReminders.some(r => r.id === reminderId && r.date === stepDateStr);
+
+                        return (
+                          <div key={idx} className="relative flex items-start gap-4 md:gap-6 group">
+                            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 z-10 transition-colors ${isPast ? 'bg-red-400 text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
+                                <span className="text-[10px] md:text-xs font-black">J{step.day}</span>
+                            </div>
+                            <div className={`flex-1 p-4 md:p-5 rounded-3xl border-2 transition-all bg-white border-gray-50 hover:border-gray-200 shadow-sm hover:shadow-md`}>
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                      <p className="font-black text-babs-brown text-sm md:text-base leading-tight flex flex-wrap items-center gap-2">
+                                        {step.title}
+                                        {isCommonBase ? (
+                                          <span className="text-[7px] md:text-[8px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Socle Commun</span>
+                                        ) : (
+                                          <span className={`text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${bgLight} ${accentColor}`}>{selectedBreed}</span>
+                                        )}
+                                      </p>
+                                      <p className="text-[9px] md:text-[10px] font-black uppercase text-gray-400 mt-1 flex items-center gap-2">
+                                        {stepDateObj.toLocaleDateString("fr-FR", { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        <span className={`px-2 py-0.5 rounded-full ${step.type === 'Vaccin' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>{step.type}</span>
+                                      </p>
+                                  </div>
+                                  <div className="flex gap-2 items-center">
+                                    <button 
+                                      onClick={() => scheduleReminder(step, stepDateStr)} 
+                                      className={`p-1 flex items-center justify-center rounded-lg transition-colors ${isReminderActive ? 'text-blue-500 bg-blue-50 shadow-sm' : 'text-gray-300 hover:text-blue-500 bg-gray-50 hover:bg-blue-50'}`} 
+                                      title={isReminderActive ? "Désactiver le rappel push" : "Activer un rappel push"}
+                                    >
+                                      <iconify-icon icon={isReminderActive ? "solar:bell-bing-bold-duotone" : "solar:bell-bing-linear"} class="text-lg md:text-xl"></iconify-icon>
+                                    </button>
+                                    <button onClick={() => markStepAsDone(step, stepDateStr)} className="text-gray-300 hover:text-emerald-500 transition-colors p-1" title="Marquer comme fait">
                                       <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
                                     </button>
-                                  )}
-                              </div>
-                              <p className="text-[11px] md:text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
+                                  </div>
+                                </div>
+                                <p className="text-[11px] md:text-xs text-gray-500 font-medium leading-relaxed">{step.description}</p>
+                            </div>
                           </div>
-                        </div>
-                      )
-                  })}
+                        );
+                    });
+                  })()}
                 </div>
             </div>
           </div>
