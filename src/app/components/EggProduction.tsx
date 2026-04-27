@@ -26,6 +26,7 @@ interface EggFormData {
 export function EggProduction() {
   const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, isInitialPullDone } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [totalFemales, setTotalFemales] = useState(0);
   const [editingRecord, setEditingRecord] = useState<EggRecord | null>(null);
 
