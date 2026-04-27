@@ -24,7 +24,7 @@ interface EggFormData {
 }
 
 export function EggProduction() {
-  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData } = useAuth();
+  const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, saveData, isInitialPullDone } = useAuth();
   const [records, setRecords] = useState<EggRecord[]>([]);
   const [totalFemales, setTotalFemales] = useState(0);
   const [editingRecord, setEditingRecord] = useState<EggRecord | null>(null);
@@ -50,9 +50,10 @@ export function EggProduction() {
   const accentBorderLeft = isMixed ? "border-l-indigo-500" : isCaille ? "border-l-emerald-500" : "border-l-orange-500";
 
   useEffect(() => {
+    if (!isInitialPullDone) return;
     const saved = StorageService.getItem<EggRecord[]>("eggs");
     if (saved) setRecords(saved);
-  }, [syncTrigger]);
+  }, [syncTrigger, isInitialPullDone]);
 
   useEffect(() => {
     const chickens = StorageService.getItem<Chicken[]>("chickens") || [];
@@ -136,7 +137,9 @@ export function EggProduction() {
     }
   };
 
-  const filteredRecords = records.filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed));
+  const filteredRecords = records
+    .filter(r => !r._deleted && isItemActive(r.poultryType, r.poultryBreed))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const totalEggs = filteredRecords.reduce((sum, r) => sum + r.quantity, 0);
 
