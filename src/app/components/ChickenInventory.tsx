@@ -184,7 +184,8 @@ export function ChickenInventory() {
     saveData("chickens", newChickens);
   };
 
-  const handleShareOrnement = async (chicken: Chicken) => {
+  const handleShareOrnement = async (chicken: Chicken, specificRing?: string) => {
+    const isIndividual = !!specificRing;
     const birthDateStr = chicken.birthDate
       ? new Date(chicken.birthDate).toLocaleDateString('fr-FR')
       : '';
@@ -195,31 +196,44 @@ export function ChickenInventory() {
       ? ageDays >= 60 ? `${Math.floor(ageDays/30)} mois` : ageDays >= 14 ? `${Math.floor(ageDays/7)} semaines` : `${ageDays} jours`
       : chicken.age ? `${chicken.age} ${chicken.ageUnit === 'weeks' ? 'semaines' : chicken.ageUnit === 'days' ? 'jours' : 'mois'}` : '';
 
+    const displayRing = specificRing || chicken.ringNumber;
+    const displayCount = isIndividual ? 1 : chicken.count;
+    const breedLabel = chicken.breed === 'ornement' ? "Poule d'Ornement"
+      : chicken.breed === 'fermier' ? 'Poulet Fermier'
+      : chicken.breed === 'pondeuse' ? 'Pondeuse'
+      : chicken.breed === 'chair' ? 'Poulet de Chair'
+      : chicken.breed || 'Volaille';
+
     const lines = [
-      `🦚 FICHE SUJET — ${chicken.name}`,
+      isIndividual
+        ? `🦚 FICHE INDIVIDUELLE`
+        : `🦚 FICHE LOT — ${chicken.name}`,
       `═══════════════════════════════`,
-      `Race : Poule d'Ornement`,
+      `Race : ${breedLabel}`,
       chicken.variety?.length ? `Variété : ${chicken.variety.join(', ')}` : '',
-      chicken.ringNumber ? `Bague(s) : ${chicken.ringNumber}` : '',
+      displayRing ? `Bague N° : ${displayRing}` : '',
       birthDateStr ? `Naissance : ${birthDateStr}` : '',
       ageStr ? `Âge : ${ageStr}` : '',
       chicken.birthYear ? `Année : ${chicken.birthYear}` : '',
       chicken.club ? `Club : ${chicken.club}` : '',
       ``,
-      `Effectif : ${chicken.count} sujet(s)`,
-      `Statut : ${chicken.status === 'active' ? '✅ Actif' : chicken.status === 'malade' ? '⚠️ Soins requis' : '📦 Retraité'}`,
-      (chicken.femaleCount || chicken.maleCount) ? `♀ ${chicken.femaleCount || 0} Femelles | ♂ ${chicken.maleCount || 0} Mâles` : '',
-      chicken.startDate ? `Arrivée : ${new Date(chicken.startDate).toLocaleDateString('fr-FR')}` : '',
+      isIndividual
+        ? `Sujet individuel — vendu seul`
+        : `Effectif : ${displayCount} sujet(s)`,
+      `Statut : ${chicken.status === 'active' ? '✅ Disponible' : chicken.status === 'malade' ? '⚠️ Soins requis' : '📦 Retraité'}`,
+      (!isIndividual && (chicken.femaleCount || chicken.maleCount)) ? `♀ ${chicken.femaleCount || 0} Femelles | ♂ ${chicken.maleCount || 0} Mâles` : '',
+      (chicken.startDate && chicken.breed !== 'ornement') ? `Arrivée : ${new Date(chicken.startDate).toLocaleDateString('fr-FR')}` : '',
       ``,
       `📱 Fiche générée par Poulailler Pro`,
     ].filter(Boolean).join('\n');
 
+    const title = isIndividual ? `Fiche ${displayRing || chicken.name}` : `Lot ${chicken.name}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Fiche ${chicken.name}`, text: lines });
+        await navigator.share({ title, text: lines });
       } else {
         await navigator.clipboard.writeText(lines);
-        toast.success('Fiche copiée dans le presse-papier !');
+        toast.success(isIndividual ? 'Fiche individuelle copiée !' : 'Fiche lot copiée !');
       }
     } catch {
       await navigator.clipboard.writeText(lines);
@@ -443,12 +457,23 @@ export function ChickenInventory() {
 
               {chicken.ringNumber && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <div className="flex items-center gap-1">
-                    <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
-                    <p className="text-[10px] font-['JetBrains_Mono'] font-bold text-gray-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
-                      Bague: {chicken.ringNumber}
-                    </p>
-                  </div>
+                  {/* Parse multiple ring numbers separated by commas */}
+                  {chicken.ringNumber.split(/[,;\n]+/).map(rn => rn.trim()).filter(Boolean).map((rn, idx) => (
+                    <div key={idx} className="flex items-center gap-1 group">
+                      <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
+                      <p className="text-[10px] font-['JetBrains_Mono'] font-bold text-gray-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
+                        {rn}
+                      </p>
+                      {/* Individual share button per ring number */}
+                      <button
+                        onClick={() => handleShareOrnement(chicken, rn)}
+                        className="opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity p-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-500 border border-purple-100"
+                        title={`Partager la fiche de ${rn}`}
+                      >
+                        <iconify-icon icon="solar:share-linear" class="text-xs"></iconify-icon>
+                      </button>
+                    </div>
+                  ))}
                   {chicken.variety && chicken.variety.length > 0 && chicken.variety.map(v => (
                     <p key={v} className="text-[10px] font-medium text-gray-700 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
                       {v}
@@ -476,16 +501,15 @@ export function ChickenInventory() {
               )}
 
               <div className="flex gap-2 pt-3 no-print">
-                {chicken.breed === 'ornement' && (
-                  <button
-                    onClick={() => handleShareOrnement(chicken)}
-                    className="flex-none px-3 bg-purple-50 hover:bg-purple-100 py-2 rounded-xl text-purple-600 font-medium text-xs transition-colors flex items-center justify-center gap-1.5 outline-none border border-purple-100"
-                    title="Partager la fiche de ce sujet"
-                  >
-                    <iconify-icon icon="solar:share-linear"></iconify-icon>
-                    <span className="hidden sm:inline">Partager</span>
-                  </button>
-                )}
+                {/* Share whole lot button */}
+                <button
+                  onClick={() => handleShareOrnement(chicken)}
+                  className="flex-none px-3 bg-purple-50 hover:bg-purple-100 py-2 rounded-xl text-purple-600 font-medium text-xs transition-colors flex items-center justify-center gap-1.5 outline-none border border-purple-100"
+                  title="Partager la fiche du lot"
+                >
+                  <iconify-icon icon="solar:share-linear"></iconify-icon>
+                  <span className="hidden sm:inline">{chicken.breed === 'ornement' ? 'Lot' : 'Partager'}</span>
+                </button>
                 <button 
                   onClick={() => {
                     setEditingChicken(chicken);

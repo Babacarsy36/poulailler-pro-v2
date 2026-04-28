@@ -523,7 +523,15 @@ export function FeedManagement() {
         {/* Stock par type d'aliment */}
         {feedTypeEntries.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Détail par Type d'Aliment</p>
+            <div className="flex items-center justify-between mb-3">
+               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Détail par Type d'Aliment</p>
+               {feedTypeEntries.some(([, qty]) => qty < 0) && (
+                 <div className="flex items-center gap-1 text-[9px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                   <iconify-icon icon="solar:info-circle-linear"></iconify-icon>
+                   Négatif = + de consos enregistrées que d'achats
+                 </div>
+               )}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {feedTypeEntries.map(([feedType, qty]) => {
                 const isLow = qty < 5;
