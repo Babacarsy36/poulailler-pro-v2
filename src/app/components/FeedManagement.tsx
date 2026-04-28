@@ -365,11 +365,24 @@ export function FeedManagement() {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
 
+  // Normalise les noms d'aliment pour éviter les doublons (ex: "Aliment Démarrage" = "Démarrage")
+  const normalizeFeedType = (feedType: string): string => {
+    const t = (feedType || '').toLowerCase().trim();
+    if (t.includes('démarr') || t.includes('demarr') || t.includes('starter')) return 'Démarrage';
+    if (t.includes('croissance') || t.includes('growth')) return 'Croissance';
+    if (t.includes('finition') || t.includes('finish')) return 'Finition';
+    if (t.includes('pondeuse') || t.includes('ponte') || t.includes('layer')) return 'Pondeuse';
+    if (t.includes('mélange') || t.includes('melange') || t.includes('maison')) return 'Mélange Maison';
+    if (t.includes('caille') || t.includes('quail')) return 'Caille';
+    if (t.includes('calcium') || t.includes('coquillage')) return 'Calcium/Minéraux';
+    return feedType.trim() || 'Autre';
+  };
+
   // Stock détaillé par type d'aliment
   const stockByFeedType = entries
     .filter(e => !e._deleted)
     .reduce((acc, entry) => {
-      const key = entry.feedType || 'Autre';
+      const key = normalizeFeedType(entry.feedType || 'Autre');
       acc[key] = (acc[key] || 0) + (entry.type === 'achat' ? entry.quantity : -entry.quantity);
       return acc;
     }, {} as Record<string, number>);

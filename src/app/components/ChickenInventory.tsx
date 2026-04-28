@@ -184,6 +184,49 @@ export function ChickenInventory() {
     saveData("chickens", newChickens);
   };
 
+  const handleShareOrnement = async (chicken: Chicken) => {
+    const birthDateStr = chicken.birthDate
+      ? new Date(chicken.birthDate).toLocaleDateString('fr-FR')
+      : '';
+    const ageDays = chicken.birthDate
+      ? Math.floor((Date.now() - new Date(chicken.birthDate).getTime()) / 86400000)
+      : null;
+    const ageStr = ageDays !== null
+      ? ageDays >= 60 ? `${Math.floor(ageDays/30)} mois` : ageDays >= 14 ? `${Math.floor(ageDays/7)} semaines` : `${ageDays} jours`
+      : chicken.age ? `${chicken.age} ${chicken.ageUnit === 'weeks' ? 'semaines' : chicken.ageUnit === 'days' ? 'jours' : 'mois'}` : '';
+
+    const lines = [
+      `🦚 FICHE SUJET — ${chicken.name}`,
+      `═══════════════════════════════`,
+      `Race : Poule d'Ornement`,
+      chicken.variety?.length ? `Variété : ${chicken.variety.join(', ')}` : '',
+      chicken.ringNumber ? `Bague(s) : ${chicken.ringNumber}` : '',
+      birthDateStr ? `Naissance : ${birthDateStr}` : '',
+      ageStr ? `Âge : ${ageStr}` : '',
+      chicken.birthYear ? `Année : ${chicken.birthYear}` : '',
+      chicken.club ? `Club : ${chicken.club}` : '',
+      ``,
+      `Effectif : ${chicken.count} sujet(s)`,
+      `Statut : ${chicken.status === 'active' ? '✅ Actif' : chicken.status === 'malade' ? '⚠️ Soins requis' : '📦 Retraité'}`,
+      (chicken.femaleCount || chicken.maleCount) ? `♀ ${chicken.femaleCount || 0} Femelles | ♂ ${chicken.maleCount || 0} Mâles` : '',
+      chicken.startDate ? `Arrivée : ${new Date(chicken.startDate).toLocaleDateString('fr-FR')}` : '',
+      ``,
+      `📱 Fiche générée par Poulailler Pro`,
+    ].filter(Boolean).join('\n');
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Fiche ${chicken.name}`, text: lines });
+      } else {
+        await navigator.clipboard.writeText(lines);
+        toast.success('Fiche copiée dans le presse-papier !');
+      }
+    } catch {
+      await navigator.clipboard.writeText(lines);
+      toast.success('Fiche copiée !');
+    }
+  };
+
   const onFormSubmit = (data: any) => {
     const now = Date.now();
     const actualCount = Number(data.count) || 1;
@@ -433,6 +476,16 @@ export function ChickenInventory() {
               )}
 
               <div className="flex gap-2 pt-3 no-print">
+                {chicken.breed === 'ornement' && (
+                  <button
+                    onClick={() => handleShareOrnement(chicken)}
+                    className="flex-none px-3 bg-purple-50 hover:bg-purple-100 py-2 rounded-xl text-purple-600 font-medium text-xs transition-colors flex items-center justify-center gap-1.5 outline-none border border-purple-100"
+                    title="Partager la fiche de ce sujet"
+                  >
+                    <iconify-icon icon="solar:share-linear"></iconify-icon>
+                    <span className="hidden sm:inline">Partager</span>
+                  </button>
+                )}
                 <button 
                   onClick={() => {
                     setEditingChicken(chicken);

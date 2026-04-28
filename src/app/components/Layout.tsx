@@ -266,24 +266,34 @@ export function Layout() {
                 {activeSpeciesFilter === 'all' && !['/finances', '/feed', '/incubator', '/health'].includes(location.pathname) && (
                    <div className="flex gap-2 py-2 overflow-x-auto no-scrollbar animate-in slide-in-from-top-2 duration-300 border-t border-gray-100 dark:border-zinc-800/50">
                         <p className="text-[10px] font-black text-gray-900 dark:text-zinc-300 flex items-center px-2 uppercase tracking-[0.1em]">Filtres :</p>
-                        {selectedBreeds.map((b) => {
-                            const bInfo = [...breedList.poulet, ...breedList.caille].find(bl => bl.id === b);
-                            const isCurrent = activeBreedFilter === b;
-                            const bAccent = breedList.poulet.some(bl => bl.id === b) ? 'orange' : 'emerald';
-                            return (
-                                <button
-                                    key={b}
-                                    onClick={() => handleBreedSelect(b)}
-                                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 ${
-                                        isCurrent 
-                                            ? `bg-${bAccent}-100 dark:bg-${bAccent}-900/30 border-${bAccent}-200 dark:border-${bAccent}-700 text-${bAccent}-700 dark:text-${bAccent}-400` 
-                                            : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-400 hover:border-gray-300'
-                                    }`}
-                                >
-                                    {bInfo?.label || b}
-                                </button>
-                            );
-                        })}
+                        {(() => {
+                            const seen = new Set<string>();
+                            const deduped = selectedBreeds
+                                .map(b => {
+                                    const isCailleBreed = ['japon', 'chine', 'commune'].includes(b);
+                                    return { key: isCailleBreed ? 'caille' : b, original: b };
+                                })
+                                .filter(({ key }) => { if (seen.has(key)) return false; seen.add(key); return true; });
+                            return deduped.map(({ key, original }) => {
+                                const allBreeds = [...breedList.poulet, ...breedList.caille, { id: 'caille', label: 'Caille' }];
+                                const bInfo = allBreeds.find(bl => bl.id === key);
+                                const isCurrent = activeBreedFilter === key || activeBreedFilter === original;
+                                const bAccent = breedList.poulet.some(bl => bl.id === key) ? 'orange' : 'emerald';
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => handleBreedSelect(key)}
+                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border shrink-0 ${
+                                            isCurrent 
+                                                ? `bg-${bAccent}-100 dark:bg-${bAccent}-900/30 border-${bAccent}-200 dark:border-${bAccent}-700 text-${bAccent}-700 dark:text-${bAccent}-400` 
+                                                : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-400 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        {bInfo?.label || key}
+                                    </button>
+                                );
+                            });
+                        })()}
                      </div>
                 )}
             </div>
