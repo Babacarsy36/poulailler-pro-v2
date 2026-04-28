@@ -424,7 +424,30 @@ export function FinanceManagement() {
                 {...register("date", { required: true })}
               />
             </div>
-            {formType === 'income' && (<div className="space-y-1.5 animate-in slide-in-from-top-2"><label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label><select className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 appearance-none" {...register("breed", { required: true })}>{selectedBreeds.map(b => (<option key={b} value={b}>{b === 'chair' ? 'Poulet de Chair' : b === 'fermier' ? 'Poulet Fermier' : b === 'ornement' ? "Poule d'Ornement" : b}</option>))}</select></div>)}
+            {formType === 'income' && (() => {
+              const breedLabelMap: Record<string, string> = {
+                chair: 'Poulet de Chair', fermier: 'Poulet Fermier',
+                ornement: "Poule d'Ornement", pondeuse: 'Pondeuse',
+                caille: 'Caille', japon: 'Caille du Japon',
+                chine: 'Caille de Chine', commune: 'Caille Commune',
+              };
+              // Deduplicate: merge caille sub-breeds under one key
+              const seen = new Set<string>();
+              const incomeBreedOptions = selectedBreeds
+                .map(b => {
+                  const isCailleBreed = ['japon', 'chine', 'commune'].includes(b);
+                  return { value: isCailleBreed ? 'caille' : b, label: breedLabelMap[b] || b };
+                })
+                .filter(opt => { if (seen.has(opt.value)) return false; seen.add(opt.value); return true; });
+              return (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race de la récolte</label>
+                  <select className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500 appearance-none" {...register("breed", { required: true })}>
+                    {incomeBreedOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+              );
+            })()}
           </div>
           <div className="flex gap-3 pt-6 border-t border-gray-100 dark:border-zinc-800 mt-4"><button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Annuler</button><button type="submit" className={`flex-1 py-3 text-white rounded-xl text-sm font-medium shadow-md transition-colors ${formType === 'expense' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>{editingTransaction ? "Appliquer les modifications" : "Ajouter"}</button></div>
         </form>

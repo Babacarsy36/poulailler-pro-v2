@@ -365,6 +365,16 @@ export function FeedManagement() {
     return sum + (entry.type === "achat" ? entry.quantity : -entry.quantity);
   }, 0);
 
+  // Stock détaillé par type d'aliment
+  const stockByFeedType = entries
+    .filter(e => !e._deleted)
+    .reduce((acc, entry) => {
+      const key = entry.feedType || 'Autre';
+      acc[key] = (acc[key] || 0) + (entry.type === 'achat' ? entry.quantity : -entry.quantity);
+      return acc;
+    }, {} as Record<string, number>);
+  const feedTypeEntries = Object.entries(stockByFeedType).filter(([, qty]) => qty !== 0);
+
   // Consumption Calculation Engine (GLOBAL)
   const calculateDailyConsumption = () => {
     let dailyTotalKg = 0;
@@ -494,6 +504,35 @@ export function FeedManagement() {
           <div className="mt-3 p-2 bg-red-50 rounded-xl border-l-2 border-l-red-500 flex items-center gap-2">
             <iconify-icon icon="solar:danger-triangle-linear" class="text-red-500 text-base"></iconify-icon>
             <p className="text-[10px] font-medium text-red-700">Rupture imminente — {new Date(Date.now() + autonomyDays * 86400000).toLocaleDateString()}</p>
+          </div>
+        )}
+
+        {/* Stock par type d'aliment */}
+        {feedTypeEntries.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Détail par Type d'Aliment</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {feedTypeEntries.map(([feedType, qty]) => {
+                const isLow = qty < 5;
+                const isNeg = qty < 0;
+                return (
+                  <div key={feedType} className={`flex items-center justify-between p-2.5 rounded-xl border ${
+                    isNeg ? 'bg-red-50 border-red-100' : isLow ? 'bg-orange-50 border-orange-100' : 'bg-gray-50 border-gray-100'
+                  }`}>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-gray-500 truncate">{feedType}</p>
+                      <p className={`font-['JetBrains_Mono'] text-sm font-black ${
+                        isNeg ? 'text-red-500' : isLow ? 'text-orange-500' : customColors.textDark
+                      }`}>
+                        {qty.toFixed(1)} <span className="text-[9px] font-normal text-gray-400">kg</span>
+                      </p>
+                    </div>
+                    {isLow && !isNeg && <iconify-icon icon="solar:danger-triangle-linear" class="text-orange-400 text-xs shrink-0 ml-1"></iconify-icon>}
+                    {isNeg && <iconify-icon icon="solar:close-circle-linear" class="text-red-400 text-xs shrink-0 ml-1"></iconify-icon>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

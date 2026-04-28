@@ -13,6 +13,7 @@ interface Chicken {
   breed: string;
   age: number;
   ageUnit: "weeks" | "months" | "days";
+  birthDate?: string;
   count: number;
   femaleCount?: number;
   maleCount?: number;
@@ -32,6 +33,7 @@ interface ChickenFormData {
   poultryType: PoultryType;
   age: string;
   ageUnit: "weeks" | "months" | "days";
+  birthDate?: string;
   count: string;
   femaleCount: string;
   maleCount: string;
@@ -49,6 +51,7 @@ export function ChickenInventory() {
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
+
   
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ChickenFormData>({
     defaultValues: {
@@ -57,6 +60,7 @@ export function ChickenInventory() {
       poultryType: activeSpeciesFilter === 'all' ? 'poulet' : activeSpeciesFilter,
       age: "",
       ageUnit: "months",
+      birthDate: "",
       count: "1",
       femaleCount: "0",
       maleCount: "0",
@@ -70,6 +74,24 @@ export function ChickenInventory() {
   });
 
   const formData = watch();
+  const watchedBirthDate = watch('birthDate');
+
+  // Auto-compute age from birth date
+  useEffect(() => {
+    if (!watchedBirthDate) return;
+    const days = Math.floor((Date.now() - new Date(watchedBirthDate).getTime()) / 86400000);
+    if (days < 0) return;
+    if (days >= 60) {
+      setValue('age', Math.floor(days / 30).toString());
+      setValue('ageUnit', 'months');
+    } else if (days >= 14) {
+      setValue('age', Math.floor(days / 7).toString());
+      setValue('ageUnit', 'weeks');
+    } else {
+      setValue('age', days.toString());
+      setValue('ageUnit', 'days');
+    }
+  }, [watchedBirthDate]);
   const [simFemales, setSimFemales] = useState("10");
 
   const isCaille = activeSpeciesFilter === 'caille';
@@ -104,29 +126,43 @@ export function ChickenInventory() {
 
     if (type === 'pigeon') return "Mélange spécial Pigeon / Graines";
     if (type === 'lapin') return "Granulés Lapin / Foin";
-    
+
     if (type === 'caille') {
-       if (ageDays <= 14) return "Démarrage Cailles (Très riche)";
-       if (ageDays <= 42) return "Croissance Cailles";
-       return "Ponte / Engraissement Cailles";
+      if (ageDays <= 14) return "🥚 Démarrage Cailles (24-28% protéines, miettes)";
+      if (ageDays <= 42) return "🥚 Croissance Cailles (20% protéines)";
+      return "🥚 Ponte / Engraissement Cailles (riche en minéraux)";
     }
 
-    if (breed.toLowerCase().includes('pondeuse')) {
-       if (ageDays <= 28) return "Démarrage Pondeuses";
-       if (ageDays <= 126) return "Poulette (Croissance)";
-       return "Aliment Ponte (Riche en Calcium)";
+    const b = breed.toLowerCase();
+
+    if (b === 'pondeuse' || b.includes('pondeuse')) {
+      if (ageDays <= 28) return "🐔 Démarrage Pondeuses (20-22%, miettes)";
+      if (ageDays <= 126) return "🐔 Poulette Croissance (16% protéines)";
+      return "🐔 Aliment Ponte enrichi Calcium (3-4%)";
     }
 
-    if (breed.toLowerCase().includes('goliath') || breed.toLowerCase().includes('brahma') || breed.toLowerCase().includes('cochin')) {
-       if (ageDays <= 28) return "Démarrage Chair (Lourdes)";
-       if (ageDays <= 60) return "Croissance Chair (Lourdes)";
-       return "Finition Chair (Énergie élevée)";
+    if (b === 'fermier') {
+      if (ageDays <= 28) return "🌿 Démarrage Fermier (19-20% protéines)";
+      if (ageDays <= 70) return "🌿 Croissance Fermier semi-liberté (17%)";
+      return "🌿 Finition Fermier (énergie modérée, qualité)";
     }
 
-    // Default Chair
-    if (ageDays <= 21) return "Démarrage Chair";
-    if (ageDays <= 35) return "Croissance Chair";
-    return "Finition Chair";
+    if (b === 'ornement') {
+      if (ageDays <= 28) return "🦚 Démarrage Ornement (18-20% protéines)";
+      if (ageDays <= 90) return "🦚 Croissance Ornement (16-18%)";
+      return "🦚 Entretien / Ponte Ornement (Calcium + Minéraux)";
+    }
+
+    if (b.includes('goliath') || b.includes('brahma') || b.includes('cochin')) {
+      if (ageDays <= 28) return "🐓 Démarrage Chair Lourde (20-22%)";
+      if (ageDays <= 60) return "🐓 Croissance Chair Lourde (18%)";
+      return "🐓 Finition Chair Lourde (énergie élevée)";
+    }
+
+    // Default: Chair
+    if (ageDays <= 21) return "🐓 Démarrage Chair (22%)";
+    if (ageDays <= 35) return "🐓 Croissance Chair (18%)";
+    return "🐓 Finition Chair (énergie max)";
   };
 
   useEffect(() => {
@@ -190,6 +226,7 @@ export function ChickenInventory() {
         variety: data.variety || undefined,
         birthYear: data.birthYear ? Number(data.birthYear) : undefined,
         club: data.club || undefined,
+        birthDate: data.birthDate || undefined,
         age: Number(data.age),
         count: actualCount,
         femaleCount: femVal,
@@ -345,7 +382,12 @@ export function ChickenInventory() {
                 <div className="flex items-center gap-2">
                   <iconify-icon icon="solar:calendar-linear" class="text-gray-400"></iconify-icon>
                   <p className="text-xs font-light text-gray-600 truncate">
-                    {chicken.age} {chicken.ageUnit === 'weeks' ? 'semaines' : chicken.ageUnit === 'days' ? 'jours' : 'mois'}
+                    {chicken.birthDate
+                      ? (() => {
+                          const d = Math.floor((Date.now() - new Date(chicken.birthDate).getTime()) / 86400000);
+                          return d >= 60 ? `${Math.floor(d/30)} mois` : d >= 14 ? `${Math.floor(d/7)} sem.` : `${d} j`;
+                        })()
+                      : `${chicken.age} ${chicken.ageUnit === 'weeks' ? 'semaines' : chicken.ageUnit === 'days' ? 'jours' : 'mois'}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -577,19 +619,42 @@ export function ChickenInventory() {
             </>
           )}
 
+              {/* Birth date picker → auto-compute age */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date de Naissance / Éclosion</label>
+                <input
+                  type="date"
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
+                  {...register("birthDate")}
+                />
+                {watchedBirthDate && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                    <iconify-icon icon="solar:calendar-check-linear" class="text-blue-500"></iconify-icon>
+                    <p className="text-xs font-medium text-blue-700">
+                      Âge calculé : <span className="font-black">{formData.age} {formData.ageUnit === 'weeks' ? 'semaines' : formData.ageUnit === 'days' ? 'jours' : 'mois'}</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Âge</label>
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
+                    {watchedBirthDate ? "Âge (calculé auto)" : "Âge"}
+                  </label>
                   <div className="flex bg-gray-50 border border-gray-200 rounded-xl p-1 items-stretch focus-within:border-gray-400 transition-colors">
                     <input 
                       type="number"
                       step="0.1"
-                      className="w-16 bg-transparent border-none p-2 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 text-center outline-none"
-                      {...register("age", { required: true, min: 0 })}
+                      readOnly={!!watchedBirthDate}
+                      className={`w-16 bg-transparent border-none p-2 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 text-center outline-none ${watchedBirthDate ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      {...register("age", { required: !watchedBirthDate, min: 0 })}
                     />
                     <div className="w-[1px] bg-gray-200 my-1.5"></div>
                     <select
                       className="flex-1 bg-transparent border-none px-2 text-xs font-medium text-gray-600 outline-none cursor-pointer"
+                      disabled={!!watchedBirthDate}
                       {...register("ageUnit")}
                     >
                       <option value="months">Mois</option>
