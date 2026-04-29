@@ -108,8 +108,12 @@ export function SelectionPage() {
                             Configuration de l'Élevage
                         </h1>
                         <p className="text-babs-brown/60 font-medium text-sm">
-                            Choisissez le type d'élevage à gérer
+                            Configurez votre espace de travail en 1 minute
                         </p>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-gray-100 mt-4">
+                           <span className="w-2 h-2 bg-babs-orange rounded-full animate-pulse"></span>
+                           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Étape 1 sur 2</span>
+                        </div>
                     </div>
 
                     {/* Species Cards */}
@@ -129,7 +133,7 @@ export function SelectionPage() {
                                 <img src="/assets/icons/poulet.png" alt="Poulet" className={`w-full h-full object-cover scale-110 ${!selectedTypes.includes('poulet') ? 'mix-blend-multiply opacity-80' : ''}`} />
                             </div>
                             <h2 className="text-lg font-black text-babs-brown mb-1">Poulets</h2>
-                            <p className="text-[10px] text-gray-400 font-bold">Fermier, Ornement, Pondeuse...</p>
+                            <p className="text-[10px] text-gray-400 font-bold leading-tight px-2">Pour la viande ou les œufs de consommation.</p>
                             {selectedTypes.includes('poulet') && (
                                 <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-babs-orange text-white flex items-center justify-center animate-in zoom-in">
                                     <Check className="w-3.5 h-3.5" />
@@ -152,7 +156,7 @@ export function SelectionPage() {
                                 <img src="/assets/icons/caille.png" alt="Caille" className={`w-full h-full object-cover scale-110 ${!selectedTypes.includes('caille') ? 'mix-blend-multiply opacity-80' : ''}`} />
                             </div>
                             <h2 className="text-lg font-black text-babs-brown mb-1">Cailles</h2>
-                            <p className="text-[10px] text-gray-400 font-bold">Œufs & chair</p>
+                            <p className="text-[10px] text-gray-400 font-bold leading-tight px-2">Petit élevage rapide, œufs très prisés.</p>
                             {selectedTypes.includes('caille') && (
                                 <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-babs-emerald text-white flex items-center justify-center animate-in zoom-in">
                                     <Check className="w-3.5 h-3.5" />

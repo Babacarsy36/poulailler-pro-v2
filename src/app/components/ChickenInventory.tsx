@@ -6,6 +6,8 @@ import { BottomSheet } from "./ui/BottomSheet";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 
+import { motion } from "framer-motion";
+
 interface Chicken {
   id: string;
   name: string;
@@ -51,6 +53,7 @@ export function ChickenInventory() {
   const [chickens, setChickens] = useState<Chicken[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ChickenFormData>({
@@ -636,23 +639,27 @@ export function ChickenInventory() {
           )}
 
           {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
-            <>
-              <div className="space-y-1.5 animate-in slide-in-from-top-2">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Race Exacte</label>
-                <select 
-                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 transition-all"
-                  onChange={(e) => setValue('name', `${e.target.value} ${new Date().getFullYear()}`)}
-                >
-                  <option value="Ornement">Autre ornement</option>
-                  <option value="Brahma">Brahma</option>
-                  <option value="Cochin">Cochin</option>
-                  <option value="Cochin Nain (Pékin)">Cochin Nain (Pékin)</option>
-                  <option value="Orpington">Orpington</option>
-                  <option value="Poule-Soie">Poule-Soie</option>
-                </select>
-              </div>
+            </>
+          )}
 
-              {['Brahma', 'Cochin', 'Cochin Nain (Pékin)', 'Orpington'].some(r => formData.name?.includes(r)) && (
+          <div className="pt-2">
+            <button 
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
+            >
+              <iconify-icon icon={showAdvanced ? "solar:minus-circle-linear" : "solar:add-circle-linear"}></iconify-icon>
+              {showAdvanced ? "Moins d'options" : "Plus d'options (Bague, Variété...)"}
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="space-y-4 pt-2 border-t border-gray-100"
+            >
+              {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
                   
@@ -681,8 +688,8 @@ export function ChickenInventory() {
                 </div>
               )}
 
-              {(formData.breed === 'ornement' || formData.breed === 'pondeuse') && (
-                <div className="space-y-1.5 animate-in slide-in-from-top-2">
+              {(formData.breed === 'ornement' || formData.breed === 'pondeuse' || formData.poultryType === 'caille') && (
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
                     Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
                   </label>
@@ -693,7 +700,29 @@ export function ChickenInventory() {
                   />
                 </div>
               )}
-            </>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année de Naissance</label>
+                  <input 
+                    type="number"
+                    placeholder={new Date().getFullYear().toString()}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
+                    {...register("birthYear")}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Provenance</label>
+                  <input 
+                    type="text"
+                    placeholder="Ex: Club Avicole..."
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
+                    {...register("club")}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
           )}
 
               {/* Birth date picker → auto-compute age */}

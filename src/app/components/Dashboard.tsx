@@ -5,15 +5,19 @@ import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { UpgradeModal } from "./ui/UpgradeModal";
 import { Chicken, EggRecord, FeedEntry, HealthRecord, Transaction, PoultryType } from "../types";
 import { toast } from "sonner";
+import { OnboardingGuide } from "./OnboardingGuide";
+import { Plus, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts, user, isInitialPullDone } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isFabOpen, setIsFabOpen] = useState(false);
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
     totalChickens: 0,
@@ -206,6 +210,16 @@ export function Dashboard() {
       globalBreakdown
     });
   }, [selectedDate, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, activeFilter, selectedMonth, isInitialPullDone]);
+
+  useEffect(() => {
+    if (isInitialPullDone) {
+      const hasSeenOnboarding = localStorage.getItem('has_seen_onboarding');
+      if (!hasSeenOnboarding) {
+        setIsOnboardingOpen(true);
+        localStorage.setItem('has_seen_onboarding', 'true');
+      }
+    }
+  }, [isInitialPullDone]);
 
   const [chartData, setChartData] = useState<{name: string, production: number}[]>([]);
   useEffect(() => {
@@ -516,6 +530,64 @@ export function Dashboard() {
       </div>
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => { setIsUpgradeModalOpen(false); if (location.search.includes('upgrade=true')) navigate('/', { replace: true }); }} />
+      <OnboardingGuide isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
+
+      {/* Floating Action Button (FAB) for Quick Entry */}
+      <div className="fixed bottom-24 right-6 z-40 sm:bottom-6">
+        <AnimatePresence>
+          {isFabOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.8 }}
+              className="absolute bottom-16 right-0 space-y-3"
+            >
+              <button 
+                onClick={() => { navigate('/eggs'); setIsFabOpen(false); }}
+                className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-3 shadow-xl hover:bg-emerald-50 transition-colors w-44"
+              >
+                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                  <iconify-icon icon="solar:egg-bold-duotone" class="text-xl"></iconify-icon>
+                </div>
+                <span className="text-xs font-bold text-gray-700">Récolte Œufs</span>
+              </button>
+              <button 
+                onClick={() => { navigate('/feed'); setIsFabOpen(false); }}
+                className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-3 shadow-xl hover:bg-orange-50 transition-colors w-44"
+              >
+                <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+                  <iconify-icon icon="solar:leaf-bold-duotone" class="text-xl"></iconify-icon>
+                </div>
+                <span className="text-xs font-bold text-gray-700">Alimentation</span>
+              </button>
+              <button 
+                onClick={() => { navigate('/inventory'); setIsFabOpen(false); }}
+                className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-3 shadow-xl hover:bg-indigo-50 transition-colors w-44"
+              >
+                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+                  <iconify-icon icon="solar:add-circle-bold-duotone" class="text-xl"></iconify-icon>
+                </div>
+                <span className="text-xs font-bold text-gray-700">Nouveau Lot</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button 
+          onClick={() => setIsFabOpen(!isFabOpen)}
+          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-90 ${isFabOpen ? 'bg-gray-900 text-white rotate-45' : 'bg-babs-orange text-white'}`}
+        >
+          <Plus className="w-7 h-7" />
+        </button>
+      </div>
+
+      <button 
+        onClick={() => setIsOnboardingOpen(true)}
+        className="fixed bottom-6 left-6 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center text-gray-400 hover:text-gray-900 transition-all sm:hidden"
+        title="Aide au démarrage"
+      >
+        <iconify-icon icon="solar:question-square-linear" class="text-xl"></iconify-icon>
+      </button>
     </section>
   );
 }
