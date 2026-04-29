@@ -638,9 +638,7 @@ export function ChickenInventory() {
             </div>
           )}
 
-          {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
-            </>
-          )}
+
 
           <div className="pt-2">
             <button 
@@ -722,7 +720,6 @@ export function ChickenInventory() {
                 </div>
               </div>
             </motion.div>
-          )}
           )}
 
               {/* Birth date picker → auto-compute age */}
