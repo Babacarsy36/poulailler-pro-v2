@@ -4,19 +4,22 @@ export type SubscriptionTier = 'FREE' | 'PRO' | 'BUSINESS';
 
 export interface Chicken {
   id: string;
+  name?: string;
   count: string | number;
   femaleCount?: string | number;
+  maleCount?: string | number;
   breed?: string;
   arrivalDate?: string;
   startDate?: string;
   date?: string;
-  status: 'active' | 'sold' | 'dead';
+  status: 'active' | 'sold' | 'dead' | 'malade' | 'retraite';
   poultryType?: PoultryType;
   ringNumber?: string;
   variety?: string[];
   birthYear?: number;
   club?: string;
   updatedAt?: number;
+  _deleted?: boolean;
 }
 
 export interface EggRecord {
@@ -27,6 +30,7 @@ export interface EggRecord {
   poultryType?: PoultryType;
   poultryBreed?: string;
   updatedAt?: number;
+  _deleted?: boolean;
 }
 
 export interface FeedEntry {
@@ -38,7 +42,10 @@ export interface FeedEntry {
   notes: string;
   poultryType?: PoultryType;
   poultryBreed?: string;
+  lotId?: string;
+  lotName?: string;
   updatedAt?: number;
+  _deleted?: boolean;
 }
 
 export interface HealthRecord {

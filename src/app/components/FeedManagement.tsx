@@ -32,6 +32,7 @@ interface FeedFormData {
   notes: string;
   poultryType: string;
   breed: string;
+  lotId?: string;
   totalPrice?: string;
 }
 
@@ -106,6 +107,7 @@ export function FeedManagement() {
       notes: "",
       breed: selectedBreeds[0] || "",
       poultryType: activeSpeciesFilter === 'all' ? 'poulet' : activeSpeciesFilter,
+      lotId: "global"
     }
   });
 
@@ -312,13 +314,29 @@ export function FeedManagement() {
 
   const onEntrySubmit = (data: FeedFormData & { breed: string }) => {
     const now = Date.now();
+    // Find lot name if lotId is provided
+    let lotName = "Global";
+    let pType = data.poultryType;
+    let pBreed = data.breed;
+
+    if (data.lotId && data.lotId !== 'global') {
+        const lot = allChickens.find(c => c.id === data.lotId);
+        if (lot) {
+            lotName = lot.name || `Lot ${lot.id.substring(0,4)}`;
+            pType = lot.poultryType || pType;
+            pBreed = lot.breed || pBreed;
+        }
+    }
+
     const newEntry: FeedEntry = {
       id: now.toString(),
       ...data,
       quantity: Number(data.quantity),
       temperature: data.temperature ? Number(data.temperature) : undefined,
-      poultryType: 'global',
-      poultryBreed: 'global',
+      poultryType: pType,
+      poultryBreed: pBreed,
+      lotId: data.lotId,
+      lotName: lotName,
       updatedAt: now
     };
     saveEntries([newEntry, ...entries].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -387,6 +405,25 @@ export function FeedManagement() {
       return acc;
     }, {} as Record<string, number>);
   const feedTypeEntries = Object.entries(stockByFeedType).filter(([, qty]) => qty !== 0);
+
+  // Stock détaillé par Lot (Ravitaillement par lot)
+  const stockByLot = entries
+    .filter(e => !e._deleted && e.lotId && e.lotId !== 'global')
+    .reduce((acc, entry) => {
+      const lotId = entry.lotId!;
+      if (!acc[lotId]) {
+          const lot = allChickens.find(c => c.id === lotId);
+          acc[lotId] = {
+              name: entry.lotName || lot?.name || "Lot Inconnu",
+              quantity: 0,
+              type: lot?.poultryType || 'poulet'
+          };
+      }
+      acc[lotId].quantity += (entry.type === 'achat' ? entry.quantity : -entry.quantity);
+      return acc;
+    }, {} as Record<string, {name: string, quantity: number, type: string}>);
+
+  const lotEntries = Object.entries(stockByLot).filter(([, data]) => data.quantity >= 0);
 
   // Consumption Calculation Engine (GLOBAL)
   const calculateDailyConsumption = () => {
@@ -550,6 +587,41 @@ export function FeedManagement() {
                     </div>
                     {isLow && !isNeg && <iconify-icon icon="solar:danger-triangle-linear" class="text-orange-400 text-xs shrink-0 ml-1"></iconify-icon>}
                     {isNeg && <iconify-icon icon="solar:close-circle-linear" class="text-red-400 text-xs shrink-0 ml-1"></iconify-icon>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {/* Stock détaillé par Lot - NEW FEATURE */}
+        {lotEntries.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Ravitaillement par Lot</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {lotEntries.map(([lotId, data]) => {
+                const isFinished = data.quantity <= 0.5; // "Terminé" si < 500g
+                return (
+                  <div key={lotId} className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                    isFinished ? 'bg-gray-50 border-emerald-500 border-dashed opacity-80' : 'bg-white border-gray-100 shadow-sm'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isFinished ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'}`}>
+                        <iconify-icon icon={isFinished ? "solar:check-circle-bold" : "solar:box-minimalistic-bold-duotone"}></iconify-icon>
+                      </div>
+                      <div>
+                        <p className={`text-xs font-bold ${isFinished ? 'text-emerald-700' : 'text-gray-900'}`}>{data.name}</p>
+                        <p className="text-[9px] text-gray-400 font-medium uppercase">{data.type}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {isFinished ? (
+                         <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">TERMINÉ</span>
+                      ) : (
+                        <p className={`font-['JetBrains_Mono'] text-sm font-black ${data.quantity < 5 ? 'text-orange-500' : 'text-gray-900'}`}>
+                          {data.quantity.toFixed(1)} <span className="text-[10px] font-normal text-gray-400">kg</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -1147,6 +1219,22 @@ export function FeedManagement() {
                 <option value="utilisation">🍴 Utilisation / Service</option>
               </select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Lot Concerné (Facultatif)</label>
+            <select 
+              className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown appearance-none outline-none focus:ring-2 focus:ring-orange-100"
+              {...register("lotId")}
+            >
+              <option value="global">🌍 Stock Global / Réserve</option>
+              {allChickens.filter(c => !c._deleted && c.status === 'active').map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name || `Lot ${c.breed} (${c.id.substring(0,4)})`}
+                </option>
+              ))}
+            </select>
+            <p className="text-[9px] text-gray-400 font-medium px-2 italic">Lier à un lot permet de suivre sa consommation propre et son autonomie.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
