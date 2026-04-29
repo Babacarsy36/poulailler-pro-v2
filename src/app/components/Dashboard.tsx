@@ -5,6 +5,7 @@ import { useAuth } from "../AuthContext";
 import { SyncService } from "../SyncService";
 import { StorageService } from "../services/StorageService";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { UpgradeModal } from "./ui/UpgradeModal";
 import { Chicken, EggRecord, FeedEntry, HealthRecord, Transaction, PoultryType } from "../types";
 import { toast } from "sonner";
 import { OnboardingGuide } from "./OnboardingGuide";
