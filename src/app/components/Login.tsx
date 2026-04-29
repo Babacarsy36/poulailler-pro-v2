@@ -26,22 +26,22 @@ export function Login() {
             console.error("Login Error Code:", err.code);
             switch (err.code) {
                 case 'auth/user-not-found':
-                    setError("Aucun compte n'existe avec cet e-mail.");
+                    setError("Aucun compte n'existe avec cet e-mail. Avez-vous déjà créé votre compte ?");
                     break;
                 case 'auth/wrong-password':
-                    setError("Le mot de passe que vous avez entré est incorrect.");
+                    setError("Mot de passe incorrect. Vérifiez les majuscules ou réinitialisez-le.");
                     break;
                 case 'auth/too-many-requests':
-                    setError("Trop de tentatives de connexion échouées. Compte temporairement bloqué par mesure de sécurité. Réessayez dans quelques minutes.");
+                    setError("Trop de tentatives. Votre compte est bloqué quelques minutes par sécurité.");
                     break;
                 case 'auth/invalid-credential':
-                    setError("Les informations de connexion sont incorrectes. Vérifiez votre e-mail ou votre mot de passe.");
+                    setError("L'e-mail ou le mot de passe n'est pas bon. Vérifiez bien l'écriture.");
                     break;
                 case 'auth/network-request-failed':
-                    setError("Erreur réseau. Vérifiez votre connexion internet.");
+                    setError("Pas de connexion internet. Vérifiez votre réseau ou Wi-Fi.");
                     break;
                 default:
-                    setError("Erreur lors de la connexion. Vérifiez vos identifiants ou réinitialisez votre mot de passe.");
+                    setError("Une erreur est survenue. Vérifiez vos infos ou demandez de l'aide.");
             }
         } finally {
             setLoading(false);

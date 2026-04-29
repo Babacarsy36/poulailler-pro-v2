@@ -14,7 +14,9 @@ export const NotificationService = {
       if (permission === 'granted') {
         const token = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (token) {
-          console.log("FCM Token:", token);
+          if (import.meta.env.DEV) {
+            console.log("[DEV] FCM Token:", token);
+          }
           await this.saveTokenToFirestore(userId, token);
           return token;
         }

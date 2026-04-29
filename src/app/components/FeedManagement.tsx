@@ -329,15 +329,19 @@ export function FeedManagement() {
     }
 
     const qty = Number(data.quantity);
+    if (qty <= 0) {
+      toast.error("La quantité doit être supérieure à 0.");
+      return;
+    }
     
-    // STOCK VALIDATION: Prevent negative values
+    // STOCK VALIDATION: Prevent negative values (Global Stock)
     if (data.type === 'utilisation') {
-        const currentStock = entries
-            .filter(e => !e._deleted && normalizeFeedType(e.feedType) === normalizeFeedType(data.feedType))
+        const totalStock = entries
+            .filter(e => !e._deleted)
             .reduce((sum, e) => sum + (e.type === 'achat' ? e.quantity : -e.quantity), 0);
         
-        if (qty > currentStock) {
-            toast.error(`Stock insuffisant ! Il ne reste que ${currentStock.toFixed(1)}kg de ${data.feedType}.`);
+        if (qty > totalStock) {
+            toast.error(`Stock insuffisant ! Il ne reste que ${totalStock.toFixed(1)}kg au total.`);
             return;
         }
     }
@@ -400,6 +404,7 @@ export function FeedManagement() {
   // Normalise les noms d'aliment pour éviter les doublons (ex: "Aliment Démarrage" = "Démarrage")
   const normalizeFeedType = (feedType: string): string => {
     const t = (feedType || '').toLowerCase().trim();
+    if (!t || t === 'aliment' || t === 'général' || t === 'general') return 'Aliment Général';
     if (t.includes('démarr') || t.includes('demarr') || t.includes('starter')) return 'Démarrage';
     if (t.includes('croissance') || t.includes('growth')) return 'Croissance';
     if (t.includes('finition') || t.includes('finish')) return 'Finition';
@@ -407,7 +412,7 @@ export function FeedManagement() {
     if (t.includes('mélange') || t.includes('melange') || t.includes('maison')) return 'Mélange Maison';
     if (t.includes('caille') || t.includes('quail')) return 'Caille';
     if (t.includes('calcium') || t.includes('coquillage')) return 'Calcium/Minéraux';
-    return feedType.trim() || 'Autre';
+    return feedType.trim() || 'Aliment Général';
   };
 
   // Stock détaillé par type d'aliment
@@ -1225,7 +1230,7 @@ export function FeedManagement() {
                 className={`w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-babs-brown outline-none focus:ring-2 focus:ring-orange-100 ${errors.feedType ? 'ring-2 ring-red-500' : ''}`}
                 {...register("feedType", { required: "Type d'aliment requis" })}
               >
-                <option value="" disabled>Choisir l'aliment...</option>
+                <option value="Aliment Général">Aliment Général</option>
                 <option value="Démarrage">Démarrage</option>
                 <option value="Croissance">Croissance</option>
                 <option value="Finition">Finition</option>

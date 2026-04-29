@@ -359,7 +359,17 @@ export function EggProduction() {
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Quantité</label>
-              <input type="number" step="1" className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500" placeholder="0" {...register("quantity", { required: true })} />
+              <input 
+                type="number" 
+                step="1" 
+                className={`w-full bg-gray-50 dark:bg-zinc-800 border ${errors.quantity ? 'border-red-500' : 'border-gray-200 dark:border-zinc-700'} rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none focus:border-gray-400 dark:focus:border-zinc-500`} 
+                placeholder="0" 
+                {...register("quantity", { 
+                  required: "Quantité requise", 
+                  min: { value: 1, message: "Minimum 1 œuf" } 
+                })} 
+              />
+              {errors.quantity && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.quantity.message}</p>}
             </div>
           </div>
 

@@ -2,6 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -20,8 +21,15 @@ service cloud.firestore {
         request.resource.data.lastUpdated is int;
     }
 
+    // Vérifie qu'un worker appartient bien à cette ferme spécifique
+    function belongsToFarm(farmId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/settings/profile) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)/settings/profile).data.farmId == farmId;
+    }
+
     // =========================================================
-    // USER DATA - Personal collections and settings
+    // USER DATA
     // =========================================================
     match /users/{userId} {
       allow read, write: if false;
@@ -34,14 +42,12 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isAllowedCollectionDoc(docId);
       }
 
-      // Preferences (species, breeds) - FIXED: accept any valid payload
       match /settings/preferences {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) && isSignedIn();
         allow delete: if isOwner(userId);
       }
 
-      // Profile (role, farmId, tier, displayName) - ADDED
       match /settings/profile {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId) && isSignedIn();
@@ -50,33 +56,28 @@ service cloud.firestore {
     }
 
     // =========================================================
-    // FARM DATA - Shared collections for team collaboration
-    // ADDED: This was completely missing, causing all data sync failures
+    // FARM DATA — accès strictement limité à la ferme concernée
     // =========================================================
     match /farms/{farmId} {
       allow read, write: if false;
 
       match /collections/{docId} {
-        // Owner can always access their farm data
         allow read: if isSignedIn() && isAllowedCollectionDoc(docId) && (
           request.auth.uid == farmId ||
-          // Workers: check they belong to this farm via their profile
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)/settings/profile)
+          belongsToFarm(farmId)        // ← CORRIGÉ : vérifie le farmId du profil
         );
-        allow create, update: if isSignedIn() && isAllowedCollectionDoc(docId) && 
+        allow create, update: if isSignedIn() && isAllowedCollectionDoc(docId) &&
           isValidCollectionPayload() && (
             request.auth.uid == farmId ||
-            exists(/databases/$(database)/documents/users/$(request.auth.uid)/settings/profile)
+            belongsToFarm(farmId)
           );
-        allow delete: if isSignedIn() && isAllowedCollectionDoc(docId) && (
-          request.auth.uid == farmId
-        );
+        allow delete: if isSignedIn() && isAllowedCollectionDoc(docId) &&
+          request.auth.uid == farmId;
       }
     }
 
     // =========================================================
-    // INVITATIONS - For team management
-    // ADDED: Missing, causing worker invitation acceptance to fail
+    // INVITATIONS
     // =========================================================
     match /invitations/{invitationId} {
       allow read: if isSignedIn() && (
@@ -91,7 +92,6 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
     }
 
-    // Default deny all
     match /{document=**} {
       allow read, write: if false;
     }

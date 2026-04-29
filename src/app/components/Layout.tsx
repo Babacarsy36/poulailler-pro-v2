@@ -62,17 +62,22 @@ export function Layout() {
     setActiveBreedFilter(breed);
   };
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'solar:widget-linear', path: '/' },
+  const primaryNav = [
+    { id: 'dashboard', label: 'Home', icon: 'solar:widget-linear', path: '/' },
     { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
-    { id: 'eggs', label: 'Production', icon: 'ph:egg-bold', path: '/eggs' },
-    { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
-    { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
+    { id: 'eggs', label: 'Ponte', icon: 'ph:egg-bold', path: '/eggs' },
     { id: 'finances', label: 'Finances', icon: 'solar:bill-list-linear', path: '/finances' },
+    { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
+  ];
+
+  const secondaryNav = [
+    { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
     { id: 'incubator', label: 'Incubation', icon: 'solar:thermometer-linear', path: '/incubator' },
     { id: 'selection', label: 'Configuration', icon: 'solar:settings-bold-duotone', path: '/selection' },
     { id: 'settings', label: 'Équipe', icon: 'solar:users-group-two-rounded-linear', path: '/team' },
   ];
+
+  const navItems = [...primaryNav, ...secondaryNav];
 
   const safePoultryTypes = poultryTypes && poultryTypes.length > 0 ? poultryTypes : ['poulet'];
   const primaryType = activeSpeciesFilter === 'all' ? safePoultryTypes[0] : activeSpeciesFilter;
@@ -312,17 +317,14 @@ export function Layout() {
         <nav className={`md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-md border-t pb-safe transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]' : 'bg-white/90 border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]'}`}>
             <div className="flex justify-around items-center h-24 px-4 pb-4">
                 {[
-                  { id: 'dashboard', label: 'Home', icon: 'solar:widget-linear', path: '/' },
-                  { id: 'inventory', label: 'Effectif', icon: 'solar:users-group-rounded-linear', path: '/inventory' },
-                  { id: 'eggs', label: 'Ponte', icon: 'ph:egg-bold', path: '/eggs' },
-                  { id: 'health', label: 'Santé', icon: 'solar:heart-bold-duotone', path: '/health' },
-                  { id: 'feed', label: 'Aliment', icon: 'solar:leaf-linear', path: '/feed' },
+                  ...primaryNav.slice(0, 4),
+                  { id: 'more', label: 'Plus', icon: 'solar:menu-dots-bold-duotone', onClick: () => setIsDrawerOpen(true) }
                 ].map((item) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive = 'path' in item && location.pathname === item.path;
                     return (
                         <button 
                             key={item.id}
-                            onClick={() => navigate(item.path)} 
+                            onClick={() => 'path' in item ? navigate(item.path!) : item.onClick!()} 
                             className="flex flex-col items-center gap-1.5 w-16 p-1 rounded-2xl transition-all relative"
                         >
                             <div className={`p-2.5 rounded-2xl transition-all ${isActive ? isDarkMode ? 'bg-zinc-800' : `bg-${accentColorClass}-500 text-white shadow-sm` : ''}`}>
@@ -375,7 +377,8 @@ export function Layout() {
                         </div>
 
                         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-                            {navItems.filter(item => !['dashboard', 'inventory', 'eggs', 'health', 'feed'].includes(item.id)).map((item) => {
+                            {/* Items that are not in the first 4 of bottom nav */}
+                            {[primaryNav[4], ...secondaryNav].map((item) => {
                                 const isActive = location.pathname === item.path;
                                 return (
                                     <button
@@ -387,7 +390,7 @@ export function Layout() {
                                         className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 ${
                                             isActive 
                                                 ? isDarkMode ? `bg-zinc-800 text-${accentColorClass}-400` : `bg-${accentColorClass}-50 text-${accentColorClass}-600`
-                                                : isDarkMode ? 'text-zinc-500' : 'text-gray-500'
+                                                : isDarkMode ? 'text-zinc-500 hover:bg-zinc-800/50' : 'text-gray-500 hover:bg-gray-50'
                                         }`}
                                     >
                                         <iconify-icon 

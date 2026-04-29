@@ -54,6 +54,15 @@ export function ChickenInventory() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingChicken, setEditingChicken] = useState<Chicken | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isSimpleMode, setIsSimpleMode] = useState(() => {
+    const saved = localStorage.getItem('inventory_simple_mode');
+    return saved === null ? true : saved === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('inventory_simple_mode', isSimpleMode.toString());
+  }, [isSimpleMode]);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null); // id du lot à supprimer
 
   
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ChickenFormData>({
@@ -246,9 +255,10 @@ export function ChickenInventory() {
 
   const onFormSubmit = (data: any) => {
     const now = Date.now();
-    const actualCount = Number(data.count) || 1;
     const femVal = Number(data.femaleCount) || 0;
     const maleVal = Number(data.maleCount) || 0;
+    // On ornement and some breeds, total count = male + female if filled
+    const actualCount = (femVal > 0 || maleVal > 0) ? (femVal + maleVal) : (Number(data.count) || 1);
 
     // Determine poultryType for the record
     let recordType = data.poultryType;
@@ -256,18 +266,25 @@ export function ChickenInventory() {
         recordType = activeSpeciesFilter !== 'all' ? activeSpeciesFilter : 'poulet';
     }
 
+    let finalName = data.name;
+    if (isSimpleMode && !finalName) {
+      const breedLabel = data.breed || selectedBreeds[0] || 'Standard';
+      finalName = `${recordType === 'caille' ? 'Lot Cailles' : recordType === 'poulet' ? `Lot ${breedLabel}` : recordType} - ${new Date(data.startDate).toLocaleDateString('fr-FR')}`;
+    }
+
     if (editingChicken) {
       const updated = chickens.map((c) =>
         c.id === editingChicken.id ? { 
           ...c, 
           ...data, 
+          name: finalName || c.name,
           poultryType: recordType,
           breed: data.breed || selectedBreeds[0] || "",
           ringNumber: data.ringNumber || undefined,
           variety: data.variety || undefined,
           birthYear: data.birthYear ? Number(data.birthYear) : undefined,
           club: data.club || undefined,
-          age: Number(data.age), 
+          age: Number(data.age || 0), 
           count: actualCount,
           femaleCount: femVal,
           maleCount: maleVal,
@@ -280,6 +297,7 @@ export function ChickenInventory() {
       const newChicken: Chicken = {
         id: now.toString(),
         ...data,
+        name: finalName,
         poultryType: recordType,
         breed: data.breed || selectedBreeds[0] || "",
         ringNumber: data.ringNumber || undefined,
@@ -287,7 +305,7 @@ export function ChickenInventory() {
         birthYear: data.birthYear ? Number(data.birthYear) : undefined,
         club: data.club || undefined,
         birthDate: data.birthDate || undefined,
-        age: Number(data.age),
+        age: Number(data.age || 0),
         count: actualCount,
         femaleCount: femVal,
         maleCount: maleVal,
@@ -535,11 +553,7 @@ export function ChickenInventory() {
                   <iconify-icon icon="solar:pen-linear"></iconify-icon> Modifier
                 </button>
                 <button 
-                  onClick={() => { 
-                    if(window.confirm("Supprimer ce lot ?")) {
-                      saveChickens(chickens.map(c => c.id === chicken.id ? { ...c, _deleted: true, updatedAt: Date.now() } : c));
-                    }
-                  }}
+                  onClick={() => setDeleteConfirm(chicken.id)}
                   className="p-2 px-3 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-xl text-gray-400 transition-colors outline-none"
                 >
                   <iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon>
@@ -556,15 +570,32 @@ export function ChickenInventory() {
         title={editingChicken ? "Modifier le lot" : "Nouveau lot"}
       >
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 text-left py-2">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Nom du Lot / Identifiant</label>
-            <input 
-              className={`w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none transition-all ${errors.name ? 'border-red-300 focus:border-red-400' : 'focus:border-gray-400'}`}
-              placeholder="Ex: Arrivage Janvier..."
-              {...register("name", { required: "Nom requis" })}
-            />
-            {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
+          {/* Toggle mode simplifié */}
+          <div className="flex items-center justify-between bg-orange-50 rounded-2xl p-3 mb-4">
+            <div>
+              <p className="text-xs font-black text-orange-700">Mode simplifié</p>
+              <p className="text-[10px] text-orange-500">Seulement les champs essentiels</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSimpleMode(!isSimpleMode)}
+              className={`relative w-12 h-6 rounded-full transition-colors ${isSimpleMode ? 'bg-orange-500' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isSimpleMode ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
           </div>
+
+          {!isSimpleMode && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Nom du Lot / Identifiant</label>
+              <input 
+                className={`w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-medium text-gray-900 dark:text-white outline-none transition-all ${errors.name ? 'border-red-300 focus:border-red-400' : 'focus:border-gray-400'}`}
+                placeholder="Ex: Arrivage Janvier..."
+                {...register("name", { required: !isSimpleMode && "Nom requis" })}
+              />
+              {errors.name && <p className="text-red-500 text-[10px] font-medium">{errors.name.message}</p>}
+            </div>
+          )}
 
           {poultryTypes.length > 1 && (
             <div className="space-y-1.5 animate-in slide-in-from-top-2">
@@ -640,178 +671,193 @@ export function ChickenInventory() {
 
 
 
-          <div className="pt-2">
-            <button 
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
-            >
-              <iconify-icon icon={showAdvanced ? "solar:minus-circle-linear" : "solar:add-circle-linear"}></iconify-icon>
-              {showAdvanced ? "Moins d'options" : "Plus d'options (Bague, Variété...)"}
-            </button>
-          </div>
-
-          {showAdvanced && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="space-y-4 pt-2 border-t border-gray-100"
-            >
-              {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
-                <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
-                  
-                  {[
-                    { group: "Unies", items: ["Noir", "Blanc", "Bleu", "Fauve"] },
-                    { group: "Herminées", items: ["Blanc herminé noir", "Fauve herminé noir", "Blanc herminé bleu", "Fauve herminé bleu"] },
-                    { group: "Maillées", items: ["Perdrix doré maillé", "Perdrix argenté maillé", "Perdrix bleu doré maillé"] },
-                    { group: "Autres", items: ["Coucou", "Splash", "Caillouté"] }
-                  ].map(g => (
-                    <div key={g.group} className="mt-2 text-left">
-                      <p className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 ml-1">{g.group}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {g.items.map(v => {
-                           const isSelected = formData.variety?.includes(v);
-                           return (
-                             <label key={v} className={`px-3 py-1.5 rounded-xl border text-[11px] cursor-pointer select-none transition-all duration-200 flex items-center gap-1.5 ${isSelected ? 'bg-orange-50 border-orange-200 text-orange-700 font-bold shadow-sm' : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:bg-gray-50'}`}>
-                               <input type="checkbox" className="hidden" value={v} {...register("variety")} />
-                               {isSelected && <iconify-icon icon="solar:check-circle-bold" class="text-orange-500"></iconify-icon>}
-                               {v}
-                             </label>
-                           );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {(formData.breed === 'ornement' || formData.breed === 'pondeuse' || formData.poultryType === 'caille') && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
-                    Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
-                  </label>
-                  <textarea 
-                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-['JetBrains_Mono'] text-gray-900 dark:text-white outline-none focus:border-gray-400 min-h-[60px]"
-                    placeholder="Ex: 23-AA123, 23-AA124..."
-                    {...register("ringNumber")}
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année de Naissance</label>
-                  <input 
-                    type="number"
-                    placeholder={new Date().getFullYear().toString()}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
-                    {...register("birthYear")}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Provenance</label>
-                  <input 
-                    type="text"
-                    placeholder="Ex: Club Avicole..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
-                    {...register("club")}
-                  />
-                </div>
+          {!isSimpleMode && (
+            <>
+              <div className="pt-2">
+                <button 
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  <iconify-icon icon={showAdvanced ? "solar:minus-circle-linear" : "solar:add-circle-linear"}></iconify-icon>
+                  {showAdvanced ? "Moins d'options" : "Plus d'options (Bague, Variété...)"}
+                </button>
               </div>
-            </motion.div>
+
+              {showAdvanced && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="space-y-4 pt-2 border-t border-gray-100"
+                >
+                  {formData.poultryType === 'poulet' && formData.breed === 'ornement' && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Variétés (Multi-sélection possible)</label>
+                      
+                      {[
+                        { group: "Unies", items: ["Noir", "Blanc", "Bleu", "Fauve"] },
+                        { group: "Herminées", items: ["Blanc herminé noir", "Fauve herminé noir", "Blanc herminé bleu", "Fauve herminé bleu"] },
+                        { group: "Maillées", items: ["Perdrix doré maillé", "Perdrix argenté maillé", "Perdrix bleu doré maillé"] },
+                        { group: "Autres", items: ["Coucou", "Splash", "Caillouté"] }
+                      ].map(g => (
+                        <div key={g.group} className="mt-2 text-left">
+                          <p className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 ml-1">{g.group}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {g.items.map(v => {
+                              const isSelected = formData.variety?.includes(v);
+                              return (
+                                <label key={v} className={`px-3 py-1.5 rounded-xl border text-[11px] cursor-pointer select-none transition-all duration-200 flex items-center gap-1.5 ${isSelected ? 'bg-orange-50 border-orange-200 text-orange-700 font-bold shadow-sm' : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:bg-gray-50'}`}>
+                                  <input type="checkbox" className="hidden" value={v} {...register("variety")} />
+                                  {isSelected && <iconify-icon icon="solar:check-circle-bold" class="text-orange-500"></iconify-icon>}
+                                  {v}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(formData.breed === 'ornement' || formData.breed === 'pondeuse' || formData.poultryType === 'caille') && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500 flex items-center gap-1">
+                        Numéro de Bague <iconify-icon icon="solar:tag-horizontal-linear" class="text-orange-500"></iconify-icon>
+                      </label>
+                      <textarea 
+                        className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm font-['JetBrains_Mono'] text-gray-900 dark:text-white outline-none focus:border-gray-400 min-h-[60px]"
+                        placeholder="Ex: 23-AA123, 23-AA124..."
+                        {...register("ringNumber")}
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Année de Naissance</label>
+                      <input 
+                        type="number"
+                        placeholder={new Date().getFullYear().toString()}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
+                        {...register("birthYear")}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Club / Provenance</label>
+                      <input 
+                        type="text"
+                        placeholder="Ex: Club Avicole..."
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400"
+                        {...register("club")}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </>
           )}
 
               {/* Birth date picker → auto-compute age */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date de Naissance / Éclosion</label>
-                <input
-                  type="date"
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                  {...register("birthDate")}
-                />
-                {watchedBirthDate && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl border border-blue-100">
-                    <iconify-icon icon="solar:calendar-check-linear" class="text-blue-500"></iconify-icon>
-                    <p className="text-xs font-medium text-blue-700">
-                      Âge calculé : <span className="font-black">{formData.age} {formData.ageUnit === 'weeks' ? 'semaines' : formData.ageUnit === 'days' ? 'jours' : 'mois'}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {!isSimpleMode && (
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
-                    {watchedBirthDate ? "Âge (calculé auto)" : "Âge"}
-                  </label>
-                  <div className="flex bg-gray-50 border border-gray-200 rounded-xl p-1 items-stretch focus-within:border-gray-400 transition-colors">
-                    <input 
-                      type="number"
-                      step="0.1"
-                      readOnly={!!watchedBirthDate}
-                      className={`w-16 bg-transparent border-none p-2 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 text-center outline-none ${watchedBirthDate ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      {...register("age", { required: !watchedBirthDate, min: 0 })}
-                    />
-                    <div className="w-[1px] bg-gray-200 my-1.5"></div>
-                    <select
-                      className="flex-1 bg-transparent border-none px-2 text-xs font-medium text-gray-600 outline-none cursor-pointer"
-                      disabled={!!watchedBirthDate}
-                      {...register("ageUnit")}
-                    >
-                      <option value="months">Mois</option>
-                      <option value="weeks">Semaines</option>
-                      <option value="days">Jours</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Quantité (Total)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
-                    {...register("count", { required: true, min: 1 })}
+                  <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Date de Naissance / Éclosion</label>
+                  <input
+                    type="date"
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
+                    {...register("birthDate")}
                   />
-                </div>
-              </div>
-
-              {formData.age && (
-                <div className="bg-blue-50/50 p-4 rounded-2xl border-l-4 border-l-blue-500 flex items-center gap-3">
-                  <iconify-icon icon="solar:leaf-linear" class="text-2xl text-blue-500"></iconify-icon>
-                  <div>
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-0.5">Aliment Recommandé</p>
-                    <p className="text-xs font-medium text-gray-900">{getRecommendedFeed(formData.age, formData.ageUnit, formData.breed || poultryBreed || "", isCaille ? "caille" : "poulet")}</p>
-                  </div>
+                  {watchedBirthDate && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                      <iconify-icon icon="solar:calendar-check-linear" class="text-blue-500"></iconify-icon>
+                      <p className="text-xs font-medium text-blue-700">
+                        Âge calculé : <span className="font-black">{formData.age} {formData.ageUnit === 'weeks' ? 'semaines' : formData.ageUnit === 'days' ? 'jours' : 'mois'}</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {!(formData.breed === 'chair' || formData.breed === 'pondeuse') && (
+              {!isSimpleMode && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
+                        {watchedBirthDate ? "Âge (calculé auto)" : "Âge"}
+                      </label>
+                      <div className="flex bg-gray-50 border border-gray-200 rounded-xl p-1 items-stretch focus-within:border-gray-400 transition-colors">
+                        <input 
+                          type="number"
+                          step="0.1"
+                          readOnly={!!watchedBirthDate}
+                          className={`w-16 bg-transparent border-none p-2 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 text-center outline-none ${watchedBirthDate ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          {...register("age", { required: !watchedBirthDate && !isSimpleMode, min: 0 })}
+                        />
+                        <div className="w-[1px] bg-gray-200 my-1.5"></div>
+                        <select
+                          className="flex-1 bg-transparent border-none px-2 text-xs font-medium text-gray-600 outline-none cursor-pointer"
+                          disabled={!!watchedBirthDate}
+                          {...register("ageUnit")}
+                        >
+                          <option value="months">Mois</option>
+                          <option value="weeks">Semaines</option>
+                          <option value="days">Jours</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {formData.age && (
+                    <div className="bg-blue-50/50 p-4 rounded-2xl border-l-4 border-l-blue-500 flex items-center gap-3">
+                      <iconify-icon icon="solar:leaf-linear" class="text-2xl text-blue-500"></iconify-icon>
+                      <div>
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500 mb-0.5">Aliment Recommandé</p>
+                        <p className="text-xs font-medium text-gray-900">{getRecommendedFeed(formData.age, formData.ageUnit, formData.breed || poultryBreed || "", isCaille ? "caille" : "poulet")}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-gray-500">Quantité (Total)</label>
+                <input 
+                  type="number"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400 transition-colors"
+                  {...register("count", { 
+                    required: "La quantité est requise", 
+                    min: { value: 1, message: "Minimum 1 sujet" } 
+                  })}
+                />
+                {errors.count && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.count.message}</p>}
+              </div>
+
+              {!isSimpleMode && !(formData.breed === 'chair' || formData.breed === 'pondeuse') && (
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col gap-3">
-                 <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <iconify-icon icon="solar:checklist-minimalistic-linear" class="text-lg text-gray-500"></iconify-icon>
                     <p className="text-[10px] font-medium uppercase tracking-widest text-gray-600">Reproduction (Optionnel)</p>
-                 </div>
-                 <div className="grid grid-cols-2 gap-3">
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-medium text-gray-500">Femelles</label>
-                     <input 
-                       type="number"
-                       className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400"
-                       {...register("femaleCount")}
-                     />
-                   </div>
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-medium text-gray-500">Mâles</label>
-                     <input 
-                       type="number"
-                       className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400"
-                       {...register("maleCount")}
-                     />
-                   </div>
-                 </div>
-                 <p className="text-[9px] text-gray-400 font-light leading-snug">Remplir ces champs remplacera la quantité totale par la somme des mâles et femelles.</p>
-              </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-gray-500">Femelles</label>
+                      <input 
+                        type="number"
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400"
+                        {...register("femaleCount")}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-gray-500">Mâles</label>
+                      <input 
+                        type="number"
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-sm font-['JetBrains_Mono'] font-medium text-gray-900 outline-none focus:border-gray-400"
+                        {...register("maleCount")}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-gray-400 font-light leading-snug">Remplir ces champs remplacera la quantité totale par la somme des mâles et femelles.</p>
+                </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
@@ -858,6 +904,41 @@ export function ChickenInventory() {
         <div className="clean-card rounded-3xl py-16 text-center border-dashed border-gray-200">
           <iconify-icon icon="solar:bird-line-duotone" class="text-4xl text-gray-300 mb-2 block"></iconify-icon>
           <p className="text-xs font-light text-gray-500">Votre inventaire est vide.</p>
+        </div>
+      )}
+
+      {/* Confirmation de suppression */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-xs space-y-6 shadow-2xl animate-in zoom-in duration-300">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-red-100 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+                <iconify-icon icon="solar:trash-bin-trash-bold" class="text-3xl text-red-500"></iconify-icon>
+              </div>
+              <div>
+                <h3 className="font-black text-xl text-gray-800">Supprimer ce lot ?</h3>
+                <p className="text-sm text-gray-500 leading-relaxed mt-2">Cette action est irréversible. Les données de ce lot seront définitivement effacées.</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  saveChickens(chickens.map(c => c.id === deleteConfirm ? { ...c, _deleted: true, updatedAt: Date.now() } : c));
+                  setDeleteConfirm(null);
+                  toast.success('Lot supprimé avec succès');
+                }}
+                className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-100 transition-all"
+              >
+                Oui, supprimer
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="w-full py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>

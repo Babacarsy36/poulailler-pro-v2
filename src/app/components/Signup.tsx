@@ -17,6 +17,11 @@ export function Signup() {
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validation mot de passe
+        if (password.length < 8) {
+            return setError('Le mot de passe doit contenir au moins 8 caractères.');
+        }
         if (password !== confirmPassword) {
             return setError('Les mots de passe ne correspondent pas.');
         }
@@ -24,7 +29,7 @@ export function Signup() {
         setLoading(true);
         setError('');
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            await createUserWithEmailAndPassword(auth, email.trim(), password);
             navigate('/selection');
         } catch (err: any) {
             setError("Erreur lors de la création du compte. L'email est peut-être déjà utilisé.");
@@ -76,6 +81,7 @@ export function Signup() {
                                 <input 
                                     type={showPassword ? "text" : "password"}
                                     required
+                                    minLength={8}
                                     className="w-full bg-gray-50/50 border-2 border-transparent focus:border-babs-orange/20 focus:bg-white rounded-2xl py-4 pl-12 pr-12 font-bold text-babs-brown outline-none transition-all"
                                     placeholder="8 caractères min."
                                     value={password}

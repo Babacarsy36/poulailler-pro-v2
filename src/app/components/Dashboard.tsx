@@ -8,16 +8,16 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, A
 import { UpgradeModal } from "./ui/UpgradeModal";
 import { Chicken, EggRecord, FeedEntry, HealthRecord, Transaction, PoultryType } from "../types";
 import { toast } from "sonner";
-import { OnboardingGuide } from "./OnboardingGuide";
+import { Onboarding } from "./Onboarding";
 import { Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tooltip as UITooltip } from "./ui/Tooltip";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isItemActive, poultryTypes, activeSpeciesFilter, activeBreedFilter, selectedBreeds, syncTrigger, hasAccess, alerts, user, isInitialPullDone } = useAuth();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(location.search.includes('upgrade=true'));
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [stats, setStats] = useState({
@@ -36,6 +36,10 @@ export function Dashboard() {
     lastEggText: "",
     lastFeedText: "",
     globalBreakdown: [] as { type: string, count: number, eggs: number }[]
+  });
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return localStorage.getItem('onboarding_done') !== 'true' &&
+           localStorage.getItem('has_selected_species') === 'true';
   });
   const [isRecovering, setIsRecovering] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
@@ -214,11 +218,7 @@ export function Dashboard() {
 
   useEffect(() => {
     if (isInitialPullDone) {
-      const hasSeenOnboarding = localStorage.getItem('has_seen_onboarding');
-      if (!hasSeenOnboarding) {
-        setIsOnboardingOpen(true);
-        localStorage.setItem('has_seen_onboarding', 'true');
-      }
+      // Automatic trigger for onboarding if needed
     }
   }, [isInitialPullDone]);
 
@@ -344,7 +344,9 @@ export function Dashboard() {
                 <div>
                     <div className="font-['JetBrains_Mono'] text-2xl tracking-tight text-gray-900 mb-1 font-medium">{activeSpeciesFilter !== 'all' ? `${stats.layingRate}%` : `${stats.eggsToday}`}</div>
                     <div className="text-xs text-emerald-700 font-medium tracking-tight bg-emerald-50 inline-block px-1.5 py-0.5 rounded truncate max-w-full">
-                      {activeSpeciesFilter !== 'all' ? stats.layingRateLabel : "œufs récoltés"}
+                      <UITooltip text="Pourcentage de femelles ayant pondu aujourd'hui. Un taux de 80% ou plus est excellent.">
+                        {activeSpeciesFilter !== 'all' ? stats.layingRateLabel : "œufs récoltés"}
+                      </UITooltip>
                     </div>
                 </div>
             </div>
@@ -358,7 +360,9 @@ export function Dashboard() {
               <div>
                   <div className="font-['JetBrains_Mono'] text-xl tracking-tight text-gray-900 mb-1 font-medium">{Math.round(stats.feedRemaining)} <span className="text-xs text-gray-400 font-normal">kg</span></div>
                   <div className={`text-xs font-medium tracking-tight inline-block px-1.5 py-0.5 rounded ${stats.feedAutonomy < 5 ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'}`}>
-                    {stats.feedAutonomy === Infinity ? 'Non calculé' : `${stats.feedAutonomy}j d'autonomie`}
+                    <UITooltip text="Nombre de jours avant d'épuiser votre stock d'aliment selon la consommation actuelle.">
+                      {stats.feedAutonomy === Infinity ? 'Non calculé' : `${stats.feedAutonomy}j d'autonomie`}
+                    </UITooltip>
                   </div>
               </div>
           </div>
@@ -531,7 +535,7 @@ export function Dashboard() {
       </div>
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => { setIsUpgradeModalOpen(false); if (location.search.includes('upgrade=true')) navigate('/', { replace: true }); }} />
-      <OnboardingGuide isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
+      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
 
       {/* Floating Action Button (FAB) for Quick Entry */}
       <div className="fixed bottom-24 right-6 z-40 sm:bottom-6">
